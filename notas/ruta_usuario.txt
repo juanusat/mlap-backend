@@ -1,0 +1,227 @@
+# user_routes.py
+
+from flask import Blueprint, jsonify, request, abort, g, url_for, redirect
+from .user_controller import (
+    get_all_users,
+    get_user_by_id,
+    create_user,
+    update_user,
+    deactivate_user,
+    get_user_by_username
+)
+
+# Creamos el blueprint para los usuarios
+user_bp = Blueprint('user', __name__)
+
+@user_bp.route('/', methods=['GET'])
+def list_users():
+    """
+    Ruta para obtener todos los usuarios.
+    """
+    # if not es_admin():
+    #     abort(403, "No autorizado")
+    
+    users = get_all_users()
+    return jsonify(users), 200
+
+@user_bp.route('/<int:user_id>', methods=['GET'])
+def get_single_user(user_id):
+    """
+    Ruta para obtener un usuario por su ID.
+    """
+    user = get_user_by_id(user_id)
+    if not user:
+        abort(404, description="Usuario no encontrado")
+    return jsonify(user), 200
+
+@user_bp.route('/username/<string:username>', methods=['GET'])
+def get_user_by_username_route(username):
+    """
+    Ruta para obtener un usuario por su nombre de usuario.
+    """
+    user = get_user_by_username(username)
+    if not user:
+        abort(404, description="Usuario no encontrado")
+    return jsonify(user), 200
+
+@user_bp.route('/', methods=['POST'])
+def add_user():
+    """
+    Ruta para crear un nuevo usuario.
+    """
+    # if not es_admin():
+    #     abort(403, "No autorizado")
+    
+    data = request.get_json()
+    required_fields = ['person_id', 'username', 'password']
+    if not all(field in data for field in required_fields):
+        abort(400, "Faltan campos obligatorios: person_id, username y password.")
+
+    try:
+        new_user = create_user(
+            person_id=data['person_id'],
+            username=data['username'],
+            password=data['password']
+        )
+        return jsonify(new_user), 201
+    except Exception as e:
+        abort(500, description=str(e))
+
+@user_bp.route('/<int:user_id>', methods=['PUT'])
+def edit_user(user_id):
+    """
+    Ruta para actualizar los datos de un usuario por su ID.
+    """
+    # if not tiene_permiso('editar_usuario'):
+    #     abort(403, "No autorizado")
+    
+    data = request.get_json()
+    
+    try:
+        updated_user = update_user(
+            user_id=user_id,
+            username=data.get('username'),
+            password=data.get('password'),
+            email_verified=data.get('email_verified'),
+            active=data.get('active')
+        )
+        if not updated_user:
+            abort(404, description="Usuario no encontrado")
+        return jsonify(updated_user), 200
+    except Exception as e:
+        abort(500, description=str(e))
+
+@user_bp.route('/<int:user_id>/deactivate', methods=['PUT'])
+def deactivate_user_route(user_id):
+    """
+    Ruta para desactivar un usuario (soft delete).
+    """
+    # if not es_admin():
+    #     abort(403, "No autorizado")
+    
+    try:
+        updated_user = deactivate_user(user_id)
+        if not updated_user:
+            abort(404, description="Usuario no encontrado")
+        return jsonify(updated_user), 200
+    except Exception as e:
+        abort(500, description=str(e)) 
+
+------------------------------------------------------------------------------ 
+
+from datetime import datetime
+from database import get_db_connection
+
+def hash_password(password):
+    """Genera un hash seguro para la contraseña."""
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+def check_password(password, hashed):
+    """Verifica si una contraseña coincide con su hash."""
+    return bcrypt.checkpw(password.encode('utf-8'), hashed.encode('utf-8'))
+
+def get_all_users():
+    """Obtiene todos los usuarios de la BD."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            # No devolvemos el password_hash por seguridad
+            cursor.execute("SELECT id, person_id, username, email_verified, active, last_login, created_at, updated_at FROM \"user\" ORDER BY username;")
+            users = cursor.fetchall()
+            return [dict(row) for row in users]
+    finally:
+        conn.close()
+
+def get_user_by_id(user_id):
+    """Obtiene un usuario por su ID."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            # No devolvemos el password_hash por seguridad
+            cursor.execute("SELECT id, person_id, username, email_verified, active, last_login, created_at, updated_at FROM \"user\" WHERE id = %s;", (user_id,))
+            user = cursor.fetchone()
+            return dict(user) if user else None
+    finally:
+        conn.close()
+
+def get_user_by_username(username):
+    """Obtiene un usuario por su nombre de usuario."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            # En este caso, sí devolvemos el hash para que la autenticación pueda usarlo
+            cursor.execute("SELECT * FROM \"user\" WHERE username = %s;", (username,))
+            user = cursor.fetchone()
+            return dict(user) if user else None
+    finally:
+        conn.close()
+
+def create_user(person_id, username, password):
+    """Crea un nuevo usuario con la contraseña hasheada."""
+    conn = get_db_connection()
+    try:
+        hashed_password = hash_password(password)
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO "user" (person_id, username, password_hash)
+                VALUES (%s, %s, %s)
+                RETURNING id, person_id, username, email_verified, active, created_at, updated_at;
+                """,
+                (person_id, username, hashed_password)
+            )
+            new_user = cursor.fetchone()
+            conn.commit()
+            return dict(new_user)
+    finally:
+        conn.close()
+
+def update_user(user_id, username=None, password=None, email_verified=None, active=None):
+    """Actualiza los datos de un usuario."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            fields = []
+            params = []
+            
+            if username is not None:
+                fields.append("username = %s")
+                params.append(username)
+            if password is not None:
+                fields.append("password_hash = %s")
+                params.append(hash_password(password))
+            if email_verified is not None:
+                fields.append("email_verified = %s")
+                params.append(email_verified)
+            if active is not None:
+                fields.append("active = %s")
+                params.append(active)
+            
+            if not fields:
+                return get_user_by_id(user_id)
+                
+            query = f"UPDATE \"user\" SET {', '.join(fields)}, updated_at = %s WHERE id = %s RETURNING *;"
+            params.append(datetime.now())
+            params.append(user_id)
+            
+            cursor.execute(query, tuple(params))
+            updated_user = cursor.fetchone()
+            conn.commit()
+            return dict(updated_user) if updated_user else None
+    finally:
+        conn.close()
+
+def deactivate_user(user_id):
+    """Desactiva un usuario por su ID."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(
+                "UPDATE \"user\" SET active = FALSE, updated_at = %s WHERE id = %s RETURNING *;",
+                (datetime.now(), user_id)
+            )
+            deactivated_user = cursor.fetchone()
+            conn.commit()
+            return dict(deactivated_user) if deactivated_user else None
+    finally:
+        conn.close()

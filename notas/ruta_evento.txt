@@ -1,0 +1,217 @@
+from .event_controller import (
+    get_all_events,
+    get_events_by_parish,
+    get_event_by_id,
+    create_event,
+    update_event,
+    deactivate_event
+)
+
+event_bp = Blueprint('event', __name__)
+
+@event_bp.route('/', methods=['GET'])
+def list_all_events():
+    """
+    Ruta para obtener todos los eventos de todas las parroquias.
+    (Solo para superadministradores)
+    """
+    # if not es_super_admin():
+    #     abort(403, "No autorizado.")
+    events = get_all_events()
+    return jsonify(events), 200
+
+@event_bp.route('/parish/<int:parish_id>', methods=['GET'])
+def list_events_by_parish(parish_id):
+    """
+    Ruta para obtener todos los eventos de una parroquia específica.
+    """
+    # if not tiene_permiso('listar_eventos_parroquia', parish_id):
+    #     abort(403, "No autorizado.")
+    events = get_events_by_parish(parish_id)
+    return jsonify(events), 200
+
+@event_bp.route('/<int:event_id>', methods=['GET'])
+def get_single_event(event_id):
+    """
+    Ruta para obtener un evento por su ID.
+    """
+    event = get_event_by_id(event_id)
+    if not event:
+        abort(404, description="Evento no encontrado.")
+    return jsonify(event), 200
+
+@event_bp.route('/', methods=['POST'])
+def add_event():
+    """
+    Ruta para crear un nuevo evento.
+    Requiere ser administrador de la parroquia.
+    """
+    data = request.get_json()
+    required_fields = ['parish_id', 'name']
+    if not all(field in data for field in required_fields):
+        abort(400, "Faltan campos obligatorios: parish_id y name.")
+    
+    # if not es_admin_de_parroquia(data['parish_id']):
+    #     abort(403, "No autorizado para crear eventos en esta parroquia.")
+        
+    try:
+        new_event = create_event(
+            parish_id=data['parish_id'],
+            name=data['name'],
+            description=data.get('description'),
+            category=data.get('category'),
+            estimated_duration=data.get('estimated_duration')
+        )
+        return jsonify(new_event), 201
+    except Exception as e:
+        abort(500, description=str(e))
+
+@event_bp.route('/<int:event_id>', methods=['PUT'])
+def edit_event(event_id):
+    """
+    Ruta para actualizar los datos de un evento.
+    Requiere ser administrador de la parroquia del evento.
+    """
+    data = request.get_json()
+    
+    # if not tiene_permiso_para_editar_evento(event_id):
+    #     abort(403, "No autorizado para editar este evento.")
+        
+    try:
+        updated_event = update_event(
+            event_id=event_id,
+            name=data.get('name'),
+            description=data.get('description'),
+            category=data.get('category'),
+            estimated_duration=data.get('estimated_duration'),
+            active=data.get('active')
+        )
+        if not updated_event:
+            abort(404, description="Evento no encontrado.")
+        return jsonify(updated_event), 200
+    except Exception as e:
+        abort(500, description=str(e))
+
+@event_bp.route('/<int:event_id>/deactivate', methods=['PUT'])
+def deactivate_event_route(event_id):
+    """
+    Ruta para desactivar un evento (borrado lógico).
+    """
+    # if not tiene_permiso_para_desactivar_evento(event_id):
+    #     abort(403, "No autorizado.")
+    try:
+        deactivated_event = deactivate_event(event_id)
+        if not deactivated_event:
+            abort(404, description="Evento no encontrado.")
+        return jsonify(deactivated_event), 200
+    except Exception as e:
+        abort(500, description=str(e)) 
+
+-----------------------------------------------------------------------------
+
+from database import get_db_connection
+
+def get_all_events():
+    """Obtiene todos los eventos de la BD."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM event ORDER BY created_at DESC;")
+            events = cursor.fetchall()
+            return [dict(row) for row in events]
+    finally:
+        conn.close()
+
+def get_events_by_parish(parish_id):
+    """Obtiene todos los eventos de una parroquia específica."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM event WHERE parish_id = %s ORDER BY created_at DESC;", (parish_id,))
+            events = cursor.fetchall()
+            return [dict(row) for row in events]
+    finally:
+        conn.close()
+
+def get_event_by_id(event_id):
+    """Obtiene un evento por su ID."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM event WHERE id = %s;", (event_id,))
+            event = cursor.fetchone()
+            return dict(event) if event else None
+    finally:
+        conn.close()
+
+def create_event(parish_id, name, description, category, estimated_duration):
+    """Crea un nuevo evento en la BD."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO event (parish_id, name, description, category, estimated_duration)
+                VALUES (%s, %s, %s, %s, %s)
+                RETURNING *;
+                """,
+                (parish_id, name, description, category, estimated_duration)
+            )
+            new_event = cursor.fetchone()
+            conn.commit()
+            return dict(new_event)
+    finally:
+        conn.close()
+
+def update_event(event_id, name=None, description=None, category=None, estimated_duration=None, active=None):
+    """Actualiza los datos de un evento."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            fields = []
+            params = []
+            
+            if name is not None:
+                fields.append("name = %s")
+                params.append(name)
+            if description is not None:
+                fields.append("description = %s")
+                params.append(description)
+            if category is not None:
+                fields.append("category = %s")
+                params.append(category)
+            if estimated_duration is not None:
+                fields.append("estimated_duration = %s")
+                params.append(estimated_duration)
+            if active is not None:
+                fields.append("active = %s")
+                params.append(active)
+            
+            if not fields:
+                return get_event_by_id(event_id)
+                
+            query = f"UPDATE event SET {', '.join(fields)}, updated_at = %s WHERE id = %s RETURNING *;"
+            params.append(datetime.now())
+            params.append(event_id)
+            
+            cursor.execute(query, tuple(params))
+            updated_event = cursor.fetchone()
+            conn.commit()
+            return dict(updated_event) if updated_event else None
+    finally:
+        conn.close()
+
+def deactivate_event(event_id):
+    """Desactiva un evento por su ID (borrado lógico)."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(
+                "UPDATE event SET active = FALSE, updated_at = %s WHERE id = %s RETURNING *;",
+                (datetime.now(), event_id)
+            )
+            deactivated_event = cursor.fetchone()
+            conn.commit()
+            return dict(deactivated_event) if deactivated_event else None
+    finally:
+        conn.close() 

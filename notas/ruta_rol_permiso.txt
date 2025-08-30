@@ -1,0 +1,167 @@
+from .role_permission_controller import (
+    get_permissions_by_role,
+    assign_permission_to_role,
+    revoke_permission_from_role,
+    get_all_role_permissions
+)
+
+role_permission_bp = Blueprint('role_permission', __name__)
+
+@role_permission_bp.route('/', methods=['GET'])
+def list_all_role_permissions():
+    """
+    Ruta para obtener todas las asignaciones de permisos a roles.
+    """
+    # if not es_super_admin():
+    #     abort(403, "No autorizado.")
+    permissions = get_all_role_permissions()
+    return jsonify(permissions), 200
+
+@role_permission_bp.route('/role/<int:role_id>', methods=['GET'])
+def list_permissions_for_role(role_id):
+    """
+    Ruta para obtener todos los permisos (activos e inactivos) de un rol.
+    """
+    #if not tiene_permiso('listar_permisos_de_rol', role_id):
+    #    abort(403, "No autorizado.")
+    permissions = get_permissions_by_role(role_id)
+    return jsonify(permissions), 200
+
+@role_permission_bp.route('/assign', methods=['POST'])
+def assign_permission():
+    """
+    Ruta para asignar un permiso a un rol.
+    """
+    data = request.get_json()
+    required_fields = ['role_id', 'permission_id']
+    if not all(field in data for field in required_fields):
+        abort(400, "Faltan campos obligatorios: role_id y permission_id.")
+    
+    #if not es_admin_de_parroquia_de_rol(data['role_id']):
+    #    abort(403, "No autorizado para asignar permisos a este rol.")
+
+    try:
+        new_assignment = assign_permission_to_role(
+            role_id=data['role_id'],
+            permission_id=data['permission_id'],
+            granted=data.get('granted', True)
+        )
+        return jsonify(new_assignment), 201
+    except Exception as e:
+        abort(500, description=str(e))
+
+@role_permission_bp.route('/revoke', methods=['PUT'])
+def revoke_permission():
+    """
+    Ruta para revocar (anular) un permiso de un rol.
+    """
+    data = request.get_json()
+    required_fields = ['role_id', 'permission_id']
+    if not all(field in data for field in required_fields):
+        abort(400, "Faltan campos obligatorios: role_id y permission_id.")
+
+    #if not es_admin_de_parroquia_de_rol(data['role_id']):
+    #    abort(403, "No autorizado para revocar permisos de este rol.")
+
+    try:
+        revoked_assignment = revoke_permission_from_role(
+            role_id=data['role_id'],
+            permission_id=data['permission_id']
+        )
+        if not revoked_assignment:
+            abort(404, description="Asignación de permiso no encontrada.")
+        return jsonify(revoked_assignment), 200
+    except Exception as e:
+        abort(500, description=str(e)) 
+
+
+---------------------------------------------------------------------------------
+
+from database import get_db_connection
+
+def get_all_role_permissions():
+    """Obtiene todas las asignaciones de permisos a roles de la BD."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM role_permission ORDER BY role_id, permission_id;")
+            permissions = cursor.fetchall()
+            return [dict(row) for row in permissions]
+    finally:
+        conn.close()
+
+def get_permissions_by_role(role_id):
+    """Obtiene los permisos (activos e inactivos) de un rol específico."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("""
+                SELECT 
+                    rp.id, rp.role_id, rp.permission_id, rp.granted, rp.assignment_date, rp.revocation_date,
+                    p.code as permission_code, p.name as permission_name
+                FROM 
+                    role_permission rp
+                JOIN 
+                    permission p ON rp.permission_id = p.id
+                WHERE 
+                    rp.role_id = %s
+                ORDER BY 
+                    rp.assignment_date DESC;
+            """, (role_id,))
+            permissions = cursor.fetchall()
+            return [dict(row) for row in permissions]
+    finally:
+        conn.close()
+
+def assign_permission_to_role(role_id, permission_id, granted):
+    """Asigna un permiso a un rol."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            # Primero, intenta revocar cualquier asignación previa (si existe) para evitar la restricción UNIQUE
+            cursor.execute(
+                """
+                UPDATE role_permission
+                SET revocation_date = CURRENT_TIMESTAMP
+                WHERE role_id = %s AND permission_id = %s AND revocation_date IS NULL;
+                """, (role_id, permission_id)
+            )
+            
+            # Luego, inserta la nueva asignación
+            cursor.execute(
+                """
+                INSERT INTO role_permission (role_id, permission_id, granted)
+                VALUES (%s, %s, %s)
+                RETURNING *;
+                """,
+                (role_id, permission_id, granted)
+            )
+            new_assignment = cursor.fetchone()
+            conn.commit()
+            return dict(new_assignment)
+    except psycopg2.IntegrityError as e:
+        conn.rollback()
+        raise Exception("Error de integridad. El permiso podría ya estar asignado a este rol.")
+    finally:
+        conn.close()
+
+def revoke_permission_from_role(role_id, permission_id):
+    """Revoca un permiso de un rol (borrado lógico)."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(
+                """
+                UPDATE role_permission
+                SET granted = FALSE, revocation_date = %s, updated_at = %s
+                WHERE role_id = %s AND permission_id = %s AND revocation_date IS NULL
+                RETURNING *;
+                """,
+                (datetime.now(), datetime.now(), role_id, permission_id)
+            )
+            revoked_assignment = cursor.fetchone()
+            conn.commit()
+            return dict(revoked_assignment) if revoked_assignment else None
+    finally:
+        conn.close() 
+        

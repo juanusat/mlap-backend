@@ -1,0 +1,225 @@
+from .person_controller import (
+    get_all_persons,
+    get_person_by_id,
+    create_person,
+    update_person,
+    delete_person,
+    get_person_by_email
+)
+
+# Creamos el blueprint para las personas
+person_bp = Blueprint('person', __name__)
+
+@person_bp.route('/', methods=['GET'])
+def list_persons():
+    """
+    Ruta para obtener todas las personas.
+    """
+    #if not getattr(g, 'user_id', None):
+    #    return redirect(url_for('inicio')) 
+    
+    persons = get_all_persons()
+    return jsonify(persons), 200
+
+@person_bp.route('/<int:person_id>', methods=['GET'])
+def get_single_person(person_id):
+    """
+    Ruta para obtener una persona por su ID.
+    """
+    person = get_person_by_id(person_id)
+    if not person:
+        abort(404, description="Persona no encontrada")
+    return jsonify(person), 200
+
+@person_bp.route('/email/<string:email>', methods=['GET'])
+def get_person_by_email_route(email):
+    """
+    Ruta para obtener una persona por su correo electrónico.
+    """
+    person = get_person_by_email(email)
+    if not person:
+        abort(404, description="Persona no encontrada")
+    return jsonify(person), 200
+
+@person_bp.route('/', methods=['POST'])
+def add_person():
+    """
+    Ruta para crear una nueva persona.
+    """
+    # Validar permisos
+    # if not es_admin():
+    #     abort(403, "No autorizado")
+    
+    data = request.get_json()
+    required_fields = ['first_names', 'paternal_surname', 'email', 'document', 'document_type_id']
+    if not all(field in data for field in required_fields):
+        abort(400, "Faltan campos obligatorios.")
+
+    try:
+        new_person = create_person(
+            first_names=data['first_names'],
+            paternal_surname=data['paternal_surname'],
+            maternal_surname=data.get('maternal_surname'),
+            email=data['email'],
+            document=data['document'],
+            document_type_id=data['document_type_id'],
+            profile_photo=data.get('profile_photo')
+        )
+        return jsonify(new_person), 201
+    except Exception as e:
+        abort(500, description=str(e))
+
+@person_bp.route('/<int:person_id>', methods=['PUT'])
+def edit_person(person_id):
+    """
+    Ruta para actualizar los datos de una persona por su ID.
+    """
+    # Validar permisos
+    # if not tiene_permiso('editar_persona'):
+    #     abort(403, "No autorizado")
+    
+    data = request.get_json()
+    
+    try:
+        updated_person = update_person(
+            person_id=person_id,
+            first_names=data.get('first_names'),
+            paternal_surname=data.get('paternal_surname'),
+            maternal_surname=data.get('maternal_surname'),
+            email=data.get('email'),
+            document=data.get('document'),
+            document_type_id=data.get('document_type_id'),
+            profile_photo=data.get('profile_photo')
+        )
+        if not updated_person:
+            abort(404, description="Persona no encontrada")
+        return jsonify(updated_person), 200
+    except Exception as e:
+        abort(500, description=str(e))
+
+@person_bp.route('/<int:person_id>', methods=['DELETE'])
+def remove_person(person_id):
+    """
+    Ruta para eliminar una persona por su ID.
+    """
+    # Validar permisos
+    # if not es_admin():
+    #     abort(403, "No autorizado")
+    
+    try:
+        deleted = delete_person(person_id)
+        if not deleted:
+            abort(404, description="Persona no encontrada")
+        return jsonify({"message": "Persona eliminada exitosamente"}), 200
+    except Exception as e:
+        abort(500, description=str(e)) 
+
+
+-------------------------------------------------------------------------------------------
+
+def get_all_persons():
+    """Obtiene todas las personas de la BD."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM person ORDER BY paternal_surname, first_names;")
+            persons = cursor.fetchall()
+            return [dict(row) for row in persons]
+    finally:
+        conn.close()
+
+def get_person_by_id(person_id):
+    """Obtiene una persona por su ID."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM person WHERE id = %s;", (person_id,))
+            person = cursor.fetchone()
+            return dict(person) if person else None
+    finally:
+        conn.close()
+
+def get_person_by_email(email):
+    """Obtiene una persona por su correo electrónico."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM person WHERE email = %s;", (email,))
+            person = cursor.fetchone()
+            return dict(person) if person else None
+    finally:
+        conn.close()
+
+def create_person(first_names, paternal_surname, email, document, document_type_id, maternal_surname=None, profile_photo=None):
+    """Crea una nueva persona."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(
+                """
+                INSERT INTO person (first_names, paternal_surname, maternal_surname, email, document, document_type_id, profile_photo)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+                RETURNING *;
+                """,
+                (first_names, paternal_surname, maternal_surname, email, document, document_type_id, profile_photo)
+            )
+            new_person = cursor.fetchone()
+            conn.commit()
+            return dict(new_person)
+    finally:
+        conn.close()
+
+def update_person(person_id, first_names=None, paternal_surname=None, maternal_surname=None, email=None, document=None, document_type_id=None, profile_photo=None):
+    """Actualiza los datos de una persona."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            fields = []
+            params = []
+            
+            if first_names is not None:
+                fields.append("first_names = %s")
+                params.append(first_names)
+            if paternal_surname is not None:
+                fields.append("paternal_surname = %s")
+                params.append(paternal_surname)
+            if maternal_surname is not None:
+                fields.append("maternal_surname = %s")
+                params.append(maternal_surname)
+            if email is not None:
+                fields.append("email = %s")
+                params.append(email)
+            if document is not None:
+                fields.append("document = %s")
+                params.append(document)
+            if document_type_id is not None:
+                fields.append("document_type_id = %s")
+                params.append(document_type_id)
+            if profile_photo is not None:
+                fields.append("profile_photo = %s")
+                params.append(profile_photo)
+            
+            if not fields:
+                return get_person_by_id(person_id) # No hay nada que actualizar
+                
+            query = f"UPDATE person SET {', '.join(fields)} WHERE id = %s RETURNING *;"
+            params.append(person_id)
+            
+            cursor.execute(query, tuple(params))
+            updated_person = cursor.fetchone()
+            conn.commit()
+            return dict(updated_person) if updated_person else None
+    finally:
+        conn.close()
+
+def delete_person(person_id):
+    """Elimina una persona por su ID."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor() as cursor:
+            cursor.execute("DELETE FROM person WHERE id = %s;", (person_id,))
+            deleted_rows = cursor.rowcount
+            conn.commit()
+            return deleted_rows > 0
+    finally:
+        conn.close()

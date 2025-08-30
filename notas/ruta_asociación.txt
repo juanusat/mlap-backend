@@ -1,0 +1,198 @@
+from .association_controller import (
+    get_all_associations,
+    get_associations_by_user,
+    get_associations_by_parish,
+    create_association,
+    end_association,
+    get_association_by_id
+)
+
+association_bp = Blueprint('association', __name__)
+
+@association_bp.route('/', methods=['GET'])
+def list_all_associations():
+    """
+    Ruta para obtener todas las asociaciones registradas.
+    """
+    # if not es_super_admin():
+    #     abort(403, "No autorizado.")
+    associations = get_all_associations()
+    return jsonify(associations), 200
+
+@association_bp.route('/user/<int:user_id>', methods=['GET'])
+def list_associations_by_user(user_id):
+    """
+    Ruta para obtener el historial de asociaciones de un usuario.
+    """
+    # if not tiene_permiso('ver_asociaciones_usuario', user_id):
+    #     abort(403, "No autorizado.")
+    associations = get_associations_by_user(user_id)
+    return jsonify(associations), 200
+
+@association_bp.route('/parish/<int:parish_id>', methods=['GET'])
+def list_associations_by_parish(parish_id):
+    """
+    Ruta para obtener los usuarios asociados a una parroquia.
+    """
+    # if not tiene_permiso('ver_asociaciones_parroquia', parish_id):
+    #     abort(403, "No autorizado.")
+    associations = get_associations_by_parish(parish_id)
+    return jsonify(associations), 200
+
+@association_bp.route('/<int:association_id>', methods=['GET'])
+def get_single_association(association_id):
+    """
+    Ruta para obtener una asociación por su ID.
+    """
+    association = get_association_by_id(association_id)
+    if not association:
+        abort(404, description="Asociación no encontrada.")
+    return jsonify(association), 200
+
+@association_bp.route('/', methods=['POST'])
+def add_association():
+    """
+    Ruta para crear una nueva asociación entre un usuario y una parroquia.
+    """
+    data = request.get_json()
+    required_fields = ['user_id', 'parish_id']
+    if not all(field in data for field in required_fields):
+        abort(400, "Faltan campos obligatorios: user_id y parish_id.")
+    
+    # if not es_admin_de_parroquia(data['parish_id']):
+    #     abort(403, "No autorizado para asociar usuarios a esta parroquia.")
+        
+    try:
+        new_association = create_association(
+            user_id=data['user_id'],
+            parish_id=data['parish_id']
+        )
+        return jsonify(new_association), 201
+    except Exception as e:
+        abort(500, description=str(e))
+
+@association_bp.route('/<int:association_id>/end', methods=['PUT'])
+def end_association_route(association_id):
+    """
+    Ruta para finalizar la relación de un usuario con una parroquia.
+    """
+    data = request.get_json()
+    end_date = data.get('end_date')
+
+    if not end_date:
+        abort(400, "Se requiere la fecha de finalización (end_date).")
+
+    # if not tiene_permiso_para_finalizar_asociacion(association_id):
+    #     abort(403, "No autorizado para finalizar esta asociación.")
+    
+    try:
+        updated_association = end_association(
+            association_id=association_id,
+            end_date=end_date
+        )
+        if not updated_association:
+            abort(404, description="Asociación no encontrada o ya finalizada.")
+        return jsonify(updated_association), 200
+    except Exception as e:
+        abort(500, description=str(e)) 
+
+--------------------------------------------------------------------------------------
+
+from database import get_db_connection
+
+def get_all_associations():
+    """Obtiene todas las asociaciones de la BD."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM association ORDER BY start_date DESC;")
+            associations = cursor.fetchall()
+            return [dict(row) for row in associations]
+    finally:
+        conn.close()
+
+def get_associations_by_user(user_id):
+    """Obtiene el historial de asociaciones de un usuario."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM association WHERE user_id = %s ORDER BY start_date DESC;", (user_id,))
+            associations = cursor.fetchall()
+            return [dict(row) for row in associations]
+    finally:
+        conn.close()
+
+def get_associations_by_parish(parish_id):
+    """Obtiene todos los usuarios asociados a una parroquia."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM association WHERE parish_id = %s ORDER BY start_date DESC;", (parish_id,))
+            associations = cursor.fetchall()
+            return [dict(row) for row in associations]
+    finally:
+        conn.close()
+
+def get_association_by_id(association_id):
+    """Obtiene una asociación por su ID."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute("SELECT * FROM association WHERE id = %s;", (association_id,))
+            association = cursor.fetchone()
+            return dict(association) if association else None
+    finally:
+        conn.close()
+
+def create_association(user_id, parish_id):
+    """Crea una nueva asociación entre un usuario y una parroquia."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            # Primero, se verifica si ya existe una asociación activa (end_date is NULL)
+            cursor.execute(
+                """
+                SELECT id FROM association 
+                WHERE user_id = %s AND parish_id = %s AND end_date IS NULL AND active = TRUE;
+                """,
+                (user_id, parish_id)
+            )
+            existing_association = cursor.fetchone()
+            if existing_association:
+                raise Exception("Ya existe una asociación activa para este usuario en esta parroquia.")
+
+            cursor.execute(
+                """
+                INSERT INTO association (user_id, parish_id)
+                VALUES (%s, %s)
+                RETURNING *;
+                """,
+                (user_id, parish_id)
+            )
+            new_association = cursor.fetchone()
+            conn.commit()
+            return dict(new_association)
+    finally:
+        conn.close()
+
+def end_association(association_id, end_date):
+    """Finaliza la relación de un usuario con una parroquia (actualizando end_date)."""
+    conn = get_db_connection()
+    try:
+        with conn.cursor(cursor_factory=extras.DictCursor) as cursor:
+            cursor.execute(
+                """
+                UPDATE association
+                SET end_date = %s, active = FALSE, updated_at = %s
+                WHERE id = %s AND end_date IS NULL
+                RETURNING *;
+                """,
+                (end_date, datetime.now(), association_id)
+            )
+            updated_association = cursor.fetchone()
+            conn.commit()
+            return dict(updated_association) if updated_association else None
+    finally:
+        conn.close() 
+
+        
