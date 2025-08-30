@@ -22,14 +22,15 @@ Rol (Role)
     - Define niveles de acceso para los usuarios.
 Evento (Event)
     - Actividades o servicios ofrecidos por parroquita.
+    - Tienen requisitos activos, los cuales deben ser cumplidos para realizar una reserva. 
 VarianteEvento (EventVariant)
     - Puede ser para un benficiario (una pareja que se va a casar, una persona que se va a bautizar) o para varios (matrimonios comunitarios, bautizos comunitarios, etc)
     - Relacionados con los eventos de una parroquia.
     - Indica precio actual y capacidad
 Reserva (Reservation)
-    - Vincula una persona a la separación de un VarianteEvento si la cantidad de reservas para dicha VarianteEvento no excede aún la capacidad
+    - Vincula una persona a la separación de un VarianteEvento o un Evento normal, si la cantidad de reservas para dicha VarianteEvento no excede aún la capacidad
     - Detalla la fecha y hora que se reerva y la fecha y hora del registro de esta.
-    - Indica la estado, si está como una reservada aceptada de continuar su proceso o quizá es rechazada por cuestiones internas de la parroquia, si está en proceso (faltan requisitos), completada (todos los requisitos satisfechos) o cumplida (ya se realizó el evento)
+    - Indica el estado, si está como una reservada aceptada de continuar su proceso o quizá es rechazada por cuestiones internas de la parroquia, si está en proceso (faltan requisitos), completada (todos los requisitos satisfechos) o cumplida (ya se realizó el evento).
 RequisitosBase (BaseRequirement)
     - Indica un requisito activo o no activo de un evento de una parroquia
 RequisitosReserva (ReservationRequirement)
