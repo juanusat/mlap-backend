@@ -12,7 +12,7 @@
 
 -- Tabla Permission: Permisos del sistema definidos por el propietario
 CREATE TABLE IF NOT EXISTS public.permission (
-    id INTEGER DEFAULT nextval('permissions_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS public.permission (
 
 -- Tabla DocumentType: Catálogo de tipos de documentos de identidad
 CREATE TABLE IF NOT EXISTS public.document_type (
-    id INTEGER DEFAULT nextval('document_types_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     code VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
     active BOOLEAN DEFAULT TRUE,
@@ -37,7 +37,7 @@ CREATE TABLE IF NOT EXISTS public.document_type (
 
 -- Tabla Person: Información personal básica
 CREATE TABLE IF NOT EXISTS public.person (
-    id INTEGER DEFAULT nextval('persons_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     first_names VARCHAR(40) NOT NULL,
     paternal_surname VARCHAR(40) NOT NULL,
     maternal_surname VARCHAR(40),
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS public.person (
 
 -- Tabla User: Información de acceso asociada a una persona
 CREATE TABLE IF NOT EXISTS public.user (
-    id INTEGER DEFAULT nextval('users_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     person_id INTEGER NOT NULL,
     username VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS public.user (
 
 -- Tabla Parish: Información de cada parroquia
 CREATE TABLE IF NOT EXISTS public.parish (
-    id INTEGER DEFAULT nextval('parishes_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     address TEXT NOT NULL,
     email VARCHAR(255) NOT NULL,
@@ -91,7 +91,7 @@ CREATE TABLE IF NOT EXISTS public.parish (
 
 -- Tabla Role: Roles definidos por cada parroquia
 CREATE TABLE IF NOT EXISTS public.role (
-    id INTEGER DEFAULT nextval('roles_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -106,7 +106,7 @@ CREATE TABLE IF NOT EXISTS public.role (
 
 -- Tabla RolePermission: Asignación de permisos a roles
 CREATE TABLE IF NOT EXISTS public.role_permission (
-    id INTEGER DEFAULT nextval('role_permissions_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
     permission_id INTEGER NOT NULL,
     granted BOOLEAN DEFAULT TRUE, -- Permite revocar permisos específicos sin eliminar la relación
@@ -124,7 +124,7 @@ CREATE TABLE IF NOT EXISTS public.role_permission (
 
 -- Tabla Association: Histórico de trabajo de usuarios en parroquias
 CREATE TABLE IF NOT EXISTS public.association (
-    id INTEGER DEFAULT nextval('associations_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     start_date DATE DEFAULT CURRENT_DATE NOT NULL,
@@ -141,7 +141,7 @@ CREATE TABLE IF NOT EXISTS public.association (
 
 -- Tabla intermedia: Asignación de roles a usuarios en asociaciones
 CREATE TABLE IF NOT EXISTS public.user_role (
-    id INTEGER DEFAULT nextval('user_roles_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     association_id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
     assignment_date DATE DEFAULT CURRENT_DATE NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE IF NOT EXISTS public.user_role (
 
 -- Tabla GeneralSchedule: Disponibilidad recurrente de la parroquia
 CREATE TABLE IF NOT EXISTS public.general_schedule (
-    id INTEGER DEFAULT nextval('general_schedules_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Domingo, 1=Lunes, ..., 6=Sábado
     start_time TIME NOT NULL,
@@ -177,7 +177,7 @@ CREATE TABLE IF NOT EXISTS public.general_schedule (
 
 -- Tabla SpecificSchedule: Excepciones al horario general
 CREATE TABLE IF NOT EXISTS public.specific_schedule (
-    id INTEGER DEFAULT nextval('specific_schedules_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     date DATE NOT NULL,
     start_time TIME,
@@ -202,7 +202,7 @@ CREATE TABLE IF NOT EXISTS public.specific_schedule (
 
 -- Tabla Event: Actividades o servicios ofrecidos por las parroquias
 CREATE TABLE IF NOT EXISTS public.event (
-    id INTEGER DEFAULT nextval('events_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -218,7 +218,7 @@ CREATE TABLE IF NOT EXISTS public.event (
 
 -- Tabla EventVariant: Diferentes configuraciones de un evento
 CREATE TABLE IF NOT EXISTS public.event_variant (
-    id INTEGER DEFAULT nextval('event_variants_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -236,7 +236,7 @@ CREATE TABLE IF NOT EXISTS public.event_variant (
 
 -- Tabla Reservation: Vincula personas con variantes de eventos
 CREATE TABLE IF NOT EXISTS public.reservation (
-    id INTEGER DEFAULT nextval('reservations_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     event_variant_id INTEGER NOT NULL,
     person_id INTEGER NOT NULL,
     event_date TIMESTAMP NOT NULL,
@@ -259,7 +259,7 @@ CREATE TABLE IF NOT EXISTS public.reservation (
 
 -- Tabla BaseRequirement: Requisitos para eventos de una parroquia
 CREATE TABLE IF NOT EXISTS public.base_requirement (
-    id INTEGER DEFAULT nextval('base_requirements_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
@@ -275,7 +275,7 @@ CREATE TABLE IF NOT EXISTS public.base_requirement (
 
 -- Tabla ReservationRequirement: Copia de requisitos activos al momento de realizar una reserva
 CREATE TABLE IF NOT EXISTS public.reservation_requirement (
-    id INTEGER DEFAULT nextval('reservation_requirements_id_seq'::regclass) NOT NULL,
+    id INTEGER NOT NULL,
     reservation_id INTEGER NOT NULL,
     base_requirement_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL, -- Copia del nombre del requisito base
@@ -295,17 +295,17 @@ CREATE TABLE IF NOT EXISTS public.reservation_requirement (
 -- ====================================================================
 
 CREATE TABLE IF NOT EXISTS public.security_audit_log (
-    id INTEGER DEFAULT nextval('security_audit_logs_id_seq') NOT NULL,
+    id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT security_audit_log_pkey PRIMARY KEY (id),
     CONSTRAINT fk_security_audit_log_user FOREIGN KEY (user_id) REFERENCES public.user(id)
-)
+);
 
 CREATE TABLE IF NOT EXISTS public.parish_audit_log (
-    id INTEGER DEFAULT nextval('parish_audit_logs_id_seq') NOT NULL,
+    id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
     description TEXT,
@@ -316,7 +316,7 @@ CREATE TABLE IF NOT EXISTS public.parish_audit_log (
 );
 
 CREATE TABLE IF NOT EXISTS public.user_audit_log (
-    id INTEGER DEFAULT nextval('user_audit_logs_id_seq') NOT NULL,
+    id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
     description TEXT,
@@ -326,7 +326,7 @@ CREATE TABLE IF NOT EXISTS public.user_audit_log (
 );
 
 CREATE TABLE IF NOT EXISTS public.event_audit_log (
-    id INTEGER DEFAULT nextval('event_audit_logs_id_seq') NOT NULL,
+    id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
     description TEXT,
