@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS public.user (
     person_id INTEGER NOT NULL,
     username VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    is_superuser BOOLEAN DEFAULT FALSE NOT NULL,
+    is_diocese BOOLEAN DEFAULT FALSE NOT NULL,
     email_verified BOOLEAN DEFAULT FALSE,
     active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP,
@@ -87,6 +87,24 @@ CREATE TABLE IF NOT EXISTS public.parish (
     
     CONSTRAINT parish_pkey PRIMARY KEY (id),
     CONSTRAINT fk_parish_admin FOREIGN KEY (admin_user_id) REFERENCES "user"(id)
+);
+
+-- Tabla Chapel: Capillas pertenecientes a una parroquia
+CREATE TABLE IF NOT EXISTS public.chapel (
+    id INTEGER NOT NULL,
+    parish_id INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    address TEXT NOT NULL,
+    phone VARCHAR(20),
+    profile_photo VARCHAR(60),
+    cover_photo VARCHAR(60),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT chapel_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_chapel_parish FOREIGN KEY (parish_id) REFERENCES parish(id) ON DELETE CASCADE,
+    CONSTRAINT uk_chapel_parish_name UNIQUE(parish_id, name)
 );
 
 -- Tabla Role: Roles definidos por cada parroquia
@@ -122,20 +140,20 @@ CREATE TABLE IF NOT EXISTS public.role_permission (
     CONSTRAINT chk_permission_dates_valid CHECK (revocation_date IS NULL OR revocation_date >= assignment_date)
 );
 
--- Tabla Association: Histórico de trabajo de usuarios en parroquias
+-- Tabla Association: Histórico de trabajo de usuarios en capillas
 CREATE TABLE IF NOT EXISTS public.association (
     id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    parish_id INTEGER NOT NULL,
+    chapel_id INTEGER NOT NULL,
     start_date DATE DEFAULT CURRENT_DATE NOT NULL,
-    end_date DATE, -- NULL si sigue trabajando para la parroquia
+    end_date DATE, -- NULL si sigue trabajando para la capilla
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT association_pkey PRIMARY KEY (id),
     CONSTRAINT fk_association_user FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
-    CONSTRAINT fk_association_parish FOREIGN KEY (parish_id) REFERENCES parish(id) ON DELETE CASCADE,
+    CONSTRAINT fk_association_chapel FOREIGN KEY (chapel_id) REFERENCES chapel(id) ON DELETE CASCADE,
     CONSTRAINT chk_dates_valid CHECK (end_date IS NULL OR end_date >= start_date)
 );
 
@@ -159,10 +177,10 @@ CREATE TABLE IF NOT EXISTS public.user_role (
 -- TABLAS DE HORARIOS
 -- ====================================================================
 
--- Tabla GeneralSchedule: Disponibilidad recurrente de la parroquia
+-- Tabla GeneralSchedule: Disponibilidad recurrente de la capilla
 CREATE TABLE IF NOT EXISTS public.general_schedule (
     id INTEGER NOT NULL,
-    parish_id INTEGER NOT NULL,
+    chapel_id INTEGER NOT NULL,
     day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Domingo, 1=Lunes, ..., 6=Sábado
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
@@ -170,15 +188,15 @@ CREATE TABLE IF NOT EXISTS public.general_schedule (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT general_schedule_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_general_schedule_parish FOREIGN KEY (parish_id) REFERENCES parish(id) ON DELETE CASCADE,
+    CONSTRAINT fk_general_schedule_chapel FOREIGN KEY (chapel_id) REFERENCES chapel(id) ON DELETE CASCADE,
     CONSTRAINT chk_schedule_valid CHECK (end_time > start_time),
-    CONSTRAINT uk_general_schedule_parish_day UNIQUE(parish_id, day_of_week, start_time)
+    CONSTRAINT uk_general_schedule_chapel_day UNIQUE(chapel_id, day_of_week, start_time)
 );
 
 -- Tabla SpecificSchedule: Excepciones al horario general
 CREATE TABLE IF NOT EXISTS public.specific_schedule (
     id INTEGER NOT NULL,
-    parish_id INTEGER NOT NULL,
+    chapel_id INTEGER NOT NULL,
     date DATE NOT NULL,
     start_time TIME,
     end_time TIME,
@@ -188,22 +206,22 @@ CREATE TABLE IF NOT EXISTS public.specific_schedule (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT specific_schedule_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_specific_schedule_parish FOREIGN KEY (parish_id) REFERENCES parish(id) ON DELETE CASCADE,
+    CONSTRAINT fk_specific_schedule_chapel FOREIGN KEY (chapel_id) REFERENCES chapel(id) ON DELETE CASCADE,
     CONSTRAINT chk_specific_schedule_valid CHECK (
         (exception_type = 'CLOSED') OR 
         (exception_type IN ('OPEN') AND start_time IS NOT NULL AND end_time IS NOT NULL AND end_time > start_time)
     ),
-    CONSTRAINT uk_specific_schedule_parish_date UNIQUE(parish_id, date)
+    CONSTRAINT uk_specific_schedule_chapel_date UNIQUE(chapel_id, date)
 );
 
 -- ====================================================================
 -- TABLAS DE EVENTOS Y RESERVAS
 -- ====================================================================
 
--- Tabla Event: Actividades o servicios ofrecidos por las parroquias
+-- Tabla Event: Actividades o servicios ofrecidos por las capillas
 CREATE TABLE IF NOT EXISTS public.event (
     id INTEGER NOT NULL,
-    parish_id INTEGER NOT NULL,
+    chapel_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100), -- Ej: 'SACRAMENTO', 'SERVICIO_COMUNITARIO', 'EVENTO_ESPECIAL'
@@ -213,7 +231,7 @@ CREATE TABLE IF NOT EXISTS public.event (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT event_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_event_parish FOREIGN KEY (parish_id) REFERENCES parish(id) ON DELETE CASCADE
+    CONSTRAINT fk_event_chapel FOREIGN KEY (chapel_id) REFERENCES chapel(id) ON DELETE CASCADE
 );
 
 -- Tabla EventVariant: Diferentes configuraciones de un evento
