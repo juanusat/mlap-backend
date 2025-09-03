@@ -289,13 +289,14 @@ CREATE TABLE IF NOT EXISTS public.reservation (
 -- TABLAS DE REQUISITOS
 -- ====================================================================
 
--- Tabla BaseRequirement: Requisitos base para eventos del sistema
+-- Tabla BaseRequirement: Requisitos predefinidos por el sistema para cada tipo de evento
 CREATE TABLE IF NOT EXISTS public.base_requirement (
     id INTEGER NOT NULL,
     event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     presentation_order INTEGER DEFAULT 1,
+    required BOOLEAN DEFAULT TRUE, -- Indica si es obligatorio para todas las capillas
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -305,21 +306,42 @@ CREATE TABLE IF NOT EXISTS public.base_requirement (
     CONSTRAINT uk_base_requirement_event_name UNIQUE(event_id, name)
 );
 
--- Tabla ReservationRequirement: Copia de requisitos activos al momento de realizar una reserva
+-- Tabla ChapelEventRequirement: Requisitos adicionales definidos por cada capilla
+CREATE TABLE IF NOT EXISTS public.chapel_event_requirement (
+    id INTEGER NOT NULL,
+    chapel_event_id INTEGER NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    presentation_order INTEGER DEFAULT 1,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT chapel_event_requirement_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_chapel_event_requirement_chapel_event FOREIGN KEY (chapel_event_id) REFERENCES chapel_event(id) ON DELETE CASCADE,
+    CONSTRAINT uk_chapel_event_requirement_name UNIQUE(chapel_event_id, name)
+);
+
+-- Tabla ReservationRequirement: Copia de todos los requisitos (base y adicionales) al momento de la reserva
 CREATE TABLE IF NOT EXISTS public.reservation_requirement (
     id INTEGER NOT NULL,
     reservation_id INTEGER NOT NULL,
-    base_requirement_id INTEGER NOT NULL,
-    name VARCHAR(255) NOT NULL, -- Copia del nombre del requisito base
-    description TEXT, -- Copia de la descripción del requisito base
-    completed BOOLEAN DEFAULT FALSE NOT NULL, -- Marcado por trabajadores de la parroquia
+    base_requirement_id INTEGER, -- NULL si es un requisito adicional de la capilla
+    chapel_requirement_id INTEGER, -- NULL si es un requisito base del sistema
+    name VARCHAR(255) NOT NULL, -- Copia del nombre del requisito
+    description TEXT, -- Copia de la descripción del requisito
+    completed BOOLEAN DEFAULT FALSE NOT NULL, -- Marcado por trabajadores de la capilla
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT reservation_requirement_pkey PRIMARY KEY (id),
     CONSTRAINT fk_reservation_requirement_reservation FOREIGN KEY (reservation_id) REFERENCES reservation(id) ON DELETE CASCADE,
     CONSTRAINT fk_reservation_requirement_base FOREIGN KEY (base_requirement_id) REFERENCES base_requirement(id),
-    CONSTRAINT uk_reservation_requirement_unique UNIQUE(reservation_id, base_requirement_id)
+    CONSTRAINT fk_reservation_requirement_chapel FOREIGN KEY (chapel_requirement_id) REFERENCES chapel_event_requirement(id),
+    CONSTRAINT chk_requirement_source CHECK (
+        (base_requirement_id IS NULL AND chapel_requirement_id IS NOT NULL) OR
+        (base_requirement_id IS NOT NULL AND chapel_requirement_id IS NULL)
+    )
 );
 
 -- ====================================================================
