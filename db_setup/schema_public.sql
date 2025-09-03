@@ -218,10 +218,9 @@ CREATE TABLE IF NOT EXISTS public.specific_schedule (
 -- TABLAS DE EVENTOS Y RESERVAS
 -- ====================================================================
 
--- Tabla Event: Actividades o servicios ofrecidos por las capillas
+-- Tabla Event: Catálogo base de eventos disponibles en el sistema
 CREATE TABLE IF NOT EXISTS public.event (
     id INTEGER NOT NULL,
-    chapel_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     category VARCHAR(100), -- Ej: 'SACRAMENTO', 'SERVICIO_COMUNITARIO', 'EVENTO_ESPECIAL'
@@ -231,13 +230,28 @@ CREATE TABLE IF NOT EXISTS public.event (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT event_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_event_chapel FOREIGN KEY (chapel_id) REFERENCES chapel(id) ON DELETE CASCADE
+    CONSTRAINT uk_event_name UNIQUE(name)
 );
 
--- Tabla EventVariant: Diferentes configuraciones de un evento
+-- Tabla ChapelEvent: Relación entre capillas y eventos que ofrecen
+CREATE TABLE IF NOT EXISTS public.chapel_event (
+    id INTEGER NOT NULL,
+    chapel_id INTEGER NOT NULL,
+    event_id INTEGER NOT NULL,
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT chapel_event_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_chapel_event_chapel FOREIGN KEY (chapel_id) REFERENCES chapel(id) ON DELETE CASCADE,
+    CONSTRAINT fk_chapel_event_event FOREIGN KEY (event_id) REFERENCES event(id),
+    CONSTRAINT uk_chapel_event UNIQUE(chapel_id, event_id)
+);
+
+-- Tabla EventVariant: Diferentes configuraciones de eventos por capilla
 CREATE TABLE IF NOT EXISTS public.event_variant (
     id INTEGER NOT NULL,
-    event_id INTEGER NOT NULL,
+    chapel_event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
     current_price DECIMAL(10,2) DEFAULT 0.00 NOT NULL,
@@ -248,8 +262,8 @@ CREATE TABLE IF NOT EXISTS public.event_variant (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT event_variant_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_event_variant_event FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
-    CONSTRAINT uk_event_variant_name UNIQUE(event_id, name)
+    CONSTRAINT fk_event_variant_chapel_event FOREIGN KEY (chapel_event_id) REFERENCES chapel_event(id) ON DELETE CASCADE,
+    CONSTRAINT uk_event_variant_name UNIQUE(chapel_event_id, name)
 );
 
 -- Tabla Reservation: Vincula personas con variantes de eventos
@@ -275,7 +289,7 @@ CREATE TABLE IF NOT EXISTS public.reservation (
 -- TABLAS DE REQUISITOS
 -- ====================================================================
 
--- Tabla BaseRequirement: Requisitos para eventos de una parroquia
+-- Tabla BaseRequirement: Requisitos base para eventos del sistema
 CREATE TABLE IF NOT EXISTS public.base_requirement (
     id INTEGER NOT NULL,
     event_id INTEGER NOT NULL,
@@ -287,7 +301,7 @@ CREATE TABLE IF NOT EXISTS public.base_requirement (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT base_requirement_pkey PRIMARY KEY (id),
-    CONSTRAINT fk_base_requirement_event FOREIGN KEY (event_id) REFERENCES event(id) ON DELETE CASCADE,
+    CONSTRAINT fk_base_requirement_event FOREIGN KEY (event_id) REFERENCES event(id),
     CONSTRAINT uk_base_requirement_event_name UNIQUE(event_id, name)
 );
 
@@ -349,12 +363,14 @@ CREATE TABLE IF NOT EXISTS public.event_audit_log (
     action_type VARCHAR(20) NOT NULL,
     description TEXT,
     event_id INTEGER,
+    chapel_event_id INTEGER,
     variant_id INTEGER,
     reservation_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT event_audit_log_pkey PRIMARY KEY (id),
     CONSTRAINT fk_event_audit_log_user FOREIGN KEY (user_id) REFERENCES public.user(id),
     CONSTRAINT fk_event_audit_log_event FOREIGN KEY (event_id) REFERENCES public.event(id),
+    CONSTRAINT fk_event_audit_log_chapel_event FOREIGN KEY (chapel_event_id) REFERENCES public.chapel_event(id),
     CONSTRAINT fk_event_audit_log_variant FOREIGN KEY (variant_id) REFERENCES public.event_variant(id),
     CONSTRAINT fk_event_audit_log_reservation FOREIGN KEY (reservation_id) REFERENCES public.reservation(id)
 );
