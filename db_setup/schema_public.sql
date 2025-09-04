@@ -59,7 +59,6 @@ CREATE TABLE IF NOT EXISTS public.user (
     username VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     is_diocese BOOLEAN DEFAULT FALSE NOT NULL,
-    email_verified BOOLEAN DEFAULT FALSE,
     active BOOLEAN DEFAULT TRUE,
     last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -74,6 +73,7 @@ CREATE TABLE IF NOT EXISTS public.parish (
     id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     address TEXT NOT NULL,
+    coordinates TEXT NOT NULL,
     email VARCHAR(255) NOT NULL,
     phone VARCHAR(20) NOT NULL,
     primary_color VARCHAR(7) DEFAULT '#b1b1b1ff' NOT NULL,
@@ -144,7 +144,7 @@ CREATE TABLE IF NOT EXISTS public.role_permission (
 CREATE TABLE IF NOT EXISTS public.association (
     id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
-    chapel_id INTEGER NOT NULL,
+    parish_id INTEGER NOT NULL,
     start_date DATE DEFAULT CURRENT_DATE NOT NULL,
     end_date DATE, -- NULL si sigue trabajando para la capilla
     active BOOLEAN DEFAULT TRUE,
@@ -153,7 +153,7 @@ CREATE TABLE IF NOT EXISTS public.association (
     
     CONSTRAINT association_pkey PRIMARY KEY (id),
     CONSTRAINT fk_association_user FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
-    CONSTRAINT fk_association_chapel FOREIGN KEY (chapel_id) REFERENCES chapel(id) ON DELETE CASCADE,
+    CONSTRAINT fk_association_parish FOREIGN KEY (parish_id) REFERENCES parish(id) ON DELETE CASCADE,
     CONSTRAINT chk_dates_valid CHECK (end_date IS NULL OR end_date >= start_date)
 );
 
@@ -223,8 +223,6 @@ CREATE TABLE IF NOT EXISTS public.event (
     id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    category VARCHAR(100), -- Ej: 'SACRAMENTO', 'SERVICIO_COMUNITARIO', 'EVENTO_ESPECIAL'
-    estimated_duration INTERVAL, -- Duración estimada del evento
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -272,10 +270,10 @@ CREATE TABLE IF NOT EXISTS public.reservation (
     event_variant_id INTEGER NOT NULL,
     person_id INTEGER NOT NULL,
     event_date TIMESTAMP NOT NULL,
+    reschedule_date TIMESTAMP,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
-    status VARCHAR(20) DEFAULT 'IN_PROGRESS' NOT NULL CHECK (status IN ('RESERVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED', 'FULFILLED', 'CANCELLED')),
+    status VARCHAR(20) DEFAULT 'RESERVED' NOT NULL CHECK (status IN ('RESERVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED', 'FULFILLED', 'CANCELLED')),
     paid_amount DECIMAL(10,2) DEFAULT 0.00,
-    special_notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -295,8 +293,6 @@ CREATE TABLE IF NOT EXISTS public.base_requirement (
     event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    presentation_order INTEGER DEFAULT 1,
-    required BOOLEAN DEFAULT TRUE, -- Indica si es obligatorio para todas las capillas
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -312,7 +308,6 @@ CREATE TABLE IF NOT EXISTS public.chapel_event_requirement (
     chapel_event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
     description TEXT,
-    presentation_order INTEGER DEFAULT 1,
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -396,4 +391,3 @@ CREATE TABLE IF NOT EXISTS public.event_audit_log (
     CONSTRAINT fk_event_audit_log_variant FOREIGN KEY (variant_id) REFERENCES public.event_variant(id),
     CONSTRAINT fk_event_audit_log_reservation FOREIGN KEY (reservation_id) REFERENCES public.reservation(id)
 );
-
