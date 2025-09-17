@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.permission (
     id INTEGER NOT NULL,
     code VARCHAR(50) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     category VARCHAR(50), -- Ej: 'USUARIOS', 'EVENTOS', 'RESERVAS', 'CONFIGURACION'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -63,6 +63,8 @@ CREATE TABLE IF NOT EXISTS public.user (
     last_login TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    reset_token VARCHAR(6),
+    reset_token_expires_at TIMESTAMP,
     
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT fk_user_person FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE
@@ -72,14 +74,8 @@ CREATE TABLE IF NOT EXISTS public.user (
 CREATE TABLE IF NOT EXISTS public.parish (
     id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    address TEXT NOT NULL,
-    coordinates TEXT NOT NULL,
-    email VARCHAR(255) NOT NULL,
-    phone VARCHAR(20) NOT NULL,
     primary_color VARCHAR(7) DEFAULT '#b1b1b1ff' NOT NULL,
     secondary_color VARCHAR(7) DEFAULT '#424242ff' NOT NULL,
-    profile_photo VARCHAR(60),
-    cover_photo VARCHAR(60),
     admin_user_id INTEGER NOT NULL,
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -94,8 +90,10 @@ CREATE TABLE IF NOT EXISTS public.chapel (
     id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    address TEXT NOT NULL,
-    phone VARCHAR(20),
+    coordinates VARCHAR(60) NOT NULL,
+    address VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
     profile_photo VARCHAR(60),
     cover_photo VARCHAR(60),
     active BOOLEAN DEFAULT TRUE,
@@ -112,7 +110,7 @@ CREATE TABLE IF NOT EXISTS public.role (
     id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     name VARCHAR(100) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -127,7 +125,7 @@ CREATE TABLE IF NOT EXISTS public.role_permission (
     id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
     permission_id INTEGER NOT NULL,
-    granted BOOLEAN DEFAULT TRUE, -- Permite revocar permisos específicos sin eliminar la relación
+    granted BOOLEAN DEFAULT TRUE,
     assignment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     revocation_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -146,7 +144,7 @@ CREATE TABLE IF NOT EXISTS public.association (
     user_id INTEGER NOT NULL,
     parish_id INTEGER NOT NULL,
     start_date DATE DEFAULT CURRENT_DATE NOT NULL,
-    end_date DATE, -- NULL si sigue trabajando para la capilla
+    end_date DATE,
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -163,7 +161,7 @@ CREATE TABLE IF NOT EXISTS public.user_role (
     association_id INTEGER NOT NULL,
     role_id INTEGER NOT NULL,
     assignment_date DATE DEFAULT CURRENT_DATE NOT NULL,
-    revocation_date DATE, -- NULL si el rol sigue activo
+    revocation_date DATE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT user_role_pkey PRIMARY KEY (id),
@@ -181,7 +179,7 @@ CREATE TABLE IF NOT EXISTS public.user_role (
 CREATE TABLE IF NOT EXISTS public.general_schedule (
     id INTEGER NOT NULL,
     chapel_id INTEGER NOT NULL,
-    day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6), -- 0=Domingo, 1=Lunes, ..., 6=Sábado
+    day_of_week INTEGER NOT NULL CHECK (day_of_week BETWEEN 0 AND 6),
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -201,7 +199,7 @@ CREATE TABLE IF NOT EXISTS public.specific_schedule (
     start_time TIME,
     end_time TIME,
     exception_type VARCHAR(20) NOT NULL CHECK (exception_type IN ('OPEN', 'CLOSED')),
-    reason TEXT,
+    reason VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
@@ -222,7 +220,7 @@ CREATE TABLE IF NOT EXISTS public.specific_schedule (
 CREATE TABLE IF NOT EXISTS public.event (
     id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -251,10 +249,9 @@ CREATE TABLE IF NOT EXISTS public.event_variant (
     id INTEGER NOT NULL,
     chapel_event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     current_price DECIMAL(10,2) DEFAULT 0.00 NOT NULL,
     max_capacity INTEGER DEFAULT 1 NOT NULL CHECK (max_capacity > 0),
-    preparation_time INTERVAL, -- Tiempo de preparación requerido antes del evento
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -292,7 +289,7 @@ CREATE TABLE IF NOT EXISTS public.base_requirement (
     id INTEGER NOT NULL,
     event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -307,7 +304,7 @@ CREATE TABLE IF NOT EXISTS public.chapel_event_requirement (
     id INTEGER NOT NULL,
     chapel_event_id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -324,7 +321,7 @@ CREATE TABLE IF NOT EXISTS public.reservation_requirement (
     base_requirement_id INTEGER, -- NULL si es un requisito adicional de la capilla
     chapel_requirement_id INTEGER, -- NULL si es un requisito base del sistema
     name VARCHAR(255) NOT NULL, -- Copia del nombre del requisito
-    description TEXT, -- Copia de la descripción del requisito
+    description VARCHAR(255), -- Copia de la descripción del requisito
     completed BOOLEAN DEFAULT FALSE NOT NULL, -- Marcado por trabajadores de la capilla
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -347,7 +344,7 @@ CREATE TABLE IF NOT EXISTS public.security_audit_log (
     id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT security_audit_log_pkey PRIMARY KEY (id),
     CONSTRAINT fk_security_audit_log_user FOREIGN KEY (user_id) REFERENCES public.user(id)
@@ -357,7 +354,7 @@ CREATE TABLE IF NOT EXISTS public.parish_audit_log (
     id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     parish_id INTEGER,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT parish_audit_log_pkey PRIMARY KEY (id),
@@ -368,7 +365,7 @@ CREATE TABLE IF NOT EXISTS public.user_audit_log (
     id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT user_audit_log_pkey PRIMARY KEY (id),
     CONSTRAINT fk_user_audit_log_user FOREIGN KEY (user_id) REFERENCES public.user(id)
@@ -378,7 +375,7 @@ CREATE TABLE IF NOT EXISTS public.event_audit_log (
     id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     action_type VARCHAR(20) NOT NULL,
-    description TEXT,
+    description VARCHAR(255),
     event_id INTEGER,
     chapel_event_id INTEGER,
     variant_id INTEGER,
