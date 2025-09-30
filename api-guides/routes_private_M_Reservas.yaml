@@ -1,0 +1,381 @@
+openapi: 3.0.0
+info:
+  title: Módulo Reservas - APIs del Cliente
+  description: APIs para la gestión del ciclo de vida de las reservas de eventos litúrgicos hechas por el usuario (cliente) logueado.
+  version: 1.0.0
+servers:
+  - url: /api
+tags:
+  - name: Reservas Pendientes
+    description: Listado y acciones sobre reservas activas (RESERVED, IN_PROGRESS).
+  - name: Historial de Reservas
+    description: Listado y detalle de reservas concluidas o canceladas (COMPLETED, CANCELLED, etc.).
+  - name: Creación de Reserva
+    description: Proceso final para registrar una nueva reserva.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de confirmación de la operación.
+      required:
+        - message
+
+    # --- Esquemas de Reserva General ---
+    ReservationStatus:
+      type: string
+      enum: [RESERVED, IN_PROGRESS, COMPLETED, FULFILLED, CANCELLED, REJECTED]
+      description: Estado de la reserva.
+    
+    # Esquema base para los listados (Pendientes e Historial)
+    ClientReservationSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID de la Reserva.
+        event_name:
+          type: string
+          description: Nombre de la EventVariant.
+        event_date:
+          type: string
+          format: date
+          description: Fecha del evento (solo fecha).
+        paid_amount:
+          type: number
+          format: float
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+      required:
+        - id
+        - event_name
+        - event_date
+        - paid_amount
+        - status
+
+    # Listado de Reservas Pendientes (Incluye Chapel y Parish)
+    PendingReservationItem:
+      allOf:
+        - $ref: '#/components/schemas/ClientReservationSummary'
+        - type: object
+          properties:
+            chapel_name:
+              type: string
+              description: Nombre de la Capilla.
+            parish_name:
+              type: string
+              description: Nombre de la Parroquia.
+          required:
+            - chapel_name
+            - parish_name
+
+    ReservationListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+        total_pages:
+          type: integer
+        current_page:
+          type: integer
+        data:
+          type: array
+          items:
+            # Se usa el PendingReservationItem para el listado de reservas pendientes
+            $ref: '#/components/schemas/PendingReservationItem' 
+      required:
+        - total_records
+        - total_pages
+        - current_page
+        - data
+
+    CancelReservationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        reservation_id:
+          type: integer
+        new_status:
+          type: string
+          enum: [CANCELLED]
+      required:
+        - message
+        - reservation_id
+        - new_status
+        
+    # Listado de Historial de Reservas (usa el esquema base)
+    ReservationHistoryListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+        total_pages:
+          type: integer
+        current_page:
+          type: integer
+        data:
+          type: array
+          items:
+            # Se usa el esquema base para el historial
+            $ref: '#/components/schemas/ClientReservationSummary' 
+      required:
+        - total_records
+        - total_pages
+        - current_page
+        - data
+
+    # Detalles de una Reserva
+    ChapelDetail:
+      type: object
+      properties:
+        name:
+          type: string
+        parish_name:
+          type: string
+      required:
+        - name
+        - parish_name
+    
+    ReservationRequirement:
+      type: object
+      properties:
+        name:
+          type: string
+        completed:
+          type: boolean
+      required:
+        - name
+        - completed
+
+    ReservationDetailResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_variant_name:
+          type: string
+        event_date:
+          type: string
+          format: date-time # Se ajusta a datetime si incluye hora, si solo es Date, usa format: date
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+        paid_amount:
+          type: number
+          format: float
+        payment_status:
+          type: string
+          enum: [PAGADO, PENDIENTE, REEMBOLSADO] # Asumiendo este enum
+        chapel:
+          $ref: '#/components/schemas/ChapelDetail'
+        requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservationRequirement'
+      required:
+        - id
+        - event_variant_name
+        - event_date
+        - status
+        - paid_amount
+        - requirements
+
+    # Creación de Reserva
+    CreateReservationRequest:
+      type: object
+      properties:
+        event_variant_id:
+          type: integer
+          description: ID de la EventVariant seleccionada.
+        event_date:
+          type: string
+          format: date-time
+          description: Fecha y hora del evento seleccionadas (YYYY-MM-DD HH:MM:SS).
+        paid_amount:
+          type: number
+          format: float
+          description: Monto pagado al momento de la reserva.
+      required:
+        - event_variant_id
+        - event_date
+        - paid_amount
+    
+    CreateReservationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        reservation_id:
+          type: integer
+        status:
+          type: string
+          enum: [RESERVED]
+      required:
+        - message
+        - reservation_id
+        - status
+
+paths:
+  # --- RESERVAS PENDIENTES ---
+  /client/reservations/pending:
+    get:
+      tags:
+        - Reservas Pendientes
+      summary: Listar Reservas Activas del Usuario
+      description: Obtiene un listado paginado de las reservas activas ('RESERVED', 'IN_PROGRESS') del usuario logueado.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: search_event_name
+          schema:
+            type: string
+          required: false
+          description: Búsqueda por nombre del evento.
+      responses:
+        '200':
+          description: Listado paginado de reservas pendientes.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationListResponse'
+
+  /client/reservations/{id}/cancel:
+    post:
+      tags:
+        - Reservas Pendientes
+      summary: Cancelar una Reserva
+      description: Cambia el estado de la reserva del usuario a 'CANCELLED' y registra el movimiento.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID de la reserva a cancelar.
+      requestBody:
+        # Petición vacía (opcional)
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              maxProperties: 0
+      responses:
+        '200':
+          description: Reserva cancelada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelReservationResponse'
+
+  # --- HISTORIAL DE RESERVAS ---
+  /client/reservations/history:
+    get:
+      tags:
+        - Historial de Reservas
+      summary: Listar Historial de Reservas del Usuario
+      description: Obtiene un listado paginado de las reservas concluidas o canceladas.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: search_event_name
+          schema:
+            type: string
+          required: false
+          description: Búsqueda por nombre del evento.
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [COMPLETED, FULFILLED, CANCELLED, REJECTED]
+          required: false
+          description: Filtro por estado de la reserva.
+      responses:
+        '200':
+          description: Listado paginado del historial de reservas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationHistoryListResponse'
+
+  /client/reservations/{id}:
+    get:
+      tags:
+        - Historial de Reservas
+      summary: Obtener Detalles de una Reserva del Usuario
+      description: Obtiene la información completa de una reserva (historial o pendiente), incluyendo los detalles del evento, monto y el estado de sus requisitos.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID de la reserva a detallar.
+      responses:
+        '200':
+          description: Detalles completos de la reserva.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationDetailResponse'
+
+  # --- CREACIÓN DE RESERVA ---
+  /client/reservations:
+    post:
+      tags:
+        - Creación de Reserva
+      summary: Crear la Reserva (Paso Final)
+      description: Registra la reserva del usuario para la variante de evento, fecha y hora especificadas, inicializando los requisitos.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReservationRequest'
+      responses:
+        '201':
+          description: Reserva creada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CreateReservationResponse'
