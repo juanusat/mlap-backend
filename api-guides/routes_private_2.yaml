@@ -1,0 +1,622 @@
+openapi: 3.0.0
+info:
+  title: Private API Routes - Diocese Management
+  version: 1.0.0
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "Message to be shown in the frontend"
+        data:
+          oneOf:
+            - type: object
+            - type: array
+          description: "The main data, can be an object or an array"
+        error:
+          type: string
+          description: "Error string or empty if everything is ok"
+        traceback:
+          type: string
+          description: "Backend error message, returned only during testing phase"
+security:
+  - bearerAuth: []
+tags:
+  - name: Diocese - Document Types
+    description: "Operations to manage identity document types"
+  - name: Diocese - Parishes
+    description: "Operations to manage parishes and their administrator accounts"
+  - name: Diocese - General Events
+    description: "Operations to manage general system events"
+  - name: Diocese - General Requirements
+    description: "Operations to manage general requirements for events"
+
+paths:
+  /api/diocese/document-types:
+    post:
+      tags:
+        - Diocese - Document Types
+      summary: Create a new Document Type
+      description: "Registers a new identity document type (e.g., DNI, Passport). Requires permission: DIOCESE_CREATE_DOCTYPE"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                code:
+                  type: string
+                name:
+                  type: string
+      responses:
+        '200':
+          description: Document type created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+
+  /api/diocese/document-types/search:
+    post:
+      tags:
+        - Diocese - Document Types
+      summary: List and Search Document Types
+      description: "Gets a paginated and filtered list of document types. Requires permission: DIOCESE_VIEW_DOCTYPE"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name_query:
+                  type: string
+                code_query:
+                  type: string
+                is_active:
+                  type: boolean
+                page:
+                  type: integer
+                limit:
+                  type: integer
+      responses:
+        '200':
+          description: A list of document types
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              type: object
+                          total_count:
+                            type: integer
+
+  /api/diocese/document-types/{id}:
+    get:
+      tags:
+        - Diocese - Document Types
+      summary: View Document Type
+      description: "Gets detailed information for a specific document type by its ID. Requires permission: DIOCESE_VIEW_DOCTYPE"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Document type details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+    put:
+      tags:
+        - Diocese - Document Types
+      summary: Edit/Update Document Type status
+      description: "Modifies fields (name, code) and/or changes the activation status. Requires permission: DIOCESE_EDIT_DOCTYPE"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                code:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Document type updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+
+  /api/diocese/parishes:
+    post:
+      tags:
+        - Diocese - Parishes
+      summary: Create Parish
+      description: "Registers the parish and creates its associated administrator user in a single transaction. Requires permission: DIOCESE_CREATE_PARISH"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                first_names:
+                  type: string
+                email:
+                  type: string
+                type_doc_id:
+                  type: integer
+                doc_value:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Parish created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          parish_id:
+                            type: integer
+
+  /api/diocese/parishes/search:
+    post:
+      tags:
+        - Diocese - Parishes
+      summary: List/Search Parishes
+      description: "Gets the list of parishes, including the administrator's email. Requires permission: DIOCESE_VIEW_PARISH"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name_query:
+                  type: string
+                admin_name_query:
+                  type: string
+                is_active:
+                  type: boolean
+                page:
+                  type: integer
+                limit:
+                  type: integer
+      responses:
+        '200':
+          description: A list of parishes
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              type: object
+                          total_count:
+                            type: integer
+
+  /api/diocese/parishes/{id}:
+    get:
+      tags:
+        - Diocese - Parishes
+      summary: View Parish
+      description: "Gets complete information for the parish, including person and user details of the administrator. Requires permission: DIOCESE_VIEW_PARISH"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Parish details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+    put:
+      tags:
+        - Diocese - Parishes
+      summary: Edit/Update Parish status
+      description: "Modifies general parish data (name, colors) and updates the activation status. Requires permission: DIOCESE_EDIT_PARISH"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                primary_color:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Parish updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+
+  /api/diocese/events:
+    post:
+      tags:
+        - Diocese - General Events
+      summary: Create a new general event
+      description: "Registers a new base system event (e.g., Marriage, Baptism). Requires permission: DIOCESE_CREATE_EVENT"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+
+  /api/diocese/events/search:
+    post:
+      tags:
+        - Diocese - General Events
+      summary: List and search general events
+      description: "Gets a paginated and filtered list of general events. Requires permission: DIOCESE_VIEW_EVENT"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name_query:
+                  type: string
+                is_active:
+                  type: boolean
+                page:
+                  type: integer
+                limit:
+                  type: integer
+      responses:
+        '200':
+          description: A list of events
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              type: object
+                          total_count:
+                            type: integer
+
+  /api/diocese/events/list:
+    get:
+      tags:
+        - Diocese - General Requirements
+      summary: Auxiliary API to list events for selection
+      description: "Gets a simple list of all General Events for the user to select from. Requires permission: DIOCESE_VIEW_EVENT"
+      parameters:
+        - name: search_query
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A simple list of events
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            name:
+                              type: string
+
+  /api/diocese/events/{id}:
+    get:
+      tags:
+        - Diocese - General Events
+      summary: View general event
+      description: "Gets detailed information for a specific event by its ID. Requires permission: DIOCESE_VIEW_EVENT"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+    put:
+      tags:
+        - Diocese - General Events
+      summary: Edit/Update general event status
+      description: "Modifies the name, description, and/or activation status of the event. Requires permission: DIOCESE_EDIT_EVENT"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Event updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+
+  /api/diocese/requirements:
+    post:
+      tags:
+        - Diocese - General Requirements
+      summary: Create base requirement
+      description: "Registers a standard requirement for a selected event_id. Requires permission: DIOCESE_CREATE_REQ"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: integer
+                name:
+                  type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: Requirement created successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+
+  /api/diocese/requirements/search:
+    post:
+      tags:
+        - Diocese - General Requirements
+      summary: List and search requirements
+      description: "Gets a paginated and filtered list of base requirements belonging to the selected event_id. Requires permission: DIOCESE_VIEW_REQ"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                event_id:
+                  type: integer
+                name_query:
+                  type: string
+                is_active:
+                  type: boolean
+                page:
+                  type: integer
+                limit:
+                  type: integer
+      responses:
+        '200':
+          description: A list of requirements
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              type: object
+                          total_count:
+                            type: integer
+
+  /api/diocese/requirements/{id}:
+    get:
+      tags:
+        - Diocese - General Requirements
+      summary: View requirement
+      description: "Gets detailed information for a specific base requirement. Requires permission: DIOCESE_VIEW_REQ"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Requirement details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+    put:
+      tags:
+        - Diocese - General Requirements
+      summary: Edit/Update requirement status
+      description: "Modifies the name, description, and/or activation status of the base requirement. Requires permission: DIOCESE_EDIT_REQ"
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Requirement updated successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer

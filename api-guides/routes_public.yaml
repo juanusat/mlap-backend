@@ -1,0 +1,143 @@
+openapi: 3.0.0
+info:
+  title: Public API Routes
+  version: 1.0.0
+components:
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: "Message to be shown in the frontend"
+        data:
+          oneOf:
+            - type: object
+            - type: array
+          description: "The main data, can be an object or an array"
+        error:
+          type: string
+          description: "Error string or empty if everything is ok"
+        traceback:
+          type: string
+          description: "Backend error message, returned only during testing phase"
+paths:
+  /api/account/login:
+    post:
+      summary: User login
+      tags:
+        - Account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  example: "strongpassword"
+      responses:
+        "200":
+          description: Successful login
+          headers:
+            Set-Cookie:
+              schema:
+                type: string
+                example: "jwt=...; Path=/; HttpOnly"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          user_name_full:
+                            type: string
+                            example: "John Doe"
+              examples:
+                default:
+                  value:
+                    message: "Login successful"
+                    data:
+                      user_name_full: "John Doe"
+                    error: ""
+                    traceback: ""
+  /api/account/register:
+    post:
+      summary: User registration
+      tags:
+        - Account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                full_name:
+                  type: string
+                paternal_surname:
+                  type: string
+                maternal_surname:
+                  type: string
+                email:
+                  type: string
+                  format: email
+                type_doc_id:
+                  type: integer
+                doc_value:
+                  type: string
+                username:
+                  type: string
+                password:
+                  type: string
+      responses:
+        "200":
+          description: Successful registration
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        description: "Empty object for this endpoint"
+              examples:
+                default:
+                  value:
+                    message: "User registered successfully"
+                    data: {}
+                    error: ""
+                    traceback: ""
+  /api/account/logout:
+    post:
+      summary: User logout
+      tags:
+        - Account
+      responses:
+        "200":
+          description: Successful logout
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          redirect_url:
+                            type: string
+                            format: url
+                            example: "/login"
