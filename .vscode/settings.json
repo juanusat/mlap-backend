@@ -1,8 +1,0 @@
-{
-    "yaml.schemas": {
-        "swaggerviewer:openapi": [
-            "file:///u%3A/pdu/mlap/mlap-backend/api-guides/routes_public.yaml",
-            "file:///u%3A/pdu/mlap/mlap-backend/api-guides/routes_private_1.yaml"
-        ]
-    }
-}
