@@ -3,9 +3,9 @@ info:
   title: API Parroquia - Gestión de Cuenta y Capillas (Final)
   description: |
     API para la gestión de la cuenta de la parroquia autenticada y sus capillas.
-    
+
     **Autenticación requerida:** JWT (Cookie)
-    
+
     **Estructura de respuesta estándar:**
     ```json
     {
@@ -149,41 +149,42 @@ security:
   - cookieAuth: []
 
 paths:
-# ==============================================================================
-# 1. GESTIONAR CUENTA PARROQUIA
-# ==============================================================================
+  # ==============================================================================
+  # 1. GESTIONAR CUENTA PARROQUIA
+  # ==============================================================================
   /api/parish/account:
     get:
       tags:
         - Gestionar Cuenta Parroquia
-      summary: 1.1 Obtener información de la cuenta de la parroquia
+      summary: 1.1 Obtener información completa de la cuenta
       description: |
         Obtiene toda la información de la parroquia autenticada (información y datos de acceso).
-        
+
         **Permisos:** PARISH_VIEW_ACCOUNT
       responses:
-        '200':
+        "200":
           description: Información obtenida exitosamente
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
+                  - $ref: "#/components/schemas/BaseResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/ParishAccountDetail'
-        '401':
+                        $ref: "#/components/schemas/ParishAccountDetail"
+        "401":
           description: No autenticado
-        '403':
+        "403":
           description: Sin permisos
 
+  /api/parish/account/info:
     patch:
       tags:
         - Gestionar Cuenta Parroquia
-      summary: 1.2 Actualizar información de la cuenta de la parroquia
+      summary: 1.2 Actualizar Información General de la Parroquia
       description: |
-        Actualiza parcialmente (PATCH) los datos de la parroquia, incluyendo los nombres de los archivos de foto de perfil y portada (los cuales son asignados por el servidor).
+        Actualiza **parcialmente** la información pública de la parroquia (nombre, dirección, coordenadas, teléfono, colores y nombres de archivos de foto).
         
         **Permisos:** PARISH_EDIT_ACCOUNT
       requestBody:
@@ -205,32 +206,23 @@ paths:
                 phone:
                   type: string
                   example: "999888777"
-                primary_color:
+                primary_color: # <-- CAMPO REAGREGADO
                   type: string
                   example: "#DC2626"
-                secondary_color:
+                secondary_color: # <-- CAMPO REAGREGADO
                   type: string
                   example: "#2563EB"
                 profile_photo:
                   type: string
-                  example: "iglesia_nueva.jpg"
+                  example: "iglesia_perfil_nuevo.jpg"
                   description: Nombre del archivo de foto de perfil asignado por el servidor.
                 cover_photo:
                   type: string
-                  example: "iglesia_portada_nueva.jpg"
+                  example: "iglesia_portada_nuevo.jpg"
                   description: Nombre del archivo de foto de portada asignado por el servidor.
-                email:
-                  type: string
-                  format: email
-                  example: "consolacion@parroquia.com"
-                password:
-                  type: string
-                  format: password
-                  example: "nuevaPassword123"
-                  description: Solo si se desea cambiar la contraseña
       responses:
         '200':
-          description: Cuenta actualizada exitosamente
+          description: Información general actualizada exitosamente
           content:
             application/json:
               schema:
@@ -251,9 +243,58 @@ paths:
         '403':
           description: Sin permisos
 
-# ==============================================================================
-# 2. GESTIÓN DE CAPILLAS (Chapels)
-# ==============================================================================
+  /api/parish/account/credentials:
+    patch:
+      tags:
+        - Gestionar Cuenta Parroquia
+      summary: 1.3 Actualizar Correo y/o Contraseña
+      description: |
+        Actualiza **parcialmente** los datos de acceso a la cuenta (email y/o contraseña).
+        
+        **Permisos:** PARISH_EDIT_ACCOUNT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "nuevo_correo@parroquia.com"
+                  description: Nuevo correo electrónico (opcional)
+                password:
+                  type: string
+                  format: password
+                  example: "ContraseniaSegura456"
+                  description: Nueva contraseña (opcional)
+      responses:
+        '200':
+          description: Credenciales de cuenta actualizadas exitosamente
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: integer
+                            example: 1
+        '400':
+          description: Datos inválidos
+        '401':
+          description: No autenticado
+        '403':
+          description: Sin permisos
+
+  # ==============================================================================
+  # 2. GESTIÓN DE CAPILLAS (Chapels)
+  # ==============================================================================
   /api/parish/chapels/create:
     post:
       tags:
@@ -281,13 +322,13 @@ paths:
                   example: "987654321"
                   description: "Teléfono de la capilla (opcional)"
       responses:
-        '200':
+        "200":
           description: Capilla creada exitosamente
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
+                  - $ref: "#/components/schemas/BaseResponse"
                   - type: object
                     properties:
                       data:
@@ -323,13 +364,13 @@ paths:
                   type: integer
                   example: 10
       responses:
-        '200':
+        "200":
           description: Lista de capillas obtenida exitosamente
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
+                  - $ref: "#/components/schemas/BaseResponse"
                   - type: object
                     properties:
                       data:
@@ -338,7 +379,7 @@ paths:
                           items:
                             type: array
                             items:
-                              $ref: '#/components/schemas/ChapelList' # <--- ESQUEMA SIMPLIFICADO
+                              $ref: "#/components/schemas/ChapelList" # <--- ESQUEMA SIMPLIFICADO
                           total_count:
                             type: integer
                             example: 5
@@ -357,17 +398,17 @@ paths:
       summary: 2.3 Ver detalle de Capilla
       description: "Obtiene la información detallada de una capilla específica. Requiere: PARISH_VIEW_CHAPEL"
       responses:
-        '200':
+        "200":
           description: Detalles de la capilla obtenidos
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
+                  - $ref: "#/components/schemas/BaseResponse"
                   - type: object
                     properties:
                       data:
-                        $ref: '#/components/schemas/ChapelDetail' # <--- ESQUEMA DETALLADO
+                        $ref: "#/components/schemas/ChapelDetail" # <--- ESQUEMA DETALLADO
     patch:
       tags:
         - Gestionar Capillas
@@ -401,13 +442,13 @@ paths:
                   type: boolean
                   example: true
       responses:
-        '200':
+        "200":
           description: Capilla actualizada exitosamente
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
+                  - $ref: "#/components/schemas/BaseResponse"
                   - type: object
                     properties:
                       data:
@@ -422,13 +463,13 @@ paths:
       summary: 2.5 Eliminar Capilla (Desactivación Lógica)
       description: "Elimina una capilla por su ID. (Se asume una eliminación lógica/cambio de estado). Requiere: PARISH_DELETE_CHAPEL"
       responses:
-        '200':
+        "200":
           description: Capilla eliminada/desactivada exitosamente
           content:
             application/json:
               schema:
                 allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
+                  - $ref: "#/components/schemas/BaseResponse"
                   - type: object
                     properties:
                       data:
