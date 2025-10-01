@@ -1,0 +1,364 @@
+openapi: 3.0.3
+info:
+  title: API Diócesis - Eventos Generales
+  description: |
+    API para la gestión de eventos generales del sistema.
+    
+    **Autenticación requerida:** JWT (Cookie)
+    
+    **Estructura de respuesta estándar:**
+    ```json
+    {
+      "message": "Mensaje descriptivo de la operación",
+      "data": {}, 
+      "error": "",
+      "traceback": ""
+    }
+    ```
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Servidor de desarrollo
+
+tags:
+  - name: Eventos Generales
+    description: CRUD completo de eventos generales
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JWT
+
+  schemas:
+    Event:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Matrimonio"
+        description:
+          type: string
+          example: "Ceremonia de matrimonio religioso"
+        active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - cookieAuth: []
+
+paths:
+  /diocese/events/create:
+    post:
+      tags:
+        - Eventos Generales
+      summary: Crear un nuevo evento general
+      description: |
+        Registra un nuevo evento base del sistema.
+        Datos requeridos: nombre y descripción.
+        
+        **Permisos:** DIOCESE_CREATE_EVENT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Matrimonio"
+                description:
+                  type: string
+                  example: "Ceremonia de matrimonio religioso"
+      responses:
+        '201':
+          description: Evento creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Evento creado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '400':
+          description: Datos inválidos
+        '403':
+          description: Sin permisos
+
+  /diocese/events/list:
+    post:
+      tags:
+        - Eventos Generales
+      summary: Listar eventos generales (paginado)
+      description: |
+        Obtiene una lista paginada de todos los eventos generales.
+        También se usa para listar eventos en el panel lateral derecho.
+        
+        **Permisos:** DIOCESE_VIEW_EVENT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Lista obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Lista obtenida exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                        example:
+                          - id: 1
+                            name: "Matrimonio"
+                            description: "Ceremonia de matrimonio"
+                            active: true
+                          - id: 2
+                            name: "Bautismo"
+                            description: "Sacramento del bautismo"
+                            active: true
+                          - id: 3
+                            name: "Primera Comunión"
+                            description: "Primera comunión de niños"
+                            active: true
+                      total_count:
+                        type: integer
+                        example: 8
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total_pages:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+
+  /diocese/events/search:
+    post:
+      tags:
+        - Eventos Generales
+      summary: Buscar eventos generales
+      description: |
+        Obtiene una lista paginada y filtrada de eventos generales.
+        Solo busca por nombre, página y límite.
+        
+        **Permisos:** DIOCESE_VIEW_EVENT
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                name_query:
+                  type: string
+                  example: "matri"
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Búsqueda exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Búsqueda exitosa"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Event'
+                        example:
+                          - id: 1
+                            name: "Matrimonio"
+                            description: "Ceremonia de matrimonio"
+                            active: true
+                      total_count:
+                        type: integer
+                        example: 1
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                  error:
+                    type: string
+                    example: ""
+
+  /diocese/events/{id}:
+    get:
+      tags:
+        - Eventos Generales
+      summary: Ver detalle de un evento general
+      description: |
+        Obtiene la información completa de un evento específico.
+        Devuelve: ID, nombre, descripción y estado.
+        
+        **Permisos:** DIOCESE_VIEW_EVENT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Información obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Evento obtenido exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        example: "Matrimonio"
+                      description:
+                        type: string
+                        example: "Ceremonia de matrimonio religioso"
+                      active:
+                        type: boolean
+                        example: true
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '404':
+          description: Evento no encontrado
+
+    put:
+      tags:
+        - Eventos Generales
+      summary: Editar un evento general
+      description: |
+        Actualiza la información completa de un evento general.
+        
+        **Permisos:** DIOCESE_EDIT_EVENT
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Matrimonio Civil y Religioso"
+                description:
+                  type: string
+                  example: "Ceremonia completa de matrimonio"
+                active:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Evento actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Evento actualizado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+        '404':
+          description: Evento no encontrado

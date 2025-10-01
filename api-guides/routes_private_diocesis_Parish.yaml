@@ -1,0 +1,371 @@
+openapi: 3.0.3
+info:
+  title: API Diócesis - Parroquias
+  description: |
+    API para la gestión de cuentas de parroquias.
+    
+    **Autenticación requerida:** JWT (Cookie)
+    
+    **Estructura de respuesta estándar:**
+    ```json
+    {
+      "message": "Mensaje descriptivo de la operación",
+      "data": {}, 
+      "error": "",
+      "traceback": ""
+    }
+    ```
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Servidor de desarrollo
+
+tags:
+  - name: Parroquias
+    description: CRUD completo de parroquias
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JWT
+
+  schemas:
+    Parish:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Parroquia San José"
+        admin_username:
+          type: string
+          example: "admin_sanjose"
+        active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ParishDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Parroquia San José"
+        email:
+          type: string
+          example: "admin@sanjose.com"
+        username:
+          type: string
+          example: "admin_sanjose"
+        active:
+          type: boolean
+          example: true
+
+security:
+  - cookieAuth: []
+
+paths:
+  /diocese/parishes/create:
+    post:
+      tags:
+        - Parroquias
+      summary: Crear una nueva parroquia
+      description: |
+        Crea parroquia con usuario administrador.
+        Datos requeridos: nombres, correo, usuario y clave.
+        
+        **Permisos:** DIOCESE_CREATE_PARISH
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - first_names
+                - email
+                - username
+                - password
+              properties:
+                name:
+                  type: string
+                  example: "Parroquia San José"
+                first_names:
+                  type: string
+                  example: "Juan Carlos"
+                email:
+                  type: string
+                  format: email
+                  example: "admin@sanjose.com"
+                username:
+                  type: string
+                  example: "admin_sanjose"
+                password:
+                  type: string
+                  format: password
+                  example: "SecurePass123"
+      responses:
+        '201':
+          description: Parroquia creada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Parroquia creada exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      parish_id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '400':
+          description: Datos inválidos
+        '403':
+          description: Sin permisos
+
+  /diocese/parishes/list:
+    post:
+      tags:
+        - Parroquias
+      summary: Listar parroquias (paginado)
+      description: |
+        Solo busca por nombre, página y límite.
+        
+        **Permisos:** DIOCESE_VIEW_PARISH
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Lista obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Lista obtenida exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Parish'
+                        example:
+                          - id: 1
+                            name: "Parroquia San José"
+                            admin_username: "admin_sanjose"
+                            active: true
+                          - id: 2
+                            name: "Parroquia San Pedro"
+                            admin_username: "admin_sanpedro"
+                            active: true
+                      total_count:
+                        type: integer
+                        example: 15
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total_pages:
+                        type: integer
+                        example: 2
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+
+  /diocese/parishes/search:
+    post:
+      tags:
+        - Parroquias
+      summary: Buscar parroquias
+      description: |
+        Búsqueda por nombre de parroquia.
+        
+        **Permisos:** DIOCESE_VIEW_PARISH
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                name_query:
+                  type: string
+                  example: "San José"
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Búsqueda exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Búsqueda exitosa"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Parish'
+                      total_count:
+                        type: integer
+                        example: 3
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                  error:
+                    type: string
+                    example: ""
+
+  /diocese/parishes/{id}:
+    get:
+      tags:
+        - Parroquias
+      summary: Ver detalle de una parroquia
+      description: |
+        Devuelve: nombre, correo y usuario.
+        
+        **Permisos:** DIOCESE_VIEW_PARISH
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Información obtenida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Parroquia obtenida exitosamente"
+                  data:
+                    $ref: '#/components/schemas/ParishDetail'
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '404':
+          description: No encontrada
+
+    put:
+      tags:
+        - Parroquias
+      summary: Editar una parroquia
+      description: |
+        Diócesis solo actualiza el correo y el estado.
+        
+        **Permisos:** DIOCESE_EDIT_PARISH
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "nuevo_admin@sanjose.com"
+                active:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Actualizada exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Parroquia actualizada exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+        '404':
+          description: No encontrada
