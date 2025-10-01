@@ -1,0 +1,389 @@
+openapi: 3.0.3
+info:
+  title: API Diócesis - Requisitos Generales
+  description: |
+    API para la gestión de requisitos base para eventos.
+    
+    **Autenticación requerida:** JWT (Cookie)
+    
+    **Estructura de respuesta estándar:**
+    ```json
+    {
+      "message": "Mensaje descriptivo de la operación",
+      "data": {}, 
+      "error": "",
+      "traceback": ""
+    }
+    ```
+    
+    **Nota:** Para listar eventos en el panel lateral derecho se usa:
+    `/diocese/events/list [POST]`
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Servidor de desarrollo
+
+tags:
+  - name: Requisitos Generales
+    description: CRUD completo de requisitos base para eventos
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JWT
+
+  schemas:
+    BaseRequirement:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        event_id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "Partida de Bautismo"
+        description:
+          type: string
+          example: "Documento que acredita el bautismo"
+        active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/diocese/events/{id}/requirements/create:
+    post:
+      tags:
+        - Requisitos Generales
+      summary: Crear un requisito base
+      description: |
+        Registra un requisito estándar para el evento especificado.
+        Datos requeridos: nombre y descripción.
+        
+        **Permisos:** DIOCESE_CREATE_REQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del evento al que pertenece el requisito
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Partida de Bautismo"
+                description:
+                  type: string
+                  example: "Documento que acredita el bautismo previo"
+      responses:
+        '201':
+          description: Requisito creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Requisito creado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '400':
+          description: Datos inválidos
+        '403':
+          description: Sin permisos
+        '404':
+          description: Evento no encontrado
+
+  /api/diocese/events/{id}/requirements/list:
+    post:
+      tags:
+        - Requisitos Generales
+      summary: Listar requisitos de un evento (paginado)
+      description: |
+        Obtiene una lista paginada de requisitos base para un evento específico.
+        
+        **Permisos:** DIOCESE_VIEW_REQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del evento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Lista obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Lista obtenida exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BaseRequirement'
+                        example:
+                          - id: 1
+                            event_id: 1
+                            name: "Partida de Bautismo"
+                            description: "Documento de bautismo"
+                            active: true
+                          - id: 2
+                            event_id: 1
+                            name: "Certificado de Confirmación"
+                            description: "Certificado de confirmación"
+                            active: true
+                      total_count:
+                        type: integer
+                        example: 5
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total_pages:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '404':
+          description: Evento no encontrado
+
+  /api/diocese/events/{id}/requirements/search:
+    post:
+      tags:
+        - Requisitos Generales
+      summary: Buscar requisitos de un evento
+      description: |
+        Obtiene una lista paginada y filtrada de requisitos base para un evento específico.
+        Búsqueda por nombre.
+        
+        **Permisos:** DIOCESE_VIEW_REQ
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del evento
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                name_query:
+                  type: string
+                  example: "partida"
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Búsqueda exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Búsqueda exitosa"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BaseRequirement'
+                      total_count:
+                        type: integer
+                        example: 2
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                  error:
+                    type: string
+                    example: ""
+        '404':
+          description: Evento no encontrado
+
+  /api/diocese/events/{event_id}/requirements/{id}:
+    get:
+      tags:
+        - Requisitos Generales
+      summary: Ver detalle de un requisito
+      description: |
+        Obtiene la información completa de un requisito base específico.
+        
+        **Permisos:** DIOCESE_VIEW_REQ
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del evento
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del requisito
+      responses:
+        '200':
+          description: Información obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Requisito obtenido exitosamente"
+                  data:
+                    $ref: '#/components/schemas/BaseRequirement'
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '404':
+          description: Requisito no encontrado
+
+    put:
+      tags:
+        - Requisitos Generales
+      summary: Editar un requisito
+      description: |
+        Actualiza la información completa de un requisito base.
+        
+        **Permisos:** DIOCESE_EDIT_REQ
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del evento
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID del requisito
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Partida de Bautismo Original"
+                description:
+                  type: string
+                  example: "Documento original actualizado"
+                active:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Requisito actualizado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Requisito actualizado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+        '404':
+          description: Requisito no encontrado

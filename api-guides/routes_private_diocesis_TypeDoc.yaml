@@ -1,0 +1,326 @@
+openapi: 3.0.3
+info:
+  title: API Diócesis - Tipos de Documento
+  description: |
+    API para la gestión de tipos de documentos de identidad.
+    
+    **Autenticación requerida:** JWT (Cookie)
+    
+    **Estructura de respuesta estándar:**
+    ```json
+    {
+      "message": "Mensaje descriptivo de la operación",
+      "data": {}, 
+      "error": "",
+      "traceback": ""
+    }
+    ```
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Servidor de desarrollo
+
+tags:
+  - name: Tipos de Documento
+    description: CRUD completo de tipos de documentos de identidad
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JWT
+
+  schemas:
+    DocumentType:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        code:
+          type: string
+          example: "DNI"
+        name:
+          type: string
+          example: "Documento Nacional de Identidad"
+        description:
+          type: string
+          example: "Documento de identidad nacional"
+        active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/diocese/document-types/create:
+    post:
+      tags:
+        - Tipos de Documento
+      summary: Crear un nuevo tipo de documento
+      description: |
+        **Permisos:** DIOCESE_CREATE_DOCTYPE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+                - name
+              properties:
+                code:
+                  type: string
+                  example: "DNI"
+                name:
+                  type: string
+                  example: "Documento Nacional de Identidad"
+                description:
+                  type: string
+                  example: "Documento oficial de identidad"
+      responses:
+        '201':
+          description: Creado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tipo de documento creado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+
+  /api/diocese/document-types/list:
+    post:
+      tags:
+        - Tipos de Documento
+      summary: Listar tipos de documento (paginado)
+      description: |
+        **Permisos:** DIOCESE_VIEW_DOCTYPE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Lista obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Lista obtenida exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DocumentType'
+                      total_count:
+                        type: integer
+                        example: 25
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                      total_pages:
+                        type: integer
+                        example: 3
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+
+  /api/diocese/document-types/search:
+    post:
+      tags:
+        - Tipos de Documento
+      summary: Buscar tipos de documento
+      description: |
+        Búsqueda por nombre.
+        **Permisos:** DIOCESE_VIEW_DOCTYPE
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                name_query:
+                  type: string
+                  example: "nacional"
+                page:
+                  type: integer
+                  example: 1
+                  minimum: 1
+                limit:
+                  type: integer
+                  example: 10
+                  minimum: 1
+                  maximum: 100
+      responses:
+        '200':
+          description: Búsqueda exitosa
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Búsqueda exitosa"
+                  data:
+                    type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DocumentType'
+                      total_count:
+                        type: integer
+                        example: 5
+                      page:
+                        type: integer
+                        example: 1
+                      limit:
+                        type: integer
+                        example: 10
+                  error:
+                    type: string
+                    example: ""
+
+  /api/diocese/document-types/{id}:
+    get:
+      tags:
+        - Tipos de Documento
+      summary: Ver detalle de un tipo de documento
+      description: |
+        Devuelve: nombre, descripción y código.
+        **Permisos:** DIOCESE_VIEW_DOCTYPE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Información obtenida
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tipo de documento obtenido exitosamente"
+                  data:
+                    $ref: '#/components/schemas/DocumentType'
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '404':
+          description: No encontrado
+
+    put:
+      tags:
+        - Tipos de Documento
+      summary: Editar tipo de documento
+      description: |
+        Devuelve: nombre, descripción y código.
+        **Permisos:** DIOCESE_EDIT_DOCTYPE
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Documento Nacional de Identidad"
+                code:
+                  type: string
+                  example: "DNI"
+                description:
+                  type: string
+                  example: "Documento oficial"
+                active:
+                  type: boolean
+                  example: true
+      responses:
+        '200':
+          description: Actualizado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Tipo de documento actualizado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                  error:
+                    type: string
+                    example: ""
