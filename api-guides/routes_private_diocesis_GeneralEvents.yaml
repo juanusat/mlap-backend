@@ -59,7 +59,7 @@ security:
   - cookieAuth: []
 
 paths:
-  /diocese/events/create:
+  /api/diocese/events/create:
     post:
       tags:
         - Eventos Generales
@@ -112,7 +112,7 @@ paths:
         '403':
           description: Sin permisos
 
-  /diocese/events/list:
+  /api/diocese/events/list:
     post:
       tags:
         - Eventos Generales
@@ -191,7 +191,7 @@ paths:
                     type: string
                     example: ""
 
-  /diocese/events/search:
+  /api/diocese/events/search:
     post:
       tags:
         - Eventos Generales
@@ -259,7 +259,7 @@ paths:
                     type: string
                     example: ""
 
-  /diocese/events/{id}:
+  /api/diocese/events/{id}:
     get:
       tags:
         - Eventos Generales

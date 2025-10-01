@@ -78,7 +78,7 @@ security:
   - cookieAuth: []
 
 paths:
-  /diocese/parishes/create:
+  /api/diocese/parishes/create:
     post:
       tags:
         - Parroquias
@@ -146,7 +146,7 @@ paths:
         '403':
           description: Sin permisos
 
-  /diocese/parishes/list:
+  /api/diocese/parishes/list:
     post:
       tags:
         - Parroquias
@@ -220,7 +220,7 @@ paths:
                     type: string
                     example: ""
 
-  /diocese/parishes/search:
+  /api/diocese/parishes/search:
     post:
       tags:
         - Parroquias
@@ -282,7 +282,7 @@ paths:
                     type: string
                     example: ""
 
-  /diocese/parishes/{id}:
+  /api/diocese/parishes/{id}:
     get:
       tags:
         - Parroquias

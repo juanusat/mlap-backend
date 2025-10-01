@@ -62,7 +62,7 @@ security:
   - cookieAuth: []
 
 paths:
-  /diocese/document-types/create:
+  /api/diocese/document-types/create:
     post:
       tags:
         - Tipos de Documento
@@ -112,7 +112,7 @@ paths:
                     type: string
                     example: ""
 
-  /diocese/document-types/list:
+  /api/diocese/document-types/list:
     post:
       tags:
         - Tipos de Documento
@@ -175,7 +175,7 @@ paths:
                     type: string
                     example: ""
 
-  /diocese/document-types/search:
+  /api/diocese/document-types/search:
     post:
       tags:
         - Tipos de Documento
@@ -236,7 +236,7 @@ paths:
                     type: string
                     example: ""
 
-  /diocese/document-types/{id}:
+  /api/diocese/document-types/{id}:
     get:
       tags:
         - Tipos de Documento

@@ -65,7 +65,7 @@ security:
   - cookieAuth: []
 
 paths:
-  /diocese/events/{id}/requirements/create:
+  /api/diocese/events/{id}/requirements/create:
     post:
       tags:
         - Requisitos Generales
@@ -127,7 +127,7 @@ paths:
         '404':
           description: Evento no encontrado
 
-  /diocese/events/{id}/requirements/list:
+  /api/diocese/events/{id}/requirements/list:
     post:
       tags:
         - Requisitos Generales
@@ -212,7 +212,7 @@ paths:
         '404':
           description: Evento no encontrado
 
-  /diocese/events/{id}/requirements/search:
+  /api/diocese/events/{id}/requirements/search:
     post:
       tags:
         - Requisitos Generales
@@ -284,7 +284,7 @@ paths:
         '404':
           description: Evento no encontrado
 
-  /diocese/events/{event_id}/requirements/{id}:
+  /api/diocese/events/{event_id}/requirements/{id}:
     get:
       tags:
         - Requisitos Generales
