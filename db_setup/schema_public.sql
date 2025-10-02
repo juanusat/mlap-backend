@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS public.permission (
     category VARCHAR(50), -- Ej: 'USUARIOS', 'EVENTOS', 'RESERVAS', 'CONFIGURACION'
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
+    
     CONSTRAINT permission_pkey PRIMARY KEY (id)
 );
 
@@ -29,6 +29,7 @@ CREATE TABLE IF NOT EXISTS public.document_type (
     code VARCHAR(20) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
     active BOOLEAN DEFAULT TRUE,
+    description VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     

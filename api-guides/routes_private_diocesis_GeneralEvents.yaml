@@ -3,9 +3,9 @@ info:
   title: API Diócesis - Eventos Generales
   description: |
     API para la gestión de eventos generales del sistema.
-    
+
     **Autenticación requerida:** JWT (Cookie)
-    
+
     **Estructura de respuesta estándar:**
     ```json
     {
@@ -67,7 +67,7 @@ paths:
       description: |
         Registra un nuevo evento base del sistema.
         Datos requeridos: nombre y descripción.
-        
+
         **Permisos:** DIOCESE_CREATE_EVENT
       requestBody:
         required: true
@@ -85,7 +85,7 @@ paths:
                   type: string
                   example: "Ceremonia de matrimonio religioso"
       responses:
-        '201':
+        "201":
           description: Evento creado exitosamente
           content:
             application/json:
@@ -107,9 +107,9 @@ paths:
                   traceback:
                     type: string
                     example: ""
-        '400':
+        "400":
           description: Datos inválidos
-        '403':
+        "403":
           description: Sin permisos
 
   /api/diocese/events/list:
@@ -120,7 +120,7 @@ paths:
       description: |
         Obtiene una lista paginada de todos los eventos generales.
         También se usa para listar eventos en el panel lateral derecho.
-        
+
         **Permisos:** DIOCESE_VIEW_EVENT
       requestBody:
         required: true
@@ -142,7 +142,7 @@ paths:
                   minimum: 1
                   maximum: 100
       responses:
-        '200':
+        "200":
           description: Lista obtenida exitosamente
           content:
             application/json:
@@ -158,7 +158,7 @@ paths:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Event'
+                          $ref: "#/components/schemas/Event"
                         example:
                           - id: 1
                             name: "Matrimonio"
@@ -199,7 +199,7 @@ paths:
       description: |
         Obtiene una lista paginada y filtrada de eventos generales.
         Solo busca por nombre, página y límite.
-        
+
         **Permisos:** DIOCESE_VIEW_EVENT
       requestBody:
         required: true
@@ -224,7 +224,7 @@ paths:
                   minimum: 1
                   maximum: 100
       responses:
-        '200':
+        "200":
           description: Búsqueda exitosa
           content:
             application/json:
@@ -240,7 +240,7 @@ paths:
                       items:
                         type: array
                         items:
-                          $ref: '#/components/schemas/Event'
+                          $ref: "#/components/schemas/Event"
                         example:
                           - id: 1
                             name: "Matrimonio"
@@ -267,7 +267,7 @@ paths:
       description: |
         Obtiene la información completa de un evento específico.
         Devuelve: ID, nombre, descripción y estado.
-        
+
         **Permisos:** DIOCESE_VIEW_EVENT
       parameters:
         - name: id
@@ -276,7 +276,7 @@ paths:
           schema:
             type: integer
       responses:
-        '200':
+        "200":
           description: Información obtenida exitosamente
           content:
             application/json:
@@ -307,7 +307,7 @@ paths:
                   traceback:
                     type: string
                     example: ""
-        '404':
+        "404":
           description: Evento no encontrado
 
     put:
@@ -316,7 +316,7 @@ paths:
       summary: Editar un evento general
       description: |
         Actualiza la información completa de un evento general.
-        
+
         **Permisos:** DIOCESE_EDIT_EVENT
       parameters:
         - name: id
@@ -341,7 +341,7 @@ paths:
                   type: boolean
                   example: true
       responses:
-        '200':
+        "200":
           description: Evento actualizado
           content:
             application/json:
@@ -360,5 +360,5 @@ paths:
                   error:
                     type: string
                     example: ""
-        '404':
+        "404":
           description: Evento no encontrado
