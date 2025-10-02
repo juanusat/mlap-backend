@@ -1,0 +1,1399 @@
+openapi: 3.0.0
+info:
+  title: Módulo Actos Litúrgicos - APIs
+  description: APIs para la gestión de actos litúrgicos, requisitos, horarios y reservas para una parroquia específica.
+  version: 1.0.0
+servers:
+  - url: /api
+tags:
+  - name: Catálogos Auxiliares
+    description: APIs para obtener listas de apoyo (Eventos Base, Capillas).
+  - name: Gestión de Eventos (Actos Litúrgicos)
+    description: CRUD para variantes de eventos litúrgicos (event_variant).
+  - name: Gestión de Requisitos
+    description: CRUD para requisitos específicos de la combinación Capilla-Evento (chapel_event_requirement).
+  - name: Gestión de Horarios
+    description: CRUD para horarios generales y específicos (excepciones) de capillas.
+  - name: Gestión de Reservas
+    description: Listado, detalle y actualización de reservas.
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    # --- Esquemas Comunes ---
+    EventBaseSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID del Evento Base.
+        name:
+          type: string
+          description: Nombre del Evento Base (ej. Matrimonio).
+      required:
+        - id
+        - name
+    ChapelSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID de la Capilla.
+        name:
+          type: string
+          description: Nombre de la Capilla.
+      required:
+        - id
+        - name
+    ChapelEventSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID de la tabla chapel_event.
+        event_name:
+          type: string
+          description: Nombre del Evento Base asociado.
+        chapel_name:
+          type: string
+          description: Nombre de la Capilla asociada.
+      required:
+        - id
+        - event_name
+        - chapel_name
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de confirmación de la operación.
+      required:
+        - message
+
+    # --- Esquemas Gestión de Eventos ---
+    EventVariantData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID de la variante de evento (event_variant).
+        name:
+          type: string
+          description: Nombre de la variante.
+        description:
+          type: string
+          description: Descripción de la variante.
+        chapel:
+          $ref: '#/components/schemas/ChapelSummary'
+        event_base:
+          $ref: '#/components/schemas/EventBaseSummary'
+        variant_type:
+          type: string
+          description: Tipo de variante deducido de max_capacity (Privado si 1, Comunitario si >1).
+        max_capacity:
+          type: integer
+          description: Número máximo de personas/eventos permitidos.
+        current_price:
+          type: number
+          format: float
+          description: Precio actual de la variante.
+        active:
+          type: boolean
+          description: Estado activo/inactivo de la variante.
+        reservations_count:
+          type: integer
+          description: Total de reservas activas para esta variante.
+      required:
+        - id
+        - name
+        - chapel
+        - event_base
+        - variant_type
+        - max_capacity
+        - current_price
+        - active
+        - reservations_count
+    EventVariantDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        chapel_id:
+          type: integer
+          description: ID de la capilla.
+        event_id:
+          type: integer
+          description: ID del evento base.
+        current_price:
+          type: number
+          format: float
+        max_capacity:
+          type: integer
+        active:
+          type: boolean
+      required:
+        - id
+        - name
+        - description
+        - chapel_id
+        - event_id
+        - current_price
+        - max_capacity
+        - active
+    EventVariantListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+        total_pages:
+          type: integer
+        current_page:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventVariantData'
+      required:
+        - total_records
+        - total_pages
+        - current_page
+        - data
+    CreateEventVariantRequest:
+      type: object
+      properties:
+        chapel_id:
+          type: integer
+          description: ID de la capilla seleccionada.
+        event_id:
+          type: integer
+          description: ID del Evento Base seleccionado.
+        name:
+          type: string
+        description:
+          type: string
+        current_price:
+          type: number
+          format: float
+        max_capacity:
+          type: integer
+          description: 1 para Privado, >1 para Comunitario.
+        active:
+          type: boolean
+      required:
+        - chapel_id
+        - event_id
+        - name
+        - description
+        - current_price
+        - max_capacity
+        - active
+    UpdateEventVariantRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        current_price:
+          type: number
+          format: float
+        max_capacity:
+          type: integer
+        active:
+          type: boolean
+
+    # --- Esquemas Gestión de Requisitos ---
+    RequirementData:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID de chapel_event_requirement.
+        name:
+          type: string
+          description: Nombre del requisito.
+        description:
+          type: string
+          description: Descripción del requisito.
+        active:
+          type: boolean
+          description: Estado activo/inactivo.
+      required:
+        - id
+        - name
+        - description
+        - active
+    RequirementListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+        total_pages:
+          type: integer
+        current_page:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequirementData'
+      required:
+        - total_records
+        - total_pages
+        - current_page
+        - data
+    RequirementDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        chapel_event_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+      required:
+        - id
+        - chapel_event_id
+        - name
+        - description
+        - active
+    CreateRequirementRequest:
+      type: object
+      properties:
+        chapel_event_id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: string
+      required:
+        - chapel_event_id
+        - name
+        - description
+    UpdateRequirementRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        active:
+          type: boolean
+
+    # --- Esquemas Gestión de Horarios ---
+    ScheduleGeneralData:
+      type: object
+      properties:
+        id:
+          type: integer
+        day_of_week:
+          type: integer
+          description: 0=Domingo, 1=Lunes, ..., 6=Sábado.
+        start_time:
+          type: string
+          format: time
+          description: Formato HH:MM:SS.
+        end_time:
+          type: string
+          format: time
+          description: Formato HH:MM:SS.
+      required:
+        - id
+        - day_of_week
+        - start_time
+        - end_time
+    CreateGeneralScheduleRequest:
+      type: object
+      properties:
+        chapel_id:
+          type: integer
+        day_of_week:
+          type: integer
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+      required:
+        - chapel_id
+        - day_of_week
+        - start_time
+        - end_time
+    UpdateGeneralScheduleRequest:
+      type: object
+      properties:
+        day_of_week:
+          type: integer
+        start_time:
+          type: string
+          format: time
+        end_time:
+          type: string
+          format: time
+    ScheduleSpecificData:
+      type: object
+      properties:
+        id:
+          type: integer
+        date:
+          type: string
+          format: date
+        exception_type:
+          type: string
+          enum: [OPEN, CLOSED]
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+      required:
+        - id
+        - date
+        - exception_type
+    CreateSpecificScheduleRequest:
+      type: object
+      properties:
+        chapel_id:
+          type: integer
+        date:
+          type: string
+          format: date
+        exception_type:
+          type: string
+          enum: [OPEN, CLOSED]
+        start_time:
+          type: string
+          format: time
+          description: Requerido si exception_type es 'OPEN'.
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          description: Requerido si exception_type es 'OPEN'.
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+      required:
+        - chapel_id
+        - date
+        - exception_type
+    UpdateSpecificScheduleRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        exception_type:
+          type: string
+          enum: [OPEN, CLOSED]
+        start_time:
+          type: string
+          format: time
+          nullable: true
+        end_time:
+          type: string
+          format: time
+          nullable: true
+        reason:
+          type: string
+          nullable: true
+
+    # --- Esquemas Gestión de Reservas ---
+    PersonSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        full_name:
+          type: string
+      required:
+        - id
+        - full_name
+    ReservationSummary:
+      type: object
+      properties:
+        id:
+          type: integer
+        user_person:
+          $ref: '#/components/schemas/PersonSummary'
+        event_variant_name:
+          type: string
+        event_date:
+          type: string
+          format: date-time
+        paid_amount:
+          type: number
+          format: float
+        status:
+          type: string
+          enum: [RESERVED, REJECTED, IN_PROGRESS, COMPLETED, FULFILLED, CANCELLED]
+      required:
+        - id
+        - user_person
+        - event_variant_name
+        - event_date
+        - paid_amount
+        - status
+    ReservationListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+        total_pages:
+          type: integer
+        current_page:
+          type: integer
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ReservationSummary'
+      required:
+        - total_records
+        - total_pages
+        - current_page
+        - data
+    ReservationDetail:
+      type: object
+      properties:
+        id:
+          type: integer
+        event_variant:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+            chapel:
+              $ref: '#/components/schemas/ChapelSummary'
+          required:
+            - id
+            - name
+            - chapel
+        person:
+          type: object
+          properties:
+            id:
+              type: integer
+            full_name:
+              type: string
+            email:
+              type: string
+            document:
+              type: string
+          required:
+            - id
+            - full_name
+            - email
+            - document
+        event_date:
+          type: string
+          format: date-time
+        registration_date:
+          type: string
+          format: date-time
+        reschedule_date:
+          type: string
+          format: date-time
+          nullable: true
+        status:
+          type: string
+          enum: [RESERVED, REJECTED, IN_PROGRESS, COMPLETED, FULFILLED, CANCELLED]
+        paid_amount:
+          type: number
+          format: float
+      required:
+        - id
+        - event_variant
+        - person
+        - event_date
+        - registration_date
+        - status
+        - paid_amount
+    UpdateReservationRequest:
+      type: object
+      properties:
+        event_date:
+          type: string
+          format: date-time
+        paid_amount:
+          type: number
+          format: float
+        reschedule_date:
+          type: string
+          format: date-time
+    UpdateReservationStatusRequest:
+      type: object
+      properties:
+        new_status:
+          type: string
+          enum: [RESERVED, REJECTED, IN_PROGRESS, COMPLETED, FULFILLED, CANCELLED]
+      required:
+        - new_status
+
+paths:
+  # --- Catálogos Auxiliares ---
+  /catalogs/events:
+    get:
+      tags:
+        - Catálogos Auxiliares
+      summary: Obtener Catálogo de Eventos Base (Diócesis)
+      description: Obtiene el listado de Eventos Base definidos por la Diócesis para la selección inicial.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+          description: Término de búsqueda para filtrar eventos.
+      responses:
+        '200':
+          description: Listado de eventos base.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EventBaseSummary'
+  /parish/chapels:
+    get:
+      tags:
+        - Catálogos Auxiliares
+      summary: Obtener Listado de Capillas por Parroquia
+      description: Obtiene el listado de Capillas que pertenecen a la Parroquia activa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+          description: Término de búsqueda para filtrar capillas.
+      responses:
+        '200':
+          description: Listado de capillas.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChapelSummary'
+
+  # --- Gestión de Eventos (Actos Litúrgicos) ---
+  /acts/events/variants:
+    get:
+      tags:
+        - Gestión de Eventos (Actos Litúrgicos)
+      summary: Listar y Buscar Actos Litúrgicos (Event Variants)
+      description: Obtiene un listado paginado y filtrable de las variantes de eventos de la parroquia activa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: chapel_id
+          schema:
+            type: integer
+          required: false
+        - in: query
+          name: active
+          schema:
+            type: boolean
+          required: false
+      responses:
+        '200':
+          description: Listado de variantes de eventos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventVariantListResponse'
+    post:
+      tags:
+        - Gestión de Eventos (Actos Litúrgicos)
+      summary: Crear un Nuevo Acto Litúrgico
+      description: Registra una nueva variante de evento para una capilla (event_variant).
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEventVariantRequest'
+      responses:
+        '201':
+          description: Variante de evento creada exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  id:
+                    type: integer
+                required:
+                  - message
+                  - id
+
+  /acts/events/variants/{id}:
+    get:
+      tags:
+        - Gestión de Eventos (Actos Litúrgicos)
+      summary: Obtener Detalles de un Acto Litúrgico Específico
+      description: Obtiene la información completa de una variante de evento.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID de la variante de evento (event_variant).
+      responses:
+        '200':
+          description: Detalles de la variante de evento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventVariantDetail'
+    put:
+      tags:
+        - Gestión de Eventos (Actos Litúrgicos)
+      summary: Actualizar un Acto Litúrgico (Completo)
+      description: Modifica toda la información de una variante de evento existente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventVariantRequest'
+      responses:
+        '200':
+          description: Variante de evento actualizada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    patch:
+      tags:
+        - Gestión de Eventos (Actos Litúrgicos)
+      summary: Actualizar Parcialmente un Acto Litúrgico
+      description: Modifica parte de la información de una variante de evento existente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEventVariantRequest'
+      responses:
+        '200':
+          description: Variante de evento actualizada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /acts/events/variants/{id}/deactivate:
+    post:
+      tags:
+        - Gestión de Eventos (Actos Litúrgicos)
+      summary: Dar de Baja/Eliminar (Lógicamente) un Acto Litúrgico
+      description: Elimina lógicamente (desactiva) la variante de evento.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID de la variante de evento (event_variant).
+      responses:
+        '200':
+          description: Variante de evento desactivada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # --- Gestión de Requisitos ---
+  /acts/chapel_events:
+    get:
+      tags:
+        - Gestión de Requisitos
+      summary: Listar Combinaciones Capilla-Evento
+      description: Lista las combinaciones de Evento y Capilla (Chapel-Event) que ofrece la parroquia para gestionar requisitos.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: chapel_id
+          schema:
+            type: integer
+          required: false
+      responses:
+        '200':
+          description: Listado de combinaciones Capilla-Evento.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ChapelEventSummary'
+
+  /acts/requirements/chapel:
+    get:
+      tags:
+        - Gestión de Requisitos
+      summary: Listar y Buscar Requisitos Específicos por Capilla-Evento
+      description: Obtiene un listado paginado y filtrable de los requisitos adicionales definidos para la combinación Capilla-Evento seleccionada.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: chapel_event_id
+          schema:
+            type: integer
+          required: true
+          description: ID de la combinación Capilla-Evento.
+      responses:
+        '200':
+          description: Listado de requisitos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementListResponse'
+    post:
+      tags:
+        - Gestión de Requisitos
+      summary: Crear un Nuevo Requisito Específico de Capilla
+      description: Registra un nuevo requisito adicional para una combinación de Capilla-Evento.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRequirementRequest'
+      responses:
+        '201':
+          description: Requisito creado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  id:
+                    type: integer
+                required:
+                  - message
+                  - id
+
+  /acts/requirements/chapel/{id}:
+    get:
+      tags:
+        - Gestión de Requisitos
+      summary: Obtener Detalles de un Requisito Específico
+      description: Obtiene la información completa de un requisito específico.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del requisito (chapel_event_requirement).
+      responses:
+        '200':
+          description: Detalles del requisito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RequirementDetail'
+    put:
+      tags:
+        - Gestión de Requisitos
+      summary: Actualizar un Requisito Específico (Completo)
+      description: Modifica el nombre, descripción y/o estado de un requisito.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequirementRequest'
+      responses:
+        '200':
+          description: Requisito actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    patch:
+      tags:
+        - Gestión de Requisitos
+      summary: Actualizar Parcialmente un Requisito Específico
+      description: Modifica el nombre, descripción y/o estado de un requisito.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRequirementRequest'
+      responses:
+        '200':
+          description: Requisito actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /acts/requirements/chapel/{id}/deactivate:
+    post:
+      tags:
+        - Gestión de Requisitos
+      summary: Dar de Baja/Eliminar (Lógicamente) un Requisito Específico
+      description: Elimina lógicamente (desactiva) el requisito.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del requisito (chapel_event_requirement).
+      responses:
+        '200':
+          description: Requisito desactivado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # --- Gestión de Horarios ---
+  /acts/schedules/general:
+    get:
+      tags:
+        - Gestión de Horarios
+      summary: Listar Horarios Generales de una Capilla
+      description: Obtiene todos los horarios de disponibilidad recurrente (normales) para la capilla activa, agrupados por día.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: chapel_id
+          schema:
+            type: integer
+          required: true
+          description: ID de la capilla.
+      responses:
+        '200':
+          description: Listado de horarios generales.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleGeneralData'
+    post:
+      tags:
+        - Gestión de Horarios
+      summary: Crear un Nuevo Horario General
+      description: Añade un bloque de disponibilidad recurrente para una capilla.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateGeneralScheduleRequest'
+      responses:
+        '201':
+          description: Horario general creado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  id:
+                    type: integer
+                required:
+                  - message
+                  - id
+
+  /acts/schedules/general/{id}:
+    put:
+      tags:
+        - Gestión de Horarios
+      summary: Actualizar un Horario General
+      description: Modifica un bloque de disponibilidad recurrente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del horario general.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGeneralScheduleRequest'
+      responses:
+        '200':
+          description: Horario general actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    patch:
+      tags:
+        - Gestión de Horarios
+      summary: Actualizar Parcialmente un Horario General
+      description: Modifica un bloque de disponibilidad recurrente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del horario general.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateGeneralScheduleRequest'
+      responses:
+        '200':
+          description: Horario general actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    delete:
+      tags:
+        - Gestión de Horarios
+      summary: Eliminar un Horario General
+      description: Elimina un bloque de disponibilidad recurrente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del horario general.
+      responses:
+        '200':
+          description: Horario general eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /acts/schedules/specific:
+    get:
+      tags:
+        - Gestión de Horarios
+      summary: Listar Horarios Específicos (Excepciones)
+      description: Obtiene las excepciones (Disponibles y No Disponibles) para un rango de fechas de la capilla activa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: chapel_id
+          schema:
+            type: integer
+          required: true
+          description: ID de la capilla.
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+          required: true
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+          required: true
+      responses:
+        '200':
+          description: Listado de horarios específicos (excepciones).
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ScheduleSpecificData'
+    post:
+      tags:
+        - Gestión de Horarios
+      summary: Crear un Nuevo Horario Específico (Excepción)
+      description: Añade una excepción de disponibilidad ('OPEN') o no disponibilidad ('CLOSED').
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSpecificScheduleRequest'
+      responses:
+        '201':
+          description: Horario específico creado exitosamente.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  id:
+                    type: integer
+                required:
+                  - message
+                  - id
+
+  /acts/schedules/specific/{id}:
+    put:
+      tags:
+        - Gestión de Horarios
+      summary: Actualizar un Horario Específico (Excepción)
+      description: Modifica una excepción de disponibilidad existente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del horario específico.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSpecificScheduleRequest'
+      responses:
+        '200':
+          description: Horario específico actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    patch:
+      tags:
+        - Gestión de Horarios
+      summary: Actualizar Parcialmente un Horario Específico (Excepción)
+      description: Modifica una excepción de disponibilidad existente.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del horario específico.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSpecificScheduleRequest'
+      responses:
+        '200':
+          description: Horario específico actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    delete:
+      tags:
+        - Gestión de Horarios
+      summary: Eliminar un Horario Específico (Excepción)
+      description: Elimina una excepción de disponibilidad.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID del horario específico.
+      responses:
+        '200':
+          description: Horario específico eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # --- Gestión de Reservas ---
+  /acts/reservations:
+    get:
+      tags:
+        - Gestión de Reservas
+      summary: Listar y Buscar Reservas
+      description: Obtiene un listado paginado y filtrable de las reservas asociadas a la parroquia activa.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+          required: true
+        - in: query
+          name: search
+          schema:
+            type: string
+          required: false
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [RESERVED, REJECTED, IN_PROGRESS, COMPLETED, FULFILLED, CANCELLED]
+          required: false
+        - in: query
+          name: start_date
+          schema:
+            type: string
+            format: date
+          required: false
+        - in: query
+          name: end_date
+          schema:
+            type: string
+            format: date
+          required: false
+      responses:
+        '200':
+          description: Listado de reservas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationListResponse'
+
+  /acts/reservations/{id}:
+    get:
+      tags:
+        - Gestión de Reservas
+      summary: Obtener Detalles de una Reserva
+      description: Obtiene la información completa de una reserva específica.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID de la reserva.
+      responses:
+        '200':
+          description: Detalles de la reserva.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationDetail'
+    put:
+      tags:
+        - Gestión de Reservas
+      summary: Actualizar la Información de una Reserva (Monto, Fecha, etc.)
+      description: Modifica datos editables de la reserva.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReservationRequest'
+      responses:
+        '200':
+          description: Reserva actualizada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    patch:
+      tags:
+        - Gestión de Reservas
+      summary: Actualizar Parcialmente la Información de una Reserva
+      description: Modifica datos editables de la reserva.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReservationRequest'
+      responses:
+        '200':
+          description: Reserva actualizada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /acts/reservations/{id}/status:
+    post:
+      tags:
+        - Gestión de Reservas
+      summary: Actualizar el Estado de una Reserva
+      description: Actualiza el campo 'status' de la reserva.
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          required: true
+          description: ID de la reserva.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateReservationStatusRequest'
+      responses:
+        '200':
+          description: Estado de la reserva actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
