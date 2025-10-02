@@ -124,60 +124,152 @@ components:
           items:
             $ref: '#/components/schemas/RequirementStatus'
           
-    ErrorResponse:
+    StandardResponse:
       type: object
       properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Historial de reservas obtenido exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
         error:
           type: string
-          description: Descripción del error.
-          example: No autorizado o El recurso no existe.
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+    HistoryListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+
+    HistorySearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search_event_name
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search_event_name:
+          type: string
+          description: Término de búsqueda para filtrar por nombre del evento
+          example: "Unción"
+        status:
+          $ref: '#/components/schemas/HistoryReservationStatus'
+          description: Filtrar por estado específico de conclusión o cancelación
+          example: COMPLETED
 
 security:
   - bearerAuth: []
 
 paths:
-  /api/client/reservations/history:
-    get:
+  /api/client/reservations/history/list:
+    post:
       tags:
         - Historial de Reservas (Cliente)
       summary: Listar Historial de Reservas del Usuario
       description: Obtiene un listado paginado de las reservas concluidas o canceladas del usuario logueado.
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-          description: Número de página.
-          required: true
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-          description: Límite de registros por página.
-          required: true
-        - in: query
-          name: search_event_name
-          schema:
-            type: string
-          description: Término de búsqueda para filtrar por nombre del evento.
-          required: false
-        - in: query
-          name: status
-          schema:
-            $ref: '#/components/schemas/HistoryReservationStatus'
-          description: Filtrar por estado específico de conclusión o cancelación.
-          required: false
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HistoryListRequest'
       responses:
         '200':
           description: Listado paginado del historial de reservas.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/HistoryReservationListResponse'
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Historial de reservas obtenido exitosamente"
+                data:
+                  total_records: 10
+                  total_pages: 4
+                  current_page: 1
+                  items:
+                    - id: 1
+                      event_name: Unción de los Enfermos
+                      event_date: 2024-12-19
+                      paid_amount: 283.00
+                      status: CANCELLED
+                error: ""
+                traceback: ""
         '401':
           description: No autorizado (JWT inválido o ausente).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/client/reservations/history/search:
+    post:
+      tags:
+        - Historial de Reservas (Cliente)
+      summary: Buscar en Historial de Reservas del Usuario
+      description: Busca reservas concluidas o canceladas del usuario por nombre del evento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HistorySearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda del historial de reservas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda en historial completada exitosamente"
+                data:
+                  total_records: 2
+                  total_pages: 1
+                  current_page: 1
+                  items:
+                    - id: 1
+                      event_name: Unción de los Enfermos
+                      event_date: 2024-12-19
+                      paid_amount: 283.00
+                      status: CANCELLED
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado (JWT inválido o ausente).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
 
   /api/client/reservations/{id}:
     get:
@@ -198,23 +290,35 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDetailClient'
+                $ref: '#/components/schemas/StandardResponse'
               example:
-                id: 1
-                event_variant_name: Unción de los Enfermos
-                event_date: 2024-12-19
-                status: CANCELLED
-                paid_amount: 283.00
-                payment_status: PENDIENTE
-                chapel:
-                  name: Capilla San Miguel
-                  parish_name: Parroquia Central
-                requirements:
-                  - name: Certificado Médico
-                    completed: false
-                  - name: Permiso Familiar
-                    completed: true
+                message: "Detalles de la reserva obtenidos exitosamente"
+                data:
+                  id: 1
+                  event_variant_name: Unción de los Enfermos
+                  event_date: 2024-12-19
+                  status: CANCELLED
+                  paid_amount: 283.00
+                  payment_status: PENDIENTE
+                  chapel:
+                    name: Capilla San Miguel
+                    parish_name: Parroquia Central
+                  requirements:
+                    - name: Certificado Médico
+                      completed: false
+                    - name: Permiso Familiar
+                      completed: true
+                error: ""
+                traceback: ""
         '401':
           description: No autorizado (JWT inválido o la reserva no pertenece al usuario).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '404':
           description: Reserva no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'

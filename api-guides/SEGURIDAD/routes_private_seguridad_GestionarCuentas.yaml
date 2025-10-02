@@ -208,35 +208,71 @@ components:
           type: boolean
           example: false
 
-    AssociationDeleteResponse:
+    StandardResponse:
       type: object
       properties:
         message:
           type: string
-          example: Asociación laboral finalizada y cuenta de trabajo desactivada exitosamente.
-        association_id:
-          type: integer
-          example: 1
-        end_date:
-          type: string
-          format: date
-          description: Fecha en que finalizó la asociación laboral.
-          example: 2025-09-27
-          
-    ErrorResponse:
-      type: object
-      properties:
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Trabajadores obtenidos exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
         error:
           type: string
-          description: Descripción del error.
-          example: No autorizado o El recurso no existe.
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+    WorkerListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+
+    WorkerSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search:
+          type: string
+          description: Término de búsqueda para filtrar trabajadores (ej. por nombre o email)
+          example: "Usuario"
 
 security:
   - bearerAuth: []
 
 paths:
-  /api/parish/{parishId}/workers:
-    get:
+  /api/parish/{parishId}/workers/list:
+    post:
       tags:
         - Gestión de Cuentas (Trabajadores)
       summary: Listar Trabajadores Asociados a la Parroquia
@@ -248,33 +284,90 @@ paths:
             type: integer
           description: ID de la Parroquia que se está administrando.
           required: true
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-          description: Número de página.
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-          description: Límite de registros por página.
-        - in: query
-          name: search
-          schema:
-            type: string
-          description: Término de búsqueda para filtrar trabajadores (ej. por nombre o email).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerListRequest'
       responses:
         '200':
           description: Listado paginado de trabajadores.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkerListResponse'
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Trabajadores obtenidos exitosamente"
+                data:
+                  total_records: 100
+                  total_pages: 10
+                  current_page: 1
+                  workers:
+                    - association_id: 1
+                      person_id: 101
+                      first_names: Usuario1
+                      paternal_surname: Apellido1
+                      email: usuario1@example.com
+                      active: true
+                error: ""
+                traceback: ""
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
 
+  /api/parish/{parishId}/workers/search:
+    post:
+      tags:
+        - Gestión de Cuentas (Trabajadores)
+      summary: Buscar Trabajadores Asociados a la Parroquia
+      description: Busca trabajadores por nombre o email en la parroquia {parishId}.
+      parameters:
+        - in: path
+          name: parishId
+          schema:
+            type: integer
+          description: ID de la Parroquia que se está administrando.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerSearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda de trabajadores.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda de trabajadores completada exitosamente"
+                data:
+                  total_records: 5
+                  total_pages: 1
+                  current_page: 1
+                  workers:
+                    - association_id: 1
+                      person_id: 101
+                      first_names: Usuario1
+                      paternal_surname: Apellido1
+                      email: usuario1@example.com
+                      active: true
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/parish/{parishId}/workers/create:
     post:
       tags:
         - Gestión de Cuentas (Trabajadores)
@@ -299,13 +392,25 @@ paths:
           content:
             application/json:
               schema:
-                oneOf:
-                  - $ref: '#/components/schemas/WorkerInviteExistingResponse'
-                  - $ref: '#/components/schemas/WorkerInviteNewResponse'
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Usuario asociado exitosamente a la parroquia"
+                data:
+                  association_id: 456
+                error: ""
+                traceback: ""
         '400':
           description: Datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
 
   /api/parish/associations/{associationId}/roles:
     get:

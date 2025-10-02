@@ -213,24 +213,75 @@ components:
           description: Número de permisos que fueron asignados o revocados en esta operación.
           example: 3
           
-    ErrorResponse:
+    StandardResponse:
       type: object
       properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Roles obtenidos exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
         error:
           type: string
-          description: Descripción del error.
-          example: No autorizado o El recurso no existe.
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+    RoleListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+
+    RoleSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search:
+          type: string
+          description: Término de búsqueda para filtrar roles
+          example: "Administrador"
 
 security:
   - bearerAuth: []
 
 paths:
-  /api/parish/{parishId}/roles:
-    get:
+  /api/parish/{parishId}/roles/list:
+    post:
       tags:
         - Gestión de Roles
       summary: Listar Roles de la Parroquia
-      description: Obtiene la lista paginada y filtrable de roles definidos por la Parroquia {parishId}.
+      description: Obtiene la lista paginada de roles definidos por la Parroquia {parishId}.
       parameters:
         - in: path
           name: parishId
@@ -238,33 +289,86 @@ paths:
             type: integer
           description: ID de la Parroquia que está administrando.
           required: true
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-          description: Número de página.
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-          description: Límite de registros por página.
-        - in: query
-          name: search
-          schema:
-            type: string
-          description: Término de búsqueda para filtrar roles.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleListRequest'
       responses:
         '200':
           description: Listado paginado de roles.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleListResponse'
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Roles obtenidos exitosamente"
+                data:
+                  total_records: 50
+                  total_pages: 5
+                  current_page: 1
+                  roles:
+                    - role_id: 1
+                      name: Rol de Ejemplo 1
+                      description: Descripción del rol de ejemplo número 1.
+                      active: true
+                error: ""
+                traceback: ""
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
 
+  /api/parish/{parishId}/roles/search:
+    post:
+      tags:
+        - Gestión de Roles
+      summary: Buscar Roles de la Parroquia
+      description: Busca roles por nombre en la Parroquia {parishId}.
+      parameters:
+        - in: path
+          name: parishId
+          schema:
+            type: integer
+          description: ID de la Parroquia que está administrando.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleSearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda de roles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda de roles completada exitosamente"
+                data:
+                  total_records: 5
+                  total_pages: 1
+                  current_page: 1
+                  roles:
+                    - role_id: 1
+                      name: Administrador
+                      description: Rol de administrador del sistema
+                      active: true
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/parish/{parishId}/roles/create:
     post:
       tags:
         - Gestión de Roles

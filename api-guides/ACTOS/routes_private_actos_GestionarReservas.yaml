@@ -194,84 +194,180 @@ components:
           description: Nuevo estado de la reserva.
           example: COMPLETED
 
-    MessageResponse:
+    StandardResponse:
       type: object
       properties:
         message:
           type: string
-          description: Mensaje de confirmación.
-          example: Reserva actualizada exitosamente.
-          
-    ErrorResponse:
-      type: object
-      properties:
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Reserva actualizada exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
         error:
           type: string
-          description: Descripción del error.
-          example: No autorizado o El recurso no existe.
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+    ReservationListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+
+    ReservationSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search:
+          type: string
+          description: Término de búsqueda (ej. por nombre de usuario o evento)
+          example: "Usuario"
+        status:
+          $ref: '#/components/schemas/ReservationStatus'
+          description: Filtrar por estado de la reserva
+          example: RESERVED
+        start_date:
+          type: string
+          format: date
+          description: Fecha de inicio para filtrar por event_date (YYYY-MM-DD)
+          example: "2025-08-01"
+        end_date:
+          type: string
+          format: date
+          description: Fecha de fin para filtrar por event_date (YYYY-MM-DD)
+          example: "2025-08-31"
 
 security:
   - bearerAuth: []
 
 paths:
-  /api/acts/reservations:
-    get:
+  /api/acts/reservations/list:
+    post:
       tags:
         - Gestión de Reservas
-      summary: Listar y Buscar Reservas
-      description: Obtiene un listado paginado y filtrable de las reservas. Requiere permiso READ_RESERVATIONS.
-      parameters:
-        - in: query
-          name: page
-          schema:
-            type: integer
-            default: 1
-          description: Número de página.
-          required: true
-        - in: query
-          name: limit
-          schema:
-            type: integer
-            default: 10
-          description: Límite de registros por página.
-          required: true
-        - in: query
-          name: search
-          schema:
-            type: string
-          description: Término de búsqueda (ej. por nombre de usuario o evento).
-          required: false
-        - in: query
-          name: status
-          schema:
-            $ref: '#/components/schemas/ReservationStatus'
-          description: Filtrar por estado de la reserva.
-          required: false
-        - in: query
-          name: start_date
-          schema:
-            type: string
-            format: date
-          description: Fecha de inicio para filtrar por event_date (YYYY-MM-DD).
-          required: false
-        - in: query
-          name: end_date
-          schema:
-            type: string
-            format: date
-          description: Fecha de fin para filtrar por event_date (YYYY-MM-DD).
-          required: false
+      summary: Listar Reservas
+      description: Obtiene un listado paginado de las reservas. Requiere permiso READ_RESERVATIONS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationListRequest'
       responses:
         '200':
           description: Listado paginado de reservas.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationListResponse'
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Reservas obtenidas exitosamente"
+                data:
+                  total_records: 100
+                  total_pages: 10
+                  current_page: 1
+                  items:
+                    - id: 1
+                      user_person:
+                        id: 10
+                        full_name: Usuario 1
+                      event_variant_name: Funeral
+                      event_date: '2025-08-13T00:00:00Z'
+                      paid_amount: 449.00
+                      status: RESERVED
+                error: ""
+                traceback: ""
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '403':
           description: Prohibido (Falta el permiso READ_RESERVATIONS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/acts/reservations/search:
+    post:
+      tags:
+        - Gestión de Reservas
+      summary: Buscar Reservas
+      description: Busca reservas por nombre de usuario, evento u otros criterios. Requiere permiso READ_RESERVATIONS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationSearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda de reservas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda de reservas completada exitosamente"
+                data:
+                  total_records: 10
+                  total_pages: 1
+                  current_page: 1
+                  items:
+                    - id: 1
+                      user_person:
+                        id: 10
+                        full_name: Usuario 1
+                      event_variant_name: Funeral
+                      event_date: '2025-08-13T00:00:00Z'
+                      paid_amount: 449.00
+                      status: RESERVED
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso READ_RESERVATIONS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/reservations/{id}:
     get:
@@ -292,29 +388,41 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/ReservationDetail'
+                $ref: '#/components/schemas/StandardResponse'
               example:
-                id: 1
-                event_variant:
-                  id: 5
-                  name: Funeral
-                  chapel:
-                    id: 101
-                    name: Capilla San José
-                person:
-                  id: 10
-                  full_name: Usuario 1
-                  email: user1@mail.com
-                  document: '12345678'
-                event_date: '2025-08-13T00:00:00Z'
-                registration_date: '2025-07-01T10:00:00Z'
-                reschedule_date: null
-                status: RESERVED
-                paid_amount: 449.00
+                message: "Detalles de la reserva obtenidos exitosamente"
+                data:
+                  id: 1
+                  event_variant:
+                    id: 5
+                    name: Funeral
+                    chapel:
+                      id: 101
+                      name: Capilla San José
+                  person:
+                    id: 10
+                    full_name: Usuario 1
+                    email: user1@mail.com
+                    document: '12345678'
+                  event_date: '2025-08-13T00:00:00Z'
+                  registration_date: '2025-07-01T10:00:00Z'
+                  reschedule_date: null
+                  status: RESERVED
+                  paid_amount: 449.00
+                error: ""
+                traceback: ""
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '404':
           description: Reserva no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
           
     put:
       tags:
@@ -341,17 +449,36 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: '#/components/schemas/StandardResponse'
               example:
-                message: Reserva actualizada exitosamente.
+                message: "Reserva actualizada exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
         '400':
           description: Datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '403':
           description: Prohibido (Falta el permiso EDIT_RESERVATIONS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '404':
           description: Reserva no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
 
     patch:
       tags:
@@ -377,17 +504,79 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: '#/components/schemas/StandardResponse'
               example:
-                message: Reserva actualizada exitosamente.
+                message: "Reserva actualizada exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
         '400':
           description: Datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '403':
           description: Prohibido (Falta el permiso EDIT_RESERVATIONS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '404':
           description: Reserva no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+    delete:
+      tags:
+        - Gestión de Reservas
+      summary: Eliminar físicamente una Reserva
+      description: Elimina físicamente una reserva. Requiere permiso DELETE_RESERVATIONS.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID de la reserva a eliminar.
+          required: true
+      responses:
+        '200':
+          description: Reserva eliminada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Reserva eliminada exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso DELETE_RESERVATIONS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Reserva no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/reservations/{id}/status:
     post:
@@ -414,14 +603,33 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/MessageResponse'
+                $ref: '#/components/schemas/StandardResponse'
               example:
-                message: Estado de la reserva actualizado exitosamente.
+                message: "Estado de la reserva actualizado exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
         '400':
           description: Datos de entrada inválidos (ej. estado no permitido para el cambio).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '401':
           description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '403':
           description: Prohibido (Falta el permiso UPDATE_RESERVATION_STATUS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
         '404':
           description: Reserva no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
