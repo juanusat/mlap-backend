@@ -1,0 +1,647 @@
+openapi: 3.0.0
+info:
+  title: Gestión de Requisitos de Actos Litúrgicos
+  description: APIs para la gestión (CRUD y listados) de requisitos específicos asociados a combinaciones de Capilla y Evento Base (Chapel-Event) en una Parroquia.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    ChapelEventSummary:
+      type: object
+      description: Resumen de una combinación de Capilla-Evento Base.
+      properties:
+        id:
+          type: integer
+          description: ID de la combinación Capilla-Evento (tabla chapel_event).
+          example: 50
+        event_name:
+          type: string
+          description: Nombre del Evento Base (ej. Matrimonio).
+          example: Matrimonio
+        chapel_name:
+          type: string
+          description: Nombre de la Capilla.
+          example: Capilla San José
+
+    RequirementData:
+      type: object
+      description: Estructura de un Requisito Específico para listados.
+      properties:
+        id:
+          type: integer
+          description: ID del requisito específico (tabla chapel_event_requirement).
+          example: 101
+        name:
+          type: string
+          description: Nombre del requisito.
+          example: Certificado de Cursillo Pre-Matrimonial
+        description:
+          type: string
+          nullable: true
+          description: Descripción o detalles del requisito.
+          example: El certificado debe estar vigente...
+        active:
+          type: boolean
+          description: Estado del requisito (Activo/Inactivo).
+          example: true
+
+    RequirementListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+          description: Número total de registros que cumplen el filtro.
+          example: 12
+        total_pages:
+          type: integer
+          description: Número total de páginas.
+          example: 2
+        current_page:
+          type: integer
+          description: Número de página actual.
+          example: 1
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RequirementData'
+
+    RequirementCreateRequest:
+      type: object
+      required:
+        - chapel_event_id
+        - name
+        - description
+      properties:
+        chapel_event_id:
+          type: integer
+          description: ID de la combinación Capilla-Evento a la que se asocia el requisito.
+          example: 50
+        name:
+          type: string
+          description: Nombre del nuevo requisito.
+          example: Acta de Nacimiento Original
+        description:
+          type: string
+          nullable: true
+          description: Descripción o detalles del requisito.
+          example: Presentar en físico y copia.
+
+    RequirementDetail:
+      type: object
+      description: Estructura detallada de un Requisito Específico.
+      properties:
+        id:
+          type: integer
+          description: ID del requisito específico.
+          example: 101
+        chapel_event_id:
+          type: integer
+          description: ID de la combinación Capilla-Evento asociada.
+          example: 50
+        name:
+          type: string
+          description: Nombre del requisito.
+          example: Certificado de Cursillo Pre-Matrimonial
+        description:
+          type: string
+          nullable: true
+          description: Descripción o detalles del requisito.
+          example: El certificado debe estar vigente...
+        active:
+          type: boolean
+          description: Estado del requisito.
+          example: true
+
+    RequirementUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          description: Nombre del requisito.
+          example: Acta de Bautismo Actualizada
+        description:
+          type: string
+          nullable: true
+          description: Descripción o detalles del requisito.
+          example: No mayor a 6 meses.
+        active:
+          type: boolean
+          description: Estado del requisito (Switch).
+          example: false
+
+    StandardResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Requisito creado exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
+        error:
+          type: string
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+    ChapelEventsListRequest:
+      type: object
+      properties:
+        search:
+          type: string
+          description: Término de búsqueda opcional para filtrar por nombre de evento o capilla
+          example: "Matrimonio"
+        chapel_id:
+          type: integer
+          description: ID de la capilla para filtrar opcionalmente
+          example: 101
+
+    RequirementListRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - chapel_event_id
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        chapel_event_id:
+          type: integer
+          description: ID de la combinación Capilla-Evento para obtener sus requisitos
+          example: 50
+
+    RequirementSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - chapel_event_id
+        - search
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        chapel_event_id:
+          type: integer
+          description: ID de la combinación Capilla-Evento para obtener sus requisitos
+          example: 50
+        search:
+          type: string
+          description: Término de búsqueda para filtrar por nombre o descripción del requisito
+          example: "Certificado"
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/acts/chapel-events/search:
+    post:
+      tags:
+        - Requisitos - Auxiliares
+      summary: Buscar Combinaciones Evento-Capilla
+      description: Obtiene las combinaciones de Evento Base y Capilla (Chapel-Event) que ofrece la parroquia con búsqueda y filtros, para la selección de qué requisitos gestionar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChapelEventsListRequest'
+      responses:
+        '200':
+          description: Listado exitoso de combinaciones Capilla-Evento.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Combinaciones Capilla-Evento obtenidas exitosamente"
+                data:
+                  - id: 50
+                    event_name: Matrimonio
+                    chapel_name: Capilla San José
+                  - id: 51
+                    event_name: Bautizo
+                    chapel_name: Capilla San José
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado (JWT inválido o ausente).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/acts/requirements/chapel/list:
+    post:
+      tags:
+        - Gestión de Requisitos
+      summary: Listar Requisitos Específicos por Capilla-Evento
+      description: Obtiene un listado paginado de los requisitos adicionales definidos para una combinación de Evento-Capilla. Requiere permiso READ_REQUIREMENTS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementListRequest'
+      responses:
+        '200':
+          description: Listado paginado de requisitos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Requisitos obtenidos exitosamente"
+                data:
+                  total_records: 2
+                  total_pages: 1
+                  current_page: 1
+                  items:
+                    - id: 101
+                      name: Certificado de Cursillo Pre-Matrimonial
+                      description: El certificado debe estar vigente...
+                      active: true
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso READ_REQUIREMENTS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/acts/requirements/chapel/search:
+    post:
+      tags:
+        - Gestión de Requisitos
+      summary: Buscar Requisitos Específicos por Capilla-Evento
+      description: Busca requisitos adicionales por nombre o descripción para una combinación específica de Evento-Capilla. Requiere permiso READ_REQUIREMENTS.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementSearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda de requisitos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda de requisitos completada exitosamente"
+                data:
+                  total_records: 1
+                  total_pages: 1
+                  current_page: 1
+                  items:
+                    - id: 101
+                      name: Certificado de Cursillo Pre-Matrimonial
+                      description: El certificado debe estar vigente...
+                      active: true
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso READ_REQUIREMENTS).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/acts/requirements/chapel/create:
+    post:
+      tags:
+        - Gestión de Requisitos
+      summary: Crear un Nuevo Requisito Específico de Capilla-Evento
+      description: Registra un nuevo requisito adicional para una combinación de Capilla-Evento. Requiere permiso CREATE_REQUIREMENT.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementCreateRequest'
+      responses:
+        '201':
+          description: Requisito creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Requisito creado exitosamente"
+                data:
+                  id: 102
+                error: ""
+                traceback: ""
+        '400':
+          description: Datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso CREATE_REQUIREMENT).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/acts/requirements/chapel/{id}:
+    get:
+      tags:
+        - Gestión de Requisitos
+      summary: Obtener Detalles de un Requisito Específico
+      description: Obtiene la información completa de un requisito específico por su ID.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID del requisito específico (tabla chapel_event_requirement).
+          required: true
+      responses:
+        '200':
+          description: Detalles del requisito obtenidos exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Detalles del requisito obtenidos exitosamente"
+                data:
+                  id: 101
+                  chapel_event_id: 50
+                  name: Certificado de Cursillo Pre-Matrimonial
+                  description: El certificado debe estar vigente...
+                  active: true
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Requisito no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+          
+    put:
+      tags:
+        - Gestión de Requisitos
+      summary: Actualizar (PUT) un Requisito Específico
+      description: Modifica completamente la información de un requisito existente. Requiere permiso UPDATE_REQUIREMENT.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID del requisito a actualizar.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              # Para PUT, podría requerir chapel_event_id si se permite mover el requisito,
+              # pero basándonos en la descripción de PUT/PATCH solo se mencionan name, description, active.
+              # Usaremos el esquema de creación y marcaremos chapel_event_id como solo lectura (o simplemente usamos el de patch si es suficiente)
+              $ref: '#/components/schemas/RequirementUpdateRequest' 
+              # Nota: En un PUT completo, name, description y active serían requeridos. Aquí se usa el esquema PATCH por simplicidad, aunque un PUT estricto debería requerir todos los campos no de solo lectura.
+      responses:
+        '200':
+          description: Requisito actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Requisito actualizado exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
+        '400':
+          description: Datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso UPDATE_REQUIREMENT).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Requisito no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+    patch:
+      tags:
+        - Gestión de Requisitos
+      summary: Actualizar (PATCH) Parcialmente un Requisito Específico
+      description: Modifica parcialmente (nombre, descripción o estado) la información de un requisito existente. Requiere permiso UPDATE_REQUIREMENT.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID del requisito a actualizar.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RequirementUpdateRequest'
+      responses:
+        '200':
+          description: Requisito actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Requisito actualizado exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
+        '400':
+          description: Datos de entrada inválidos.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso UPDATE_REQUIREMENT).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Requisito no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+    delete:
+      tags:
+        - Gestión de Requisitos
+      summary: Eliminar físicamente un Requisito Específico
+      description: Elimina físicamente un requisito existente. Requiere permiso DELETE_REQUIREMENT.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID del requisito a eliminar.
+          required: true
+      responses:
+        '200':
+          description: Requisito eliminado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Requisito eliminado exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso DELETE_REQUIREMENT).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Requisito no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/acts/requirements/chapel/{id}/deactivate:
+    post:
+      tags:
+        - Gestión de Requisitos
+      summary: Dar de Baja/Desactivar un Requisito Específico (Baja Lógica)
+      description: Realiza una baja lógica (desactiva el campo 'active') del requisito. Requiere permiso DELETE_REQUIREMENT.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID del requisito a desactivar.
+          required: true
+      requestBody:
+        description: Cuerpo de la solicitud vacío (no se requiere body).
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Requisito desactivado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Requisito desactivado exitosamente"
+                data: {}
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '403':
+          description: Prohibido (Falta el permiso DELETE_REQUIREMENT).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Requisito no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'

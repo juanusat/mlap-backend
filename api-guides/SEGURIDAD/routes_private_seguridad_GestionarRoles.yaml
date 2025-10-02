@@ -1,0 +1,545 @@
+openapi: 3.0.0
+info:
+  title: Gestión de Roles de Parroquia
+  description: APIs para la administración de roles dentro de una Parroquia específica, incluyendo CRUD de roles y gestión de permisos asociados a cada rol.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    RoleSummary:
+      type: object
+      description: Resumen de la información de un rol para listados.
+      properties:
+        role_id:
+          type: integer
+          description: ID del rol.
+          example: 1
+        name:
+          type: string
+          description: Nombre del rol.
+          example: Rol de Ejemplo 1
+        description:
+          type: string
+          nullable: true
+          description: Descripción del rol.
+          example: Descripción del rol de ejemplo número 1.
+        active:
+          type: boolean
+          description: Estado del rol (Activo/Inactivo).
+          example: true
+
+    RoleListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+          description: Número total de roles que cumplen el filtro.
+          example: 50
+        total_pages:
+          type: integer
+          description: Número total de páginas.
+          example: 5
+        current_page:
+          type: integer
+          description: Número de página actual.
+          example: 1
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleSummary'
+
+    RoleCreateRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          description: Nombre del nuevo rol (debe ser único por parroquia).
+          example: Vicario
+        description:
+          type: string
+          nullable: true
+          description: Descripción detallada del rol.
+          example: Encargado de las funciones administrativas y litúrgicas del párroco.
+
+    RoleCreationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Rol creado exitosamente.
+        role_id:
+          type: integer
+          description: ID del rol recién creado.
+          example: 15
+        name:
+          type: string
+          example: Vicario
+
+    RoleDetail:
+      type: object
+      description: Información completa de un rol específico.
+      properties:
+        role_id:
+          type: integer
+          example: 1
+        parish_id:
+          type: integer
+          description: ID de la Parroquia a la que pertenece el rol.
+          example: 15
+        name:
+          type: string
+          example: Rol de Ejemplo 1
+        description:
+          type: string
+          nullable: true
+          example: Descripción del rol de ejemplo número 1.
+        active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Fecha y hora de creación del rol.
+          example: 2024-05-01T10:00:00Z
+
+    RoleUpdateRequest:
+      type: object
+      required:
+        - name
+        - description
+      properties:
+        name:
+          type: string
+          description: Nuevo nombre del rol.
+          example: Nuevo Nombre del Rol
+        description:
+          type: string
+          nullable: true
+          description: Nueva descripción del rol.
+          example: Nueva descripción actualizada.
+
+    RoleUpdateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Rol actualizado exitosamente.
+        role_id:
+          type: integer
+          example: 1
+
+    RoleStatusRequest:
+      type: object
+      required:
+        - active
+      properties:
+        active:
+          type: boolean
+          description: true para activar, false para desactivar.
+          example: false
+
+    RoleStatusResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Estado del rol actualizado exitosamente (Desactivado).
+        role_id:
+          type: integer
+          example: 1
+        active:
+          type: boolean
+          example: false
+
+    RoleDeleteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Rol desactivado/eliminado lógicamente exitosamente.
+        role_id:
+          type: integer
+          example: 1
+
+    PermissionUpdateItem:
+      type: object
+      required:
+        - permission_id
+        - granted
+      properties:
+        permission_id:
+          type: integer
+          description: ID del permiso del catálogo global.
+          example: 1
+        granted:
+          type: boolean
+          description: Asignar (true) o Revocar (false) el permiso.
+          example: true
+          
+    RolePermissionsUpdateRequest:
+      type: object
+      required:
+        - permissions
+      properties:
+        permissions:
+          type: array
+          description: Lista de permisos a modificar (asignar o revocar).
+          items:
+            $ref: '#/components/schemas/PermissionUpdateItem'
+
+    RolePermissionsUpdateResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Permisos del rol actualizados exitosamente.
+        role_id:
+          type: integer
+          example: 1
+        updated_count:
+          type: integer
+          description: Número de permisos que fueron asignados o revocados en esta operación.
+          example: 3
+          
+    StandardResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Roles obtenidos exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
+        error:
+          type: string
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+    RoleListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+
+    RoleSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search:
+          type: string
+          description: Término de búsqueda para filtrar roles
+          example: "Administrador"
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/parish/{parishId}/roles/list:
+    post:
+      tags:
+        - Gestión de Roles
+      summary: Listar Roles de la Parroquia
+      description: Obtiene la lista paginada de roles definidos por la Parroquia {parishId}.
+      parameters:
+        - in: path
+          name: parishId
+          schema:
+            type: integer
+          description: ID de la Parroquia que está administrando.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleListRequest'
+      responses:
+        '200':
+          description: Listado paginado de roles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Roles obtenidos exitosamente"
+                data:
+                  total_records: 50
+                  total_pages: 5
+                  current_page: 1
+                  roles:
+                    - role_id: 1
+                      name: Rol de Ejemplo 1
+                      description: Descripción del rol de ejemplo número 1.
+                      active: true
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/parish/{parishId}/roles/search:
+    post:
+      tags:
+        - Gestión de Roles
+      summary: Buscar Roles de la Parroquia
+      description: Busca roles por nombre en la Parroquia {parishId}.
+      parameters:
+        - in: path
+          name: parishId
+          schema:
+            type: integer
+          description: ID de la Parroquia que está administrando.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleSearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda de roles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda de roles completada exitosamente"
+                data:
+                  total_records: 5
+                  total_pages: 1
+                  current_page: 1
+                  roles:
+                    - role_id: 1
+                      name: Administrador
+                      description: Rol de administrador del sistema
+                      active: true
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/parish/{parishId}/roles/create:
+    post:
+      tags:
+        - Gestión de Roles
+      summary: Crear Rol
+      description: Crea un nuevo rol dentro del contexto de la parroquia {parishId}.
+      parameters:
+        - in: path
+          name: parishId
+          schema:
+            type: integer
+          description: ID de la Parroquia.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleCreateRequest'
+      responses:
+        '201':
+          description: Rol creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleCreationResponse'
+        '400':
+          description: Datos de entrada inválidos (ej. Nombre de rol ya existe).
+        '401':
+          description: No autorizado.
+
+  /api/parish/roles/{roleId}:
+    get:
+      tags:
+        - Gestión de Roles
+      summary: Ver/Obtener Detalles del Rol
+      description: Obtiene la información completa de un rol específico.
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          description: ID del rol.
+          required: true
+      responses:
+        '200':
+          description: Detalles del rol obtenidos exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          description: No autorizado.
+        '404':
+          description: Rol no encontrado.
+          
+    put:
+      tags:
+        - Gestión de Roles
+      summary: Editar Rol (Nombre y Descripción)
+      description: Modifica el nombre y la descripción de un rol existente.
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          description: ID del rol a editar.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleUpdateRequest'
+      responses:
+        '200':
+          description: Rol actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleUpdateResponse'
+        '400':
+          description: Datos de entrada inválidos (ej. Nombre ya existe).
+        '401':
+          description: No autorizado.
+        '404':
+          description: Rol no encontrado.
+
+    delete:
+      tags:
+        - Gestión de Roles
+      summary: Eliminar Rol (Desactivación/Borrado Lógico)
+      description: Desactiva o elimina lógicamente el rol.
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          description: ID del rol a eliminar.
+          required: true
+      responses:
+        '200':
+          description: Rol desactivado/eliminado lógicamente exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleDeleteResponse'
+        '401':
+          description: No autorizado.
+        '404':
+          description: Rol no encontrado.
+
+  /api/parish/roles/{roleId}/status:
+    patch:
+      tags:
+        - Gestión de Roles
+      summary: Desactivar/Activar Rol (Toggle Estado)
+      description: Cambia el estado 'active' del rol.
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          description: ID del rol a modificar.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleStatusRequest'
+      responses:
+        '200':
+          description: Estado del rol actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleStatusResponse'
+        '401':
+          description: No autorizado.
+        '404':
+          description: Rol no encontrado.
+
+  /api/parish/roles/{roleId}/permissions:
+    put:
+      tags:
+        - Gestión de Roles (Permisos)
+      summary: Gestionar Permisos (Asignación/Revocación Masiva)
+      description: Asigna o revoca masivamente los permisos del sistema a un rol específico.
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          description: ID del rol al que se modificarán los permisos.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RolePermissionsUpdateRequest'
+      responses:
+        '200':
+          description: Permisos del rol actualizados exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolePermissionsUpdateResponse'
+        '400':
+          description: Datos de entrada inválidos.
+        '401':
+          description: No autorizado.
+        '404':
+          description: Rol o alguno de los permisos no encontrado.
