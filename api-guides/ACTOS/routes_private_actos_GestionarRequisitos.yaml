@@ -223,12 +223,18 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/acts/chapel_events:
-    get:
+  /api/acts/chapel-events/search:
+    post:
       tags:
         - Requisitos - Auxiliares
-      summary: Listar Combinaciones Evento-Capilla
-      description: Obtiene las combinaciones de Evento Base y Capilla (Chapel-Event) que ofrece la parroquia, para la selección de qué requisitos gestionar.
+      summary: Buscar Combinaciones Evento-Capilla
+      description: Obtiene las combinaciones de Evento Base y Capilla (Chapel-Event) que ofrece la parroquia con búsqueda y filtros, para la selección de qué requisitos gestionar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChapelEventsListRequest'
       responses:
         '200':
           description: Listado exitoso de combinaciones Capilla-Evento.

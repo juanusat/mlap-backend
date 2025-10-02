@@ -267,6 +267,21 @@ components:
           description: Término de búsqueda para filtrar trabajadores (ej. por nombre o email)
           example: "Usuario"
 
+    RoleListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+
 security:
   - bearerAuth: []
 
@@ -412,31 +427,38 @@ paths:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
 
-  /api/parish/associations/{associationId}/roles:
-    get:
+  /api/security/parish-workers/{id}/roles/list:
+    post:
       tags:
         - Gestión de Cuentas (Roles)
-      summary: Ver Roles Activos de un Trabajador Asociado
-      description: Lista todos los roles activos que tiene un trabajador ({associationId}) en la parroquia.
+      summary: Listar Roles Activos de un Trabajador Asociado
+      description: Lista todos los roles activos que tiene un trabajador en la parroquia con paginación.
       parameters:
         - in: path
-          name: associationId
+          name: id
           schema:
             type: integer
           description: ID de la asociación laboral del trabajador.
           required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleListRequest'
       responses:
         '200':
           description: Roles activos listados exitosamente.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/WorkerRolesResponse'
+                $ref: '#/components/schemas/StandardResponse'
         '401':
           description: No autorizado.
         '404':
           description: Asociación no encontrada.
 
+  /api/security/parish-workers/{id}/roles/create:
     post:
       tags:
         - Gestión de Cuentas (Roles)

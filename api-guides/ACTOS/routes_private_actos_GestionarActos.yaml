@@ -305,12 +305,18 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/catalogs/events:
-    get:
+  /api/catalogs/events/search:
+    post:
       tags:
         - Catálogos Auxiliares
-      summary: Obtener Catálogo de Eventos Base
-      description: Obtiene el catálogo de Eventos Base definidos por la Diócesis, para la selección inicial al crear un Acto Litúrgico.
+      summary: Buscar Catálogo de Eventos Base
+      description: Obtiene el catálogo de Eventos Base definidos por la Diócesis con búsqueda y paginación, para la selección inicial al crear un Acto Litúrgico.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
       responses:
         '200':
           description: Listado exitoso de eventos base.
@@ -339,12 +345,18 @@ paths:
                 error: "No autorizado"
                 traceback: ""
               
-  /api/parish/chapels:
-    get:
+  /api/parish/chapels/search:
+    post:
       tags:
         - Catálogos Auxiliares
-      summary: Obtener Listado de Capillas de la Parroquia
-      description: Obtiene el listado de Capillas que pertenecen a la Parroquia activa, para la selección al crear un Acto Litúrgico.
+      summary: Buscar Capillas de la Parroquia
+      description: Obtiene el listado de Capillas que pertenecen a la Parroquia activa con búsqueda y paginación, para la selección al crear un Acto Litúrgico.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SearchRequest'
       responses:
         '200':
           description: Listado exitoso de capillas.
