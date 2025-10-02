@@ -1,0 +1,105 @@
+openapi: 3.0.0
+info:
+  title: Módulo Reservas - Creación de Eventos por Cliente
+  description: API para registrar la reserva de un evento litúrgico por parte del usuario logueado, incluyendo el registro de los requisitos asociados.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs de cliente
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    ReservationCreateRequest:
+      type: object
+      required:
+        - event_variant_id
+        - event_date
+        - paid_amount
+      properties:
+        event_variant_id:
+          type: integer
+          description: ID de la EventVariant (tipo de acto litúrgico) seleccionada.
+          example: 5
+        event_date:
+          type: string
+          format: date-time
+          description: Fecha y hora específicas del evento que se está reservando.
+          example: 2025-09-30T16:00:00Z
+        paid_amount:
+          type: number
+          format: float
+          description: Monto pagado al momento de crear la reserva.
+          example: 150.00
+
+    StandardResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Reserva creada exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
+        error:
+          type: string
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/client/reservations/create:
+    post:
+      tags:
+        - Reserva Evento (Cliente)
+      summary: Crear la Reserva (Paso Final)
+      description: Registra la reserva para un evento específico. El sistema asocia la reserva al usuario logueado y copia los requisitos activos.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReservationCreateRequest'
+      responses:
+        '201':
+          description: Reserva creada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Reserva creada exitosamente"
+                data:
+                  reservation_id: 1234
+                  status: "RESERVED"
+                error: ""
+                traceback: ""
+        '400':
+          description: Datos de entrada inválidos (ej. fecha no disponible, ID de variante no existe, monto negativo).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '401':
+          description: No autorizado (JWT inválido o ausente).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'

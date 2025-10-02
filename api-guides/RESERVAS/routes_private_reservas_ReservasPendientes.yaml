@@ -1,0 +1,275 @@
+openapi: 3.0.0
+info:
+  title: Módulo Reservas - Reservas Pendientes (Cliente)
+  description: APIs para que el usuario (cliente) logueado pueda ver y gestionar sus propias reservas activas y cancelarlas.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs de cliente
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    ClientReservationStatus:
+      type: string
+      enum: [RESERVED, IN_PROGRESS, CANCELLED]
+      description: Estado relevante de la reserva para el cliente.
+
+    ClientReservationSummary:
+      type: object
+      description: Estructura de una reserva para el listado del cliente.
+      properties:
+        id:
+          type: integer
+          description: ID de la reserva.
+          example: 1
+        event_name:
+          type: string
+          description: Nombre de la variante de evento (Acto Litúrgico).
+          example: Confirmación
+        event_date:
+          type: string
+          format: date
+          description: Fecha del evento (YYYY-MM-DD).
+          example: 2025-01-13
+        paid_amount:
+          type: number
+          format: float
+          description: Monto pagado hasta la fecha.
+          example: 346.00
+        status:
+          $ref: '#/components/schemas/ClientReservationStatus'
+        chapel_name:
+          type: string
+          description: Nombre de la Capilla donde se realizará el evento.
+          example: Capilla San José
+        parish_name:
+          type: string
+          description: Nombre de la Parroquia a la que pertenece la capilla.
+          example: Parroquia Central
+
+    ClientReservationListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+          description: Número total de registros que cumplen el filtro.
+          example: 10
+        total_pages:
+          type: integer
+          description: Número total de páginas.
+          example: 4
+        current_page:
+          type: integer
+          description: Número de página actual.
+          example: 1
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClientReservationSummary'
+
+    StandardResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Reservas pendientes obtenidas exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
+        error:
+          type: string
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+    PendingListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+
+    PendingSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search_event_name
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search_event_name:
+          type: string
+          description: Término de búsqueda para filtrar por nombre del evento
+          example: "Confirmación"
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/client/reservations/pending/list:
+    post:
+      tags:
+        - Reservas Cliente (Pendientes)
+      summary: Listar Reservas Activas del Usuario Logueado
+      description: Obtiene un listado paginado de las reservas del usuario logueado con estado 'RESERVED' o 'IN_PROGRESS'.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PendingListRequest'
+      responses:
+        '200':
+          description: Listado paginado de reservas activas del cliente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Reservas pendientes obtenidas exitosamente"
+                data:
+                  total_records: 10
+                  total_pages: 4
+                  current_page: 1
+                  items:
+                    - id: 1
+                      event_name: Confirmación
+                      event_date: '2025-01-13'
+                      paid_amount: 346.00
+                      status: RESERVED
+                      chapel_name: Capilla San José
+                      parish_name: Parroquia Central
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado (JWT inválido o ausente).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/client/reservations/pending/search:
+    post:
+      tags:
+        - Reservas Cliente (Pendientes)
+      summary: Buscar Reservas Activas del Usuario Logueado
+      description: Busca reservas activas del usuario por nombre de evento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PendingSearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda de reservas activas del cliente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda de reservas pendientes completada exitosamente"
+                data:
+                  total_records: 2
+                  total_pages: 1
+                  current_page: 1
+                  items:
+                    - id: 1
+                      event_name: Confirmación
+                      event_date: '2025-01-13'
+                      paid_amount: 346.00
+                      status: RESERVED
+                      chapel_name: Capilla San José
+                      parish_name: Parroquia Central
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado (JWT inválido o ausente).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+
+  /api/client/reservations/{id}/cancel:
+    post:
+      tags:
+        - Reservas Cliente (Pendientes)
+      summary: Cancelar una Reserva
+      description: Cambia el estado de una reserva específica del usuario logueado a 'CANCELLED'.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID de la reserva a cancelar.
+          required: true
+      requestBody:
+        description: Cuerpo de la solicitud vacío (no se requiere body).
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Reserva cancelada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "La reserva ha sido cancelada exitosamente"
+                data:
+                  reservation_id: 1
+                  new_status: "CANCELLED"
+                error: ""
+                traceback: ""
+        '401':
+          description: No autorizado (JWT inválido o la reserva no pertenece al usuario).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '400':
+          description: La reserva ya está en un estado que no permite la cancelación (ej. 'FULFILLED' o ya 'CANCELLED').
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+        '404':
+          description: Reserva no encontrada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'

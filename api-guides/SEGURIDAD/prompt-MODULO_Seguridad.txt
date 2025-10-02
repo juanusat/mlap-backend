@@ -1,0 +1,161 @@
+CONTEXTO GLOBAL DEL PROYECTO:
+El sistema gestiona trabajadores de parroquias.
+Entidades clave para este módulo: Association (relación User-Parish, entidad principal de gestión), Person, User, Role, UserRole (roles asignados al trabajador).
+
+REGLAS DE FORMATO Y CONVENCIÓN (ESTRICTAS):
+1. Rutas: Usar nomenclatura /entidad_padre/{id}/entidad_hija o /entidad_principal/accion.
+   - Obtener: /{ruta}/{id} [GET]
+   - Actualizar (Total): /{ruta}/{id} [PUT]
+   - Actualizar (Parcial/Lógica): /{ruta}/{id} [PATCH] (Usar para baja lógica de 'Estado' o 'Eliminar').
+   - Crear: /{ruta}/create [POST]
+   - Listar (Paginado): /{ruta}/list [POST]
+   - Buscar (Paginado/Filtrado): /{ruta}/search [POST]
+   - Los métodos GET no tienen body.
+2. Respuesta Estándar (OBLIGATORIA):
+   { "message": "string", "data": {}, "error": "string o null", "traceback": "string o null" }
+3. Jerarquía del Módulo: /api/security
+
+--- INSTRUCCIONES DE GENERACIÓN DE API (Gestionar Cuentas - Trabajadores)
+
+Para: routes_private_seguridad_GestionarCuentas.yaml
+
+---
+
+OBJETIVO:
+Generar la especificación completa de las rutas (endpoints) del Módulo 'Seguridad' - Submódulo 'Gestionar Cuentas' (Trabajadores de Parroquia), basándose estrictamente en las reglas de nomenclatura y formato de respuesta proporcionadas. La entidad principal gestionada es **Association**.
+
+JERARQUÍA DE ENDPOINTS REQUERIDA:
+Utilizar la estructura: `/api/security/parish-workers`
+NOTAS: Los endpoints deben operar en el contexto de la Parroquia actual del usuario autenticado, o aceptar un `parish_id` si la acción no es ambigua. Asumiremos que el `parishId` se infiere del JWT o se pasa como parámetro de ruta, pero simplificaremos la ruta al nivel de `parish-workers`.
+
+--- TAREAS DE GENERACIÓN ---
+
+Generar las especificaciones de los siguientes endpoints con sus cuerpos de entrada y salida (datos) detallados, incluyendo APIs auxiliares si son necesarias para completar las funcionalidades mostradas en la interfaz:
+
+1. Listado/Búsqueda de Trabajadores:
+   - RUTA PRINCIPAL: /api/security/parish-workers/list [POST]
+   - RUTA AUXILIAR: /api/security/parish-workers/search [POST]
+   - INPUT: Cuerpo de entrada para paginación y el campo "Buscar..." (por nombre o correo).
+   - OUTPUT: Array de objetos que contengan el **association_id**, nombre, apellido, correo y estado (`active`) del trabajador.
+
+2. Invitar/Asociar Usuario (Botón "+"):
+   - RUTA: /api/security/parish-workers/create [POST]
+   - INPUT: Cuerpo de entrada que requiere el **email**.
+   - OUTPUT: Objeto con el `association_id` si el usuario fue asociado, o un mensaje de invitación.
+
+3. Ver Roles de Usuario (Botón "ojo"):
+   - RUTA: /api/security/parish-workers/{id}/roles/list [POST]
+   - NOTA: {id} es el **association_id**. Esto usa la convención de entidad anidada.
+   - INPUT: Cuerpo de entrada solo para paginación (page, limit). No se muestra un buscador en el modal lateral.
+   - OUTPUT: Array de objetos Role (incluyendo `user_role_id`, `name`).
+
+4. Asignar Nuevo Rol (Botón "escudito +"):
+   - RUTA: /api/security/parish-workers/{id}/roles/create [POST]
+   - NOTA: {id} es el **association_id**.
+   - INPUT: Cuerpo de entrada que requiere el **role_id** a asignar.
+   - OUTPUT: Objeto con el `user_role_id` y mensaje de confirmación.
+
+5. Revocar Rol de Usuario (Botón "tacho de basura" en el modal lateral):
+   - RUTA: /api/security/parish-workers/user-roles/{id} [PATCH]
+   - NOTA: {id} en este caso es el **user_role_id** (la tabla `UserRole` no tiene una jerarquía anidada simple con `Association`). Usar PATCH para baja lógica (establecer `revocation_date`).
+   - INPUT: Cuerpo de entrada vacío (la revocación es inmediata a la fecha actual).
+   - OUTPUT: Objeto con el `user_role_id` y la fecha de revocación.
+
+6. Desactivar/Activar Asociación (Switch "Estado"):
+   - RUTA: /api/security/parish-workers/{id} [PATCH]
+   - NOTA: {id} es el **association_id**.
+   - INPUT: Cuerpo de entrada que requiere el campo `active` (boolean).
+   - OUTPUT: Objeto con el `association_id` y el nuevo estado.
+
+7. Dar de Baja Definitiva (Botón "tacho de basura" en la fila, modal "Eliminar usuario"):
+   - RUTA: /api/security/parish-workers/{id} [PATCH]
+   - NOTA: {id} es el **association_id**. Utilizar el mismo PATCH que el punto 6, pero con una intención específica. Esto establecerá la `end_date` y `active=false` en la tabla `Association`.
+   - INPUT: Cuerpo de entrada que solo debe enviar `active: false` y, opcionalmente, un campo indicando "baja_definitiva: true" si el backend necesita distinguir de una simple suspensión.
+   - OUTPUT: Objeto con el `association_id`, el mensaje de baja definitiva y la `end_date`.
+
+API AUXILIAR 1 (Catálogo de Roles disponibles para el dropdown "Añadir rol"):
+   - RUTA: /api/security/roles/search [POST]
+   - INPUT: Cuerpo de entrada para paginación y búsqueda (por nombre de rol), filtrando por roles activos de la parroquia.
+   - OUTPUT: Array de objetos Role (ID y Nombre).
+
+----------------------------------------------------------------------
+CONTEXTO GLOBAL DEL PROYECTO:
+El sistema gestiona roles de seguridad por parroquia.
+Entidades clave para este módulo: Role (entidad principal gestionada), RolePermission (relación entre Role y Permission).
+
+REGLAS DE FORMATO Y CONVENCIÓN (ESTRICTAS):
+1. Rutas: Usar nomenclatura /entidad_padre/{id}/entidad_hija o /entidad_principal/accion.
+   - Obtener: /{ruta}/{id} [GET]
+   - Actualizar (Total): /{ruta}/{id} [PUT]
+   - Actualizar (Parcial/Lógica): /{ruta}/{id} [PATCH] (Usar para baja lógica: active=false y toggle de estado).
+   - Crear: /{ruta}/create [POST]
+   - Listar (Paginado): /{ruta}/list [POST]
+   - Buscar (Paginado/Filtrado): /{ruta}/search [POST]
+   - Los métodos GET no tienen body.
+2. Respuesta Estándar (OBLIGATORIA):
+   { "message": "string", "data": {}, "error": "string o null", "traceback": "string o null" }
+3. Jerarquía del Módulo: /api/security
+
+--- INSTRUCCIONES DE GENERACIÓN DE API (Gestionar Roles)
+
+Para: routes_private_seguridad_GestionarRoles.yaml
+
+---
+
+OBJETIVO:
+Generar la especificación completa de las rutas (endpoints) para el CRUD de la entidad **Role**, que representa los roles de una parroquia, y la gestión de su entidad anidada **RolePermission**.
+
+JERARQUÍA DE ENDPOINTS REQUERIDA:
+Utilizar la estructura para la entidad principal: `/api/security/roles`
+
+--- TAREAS DE GENERACIÓN ---
+
+Generar las especificaciones de los siguientes endpoints con sus cuerpos de entrada y salida (datos) detallados, basándose en la interfaz de "Gestionar Roles":
+
+1. Listado/Búsqueda de Roles:
+   - RUTA PRINCIPAL: /api/security/roles/list [POST]
+   - RUTA AUXILIAR: /api/security/roles/search [POST]
+   - INPUT: Cuerpo de entrada para paginación (page, limit) y el campo "Buscar..." (por nombre de rol y/o descripción).
+   - OUTPUT: Array de objetos Role (ID, Nombre, Descripción, Estado).
+
+2. Añadir Rol (Botón "+"):
+   - RUTA: /api/security/roles/create [POST]
+   - INPUT: Cuerpo de entrada que requiere el **name** (único por parroquia) y **description**.
+   - OUTPUT: Objeto con el `role_id` y mensaje de confirmación.
+
+3. Obtener Detalles del Rol (Botón "ojo"):
+   - RUTA: /api/security/roles/{id} [GET]
+   - NOTA: {id} es el **role_id**.
+   - INPUT: Solo path parameter {id}.
+   - OUTPUT: Objeto completo del Role (ID, Nombre, Descripción, Estado).
+
+4. Editar Rol (Botón "lápiz"):
+   - RUTA: /api/security/roles/{id} [PUT]
+   - NOTA: {id} es el **role_id**. Usar PUT para la actualización total del nombre y descripción.
+   - INPUT: Cuerpo de entrada que requiere **name** y **description**.
+   - OUTPUT: Objeto con el `role_id` y mensaje de confirmación.
+
+5. Desactivar/Activar Estado (Toggle "Estado"):
+   - RUTA: /api/security/roles/{id} [PATCH]
+   - NOTA: {id} es el **role_id**.
+   - INPUT: Cuerpo de entrada que solo requiere el campo `active` (boolean).
+   - OUTPUT: Objeto con el `role_id` y el nuevo estado.
+
+6. Eliminar Rol (Botón "tacho de basura"):
+   - RUTA: /api/security/roles/{id} [PATCH]
+   - NOTA: {id} es el **role_id**. Debe ser una **baja lógica** (`active=false`) y la ruta es la misma que el punto 5, pero con una semántica de eliminación permanente.
+   - INPUT: Cuerpo de entrada que debe establecer `active: false` y, opcionalmente, un indicador de baja (por ejemplo, `deleted_flag: true`).
+   - OUTPUT: Objeto con el `role_id` y mensaje de eliminación lógica.
+
+--- TAREAS ANIDADAS (Permisos) ---
+
+7. Gestionar Permisos del Rol (Botón "llave"):
+   - RUTA: /api/security/roles/{id}/permissions [PUT]
+   - NOTA: {id} es el **role_id**. Se usa PUT para sobrescribir o sincronizar la lista completa de permisos.
+   - INPUT: Cuerpo de entrada que recibe una lista de IDs de Permisos (`permission_id`) y su estado (`granted`). Esto sincroniza los registros de la tabla **RolePermission**.
+   - OUTPUT: Objeto con el `role_id` y el número de permisos actualizados.
+
+API AUXILIAR 1 (Catálogo Global de Permisos para la Matriz):
+   - RUTA: /api/catalogs/permissions/list [POST]
+   - INPUT: Cuerpo para listar todos los permisos del sistema (por categoría o módulo).
+   - OUTPUT: Array de objetos Permission (ID, Código, Categoría).
