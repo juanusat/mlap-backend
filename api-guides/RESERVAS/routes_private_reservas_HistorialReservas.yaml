@@ -1,0 +1,220 @@
+openapi: 3.0.0
+info:
+  title: Módulo Reservas - Historial de Reservas (Cliente)
+  description: APIs para que el usuario (cliente) logueado pueda consultar sus reservas concluidas o canceladas, y ver sus detalles incluyendo el estado de los requisitos.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs de cliente
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    HistoryReservationStatus:
+      type: string
+      enum: [COMPLETED, FULFILLED, CANCELLED, REJECTED]
+      description: Estado de la reserva en el historial.
+
+    HistoryReservationSummary:
+      type: object
+      description: Estructura de una reserva para el listado de historial.
+      properties:
+        id:
+          type: integer
+          description: ID de la reserva.
+          example: 1
+        event_name:
+          type: string
+          description: Nombre de la variante de evento (Acto Litúrgico).
+          example: Unción de los Enfermos
+        event_date:
+          type: string
+          format: date
+          description: Fecha del evento (YYYY-MM-DD).
+          example: 2024-12-19
+        paid_amount:
+          type: number
+          format: float
+          description: Monto pagado.
+          example: 283.00
+        status:
+          $ref: '#/components/schemas/HistoryReservationStatus'
+
+    HistoryReservationListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+          description: Número total de registros en el historial que cumplen el filtro.
+          example: 10
+        total_pages:
+          type: integer
+          description: Número total de páginas.
+          example: 4
+        current_page:
+          type: integer
+          description: Número de página actual.
+          example: 1
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/HistoryReservationSummary'
+
+    ChapelDetailRef:
+      type: object
+      description: Información de la capilla y parroquia asociadas a la reserva.
+      properties:
+        name:
+          type: string
+          description: Nombre de la Capilla.
+          example: Capilla San Miguel
+        parish_name:
+          type: string
+          description: Nombre de la Parroquia.
+          example: Parroquia Central
+
+    RequirementStatus:
+      type: object
+      description: Estado de un requisito específico de la reserva.
+      properties:
+        name:
+          type: string
+          description: Nombre del requisito.
+          example: Requisito 1
+        completed:
+          type: boolean
+          description: Indica si el requisito fue completado/entregado.
+          example: false
+
+    ReservationDetailClient:
+      type: object
+      description: Detalles completos de una reserva del historial para el cliente.
+      properties:
+        id:
+          type: integer
+          example: 1
+        event_variant_name:
+          type: string
+          example: Unción de los Enfermos
+        event_date:
+          type: string
+          format: date
+          example: 2024-12-19
+        status:
+          $ref: '#/components/schemas/HistoryReservationStatus'
+        paid_amount:
+          type: number
+          format: float
+          example: 283.00
+        payment_status:
+          type: string
+          enum: [PAGADO, PENDIENTE, REEMBOLSADO]
+          description: Estado del pago.
+          example: PENDIENTE
+        chapel:
+          $ref: '#/components/schemas/ChapelDetailRef'
+        requirements:
+          type: array
+          description: Lista de requisitos asociados y su estado de cumplimiento.
+          items:
+            $ref: '#/components/schemas/RequirementStatus'
+          
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Descripción del error.
+          example: No autorizado o El recurso no existe.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/client/reservations/history:
+    get:
+      tags:
+        - Historial de Reservas (Cliente)
+      summary: Listar Historial de Reservas del Usuario
+      description: Obtiene un listado paginado de las reservas concluidas o canceladas del usuario logueado.
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Número de página.
+          required: true
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Límite de registros por página.
+          required: true
+        - in: query
+          name: search_event_name
+          schema:
+            type: string
+          description: Término de búsqueda para filtrar por nombre del evento.
+          required: false
+        - in: query
+          name: status
+          schema:
+            $ref: '#/components/schemas/HistoryReservationStatus'
+          description: Filtrar por estado específico de conclusión o cancelación.
+          required: false
+      responses:
+        '200':
+          description: Listado paginado del historial de reservas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HistoryReservationListResponse'
+        '401':
+          description: No autorizado (JWT inválido o ausente).
+
+  /api/client/reservations/{id}:
+    get:
+      tags:
+        - Historial de Reservas (Cliente)
+      summary: Obtener Detalles de una Reserva del Usuario (Incluye Requisitos)
+      description: Obtiene la información completa de una reserva del historial, incluyendo detalles del evento y el estado de sus requisitos asociados.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID de la reserva a consultar.
+          required: true
+      responses:
+        '200':
+          description: Detalles de la reserva obtenidos exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationDetailClient'
+              example:
+                id: 1
+                event_variant_name: Unción de los Enfermos
+                event_date: 2024-12-19
+                status: CANCELLED
+                paid_amount: 283.00
+                payment_status: PENDIENTE
+                chapel:
+                  name: Capilla San Miguel
+                  parish_name: Parroquia Central
+                requirements:
+                  - name: Certificado Médico
+                    completed: false
+                  - name: Permiso Familiar
+                    completed: true
+        '401':
+          description: No autorizado (JWT inválido o la reserva no pertenece al usuario).
+        '404':
+          description: Reserva no encontrada.

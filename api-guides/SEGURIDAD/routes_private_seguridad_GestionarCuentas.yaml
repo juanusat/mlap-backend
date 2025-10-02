@@ -1,0 +1,453 @@
+openapi: 3.0.0
+info:
+  title: Gestión de Cuentas de Trabajadores (Parroquia)
+  description: APIs para la administración de usuarios asociados a una Parroquia específica, incluyendo listado, invitación, asignación de roles y gestión de la asociación laboral.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    WorkerSummary:
+      type: object
+      description: Resumen de la información de un trabajador (persona + asociación).
+      properties:
+        association_id:
+          type: integer
+          description: ID de la asociación laboral (tabla association).
+          example: 1
+        person_id:
+          type: integer
+          description: ID de la persona.
+          example: 101
+        first_names:
+          type: string
+          description: Nombres de la persona.
+          example: Usuario1
+        paternal_surname:
+          type: string
+          description: Apellido paterno de la persona.
+          example: Apellido1
+        email:
+          type: string
+          format: email
+          description: Correo electrónico.
+          example: usuario1@example.com
+        active:
+          type: boolean
+          description: Estado de la asociación laboral (activa/inactiva).
+          example: true
+
+    WorkerListResponse:
+      type: object
+      properties:
+        total_records:
+          type: integer
+          description: Número total de trabajadores que cumplen el filtro.
+          example: 100
+        total_pages:
+          type: integer
+          description: Número total de páginas.
+          example: 10
+        current_page:
+          type: integer
+          description: Número de página actual.
+          example: 1
+        workers:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkerSummary'
+
+    WorkerInviteRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Correo electrónico de la persona a asociar/invitar.
+          example: usuario@ejemplo.com
+
+    WorkerInviteExistingResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Usuario asociado exitosamente a la parroquia.
+        association_id:
+          type: integer
+          description: ID de la nueva asociación.
+          example: 456
+
+    WorkerInviteNewResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Usuario no encontrado. Se ha enviado una invitación por correo electrónico para que se registre y se asocie a la parroquia.
+
+    WorkerDetails:
+      type: object
+      description: Información del trabajador para la vista de roles.
+      properties:
+        association_id:
+          type: integer
+          example: 1
+        first_names:
+          type: string
+          example: Usuario1
+        paternal_surname:
+          type: string
+          example: Apellido1
+        email:
+          type: string
+          format: email
+          example: usuario1@example.com
+
+    ActiveRole:
+      type: object
+      description: Detalle de un rol activo.
+      properties:
+        user_role_id:
+          type: integer
+          description: ID de la asignación de rol (user_role), usado para la revocación.
+          example: 50
+        role_id:
+          type: integer
+          description: ID del rol (tabla role).
+          example: 5
+        role_name:
+          type: string
+          description: Nombre del rol.
+          example: Administrador
+        assignment_date:
+          type: string
+          format: date
+          description: Fecha de asignación del rol.
+          example: 2024-01-10
+
+    WorkerRolesResponse:
+      type: object
+      description: Listado de roles activos de un trabajador.
+      properties:
+        worker_details:
+          $ref: '#/components/schemas/WorkerDetails'
+        active_roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/ActiveRole'
+
+    RoleAssignmentRequest:
+      type: object
+      required:
+        - role_id
+      properties:
+        role_id:
+          type: integer
+          description: ID del rol de la Parroquia a asignar.
+          example: 7
+
+    RoleAssignmentResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Rol asignado exitosamente al trabajador.
+        user_role_id:
+          type: integer
+          description: ID del nuevo registro user_role.
+          example: 51
+        role_name:
+          type: string
+          description: Nombre del rol asignado.
+          example: Vicario
+
+    RoleRevocationResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Rol revocado exitosamente para el trabajador.
+        user_role_id:
+          type: integer
+          example: 50
+        revocation_date:
+          type: string
+          format: date
+          description: Fecha de revocación del rol.
+          example: 2025-09-27
+
+    AssociationStatusRequest:
+      type: object
+      required:
+        - active
+      properties:
+        active:
+          type: boolean
+          description: true para activar, false para suspender/desactivar temporalmente.
+          example: false
+
+    AssociationStatusResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Estado de la asociación actualizado exitosamente (Suspendida).
+        association_id:
+          type: integer
+          example: 1
+        active:
+          type: boolean
+          example: false
+
+    AssociationDeleteResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Asociación laboral finalizada y cuenta de trabajo desactivada exitosamente.
+        association_id:
+          type: integer
+          example: 1
+        end_date:
+          type: string
+          format: date
+          description: Fecha en que finalizó la asociación laboral.
+          example: 2025-09-27
+          
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Descripción del error.
+          example: No autorizado o El recurso no existe.
+
+security:
+  - bearerAuth: []
+
+paths:
+  /api/parish/{parishId}/workers:
+    get:
+      tags:
+        - Gestión de Cuentas (Trabajadores)
+      summary: Listar Trabajadores Asociados a la Parroquia
+      description: Obtiene la lista paginada de personas activamente asociadas a la parroquia {parishId}.
+      parameters:
+        - in: path
+          name: parishId
+          schema:
+            type: integer
+          description: ID de la Parroquia que se está administrando.
+          required: true
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Número de página.
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+          description: Límite de registros por página.
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Término de búsqueda para filtrar trabajadores (ej. por nombre o email).
+      responses:
+        '200':
+          description: Listado paginado de trabajadores.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerListResponse'
+        '401':
+          description: No autorizado.
+
+    post:
+      tags:
+        - Gestión de Cuentas (Trabajadores)
+      summary: Invitar/Asociar Usuario a la Parroquia
+      description: Asocia una Persona/Usuario existente o envía una invitación para crear una cuenta y asociarse a la Parroquia.
+      parameters:
+        - in: path
+          name: parishId
+          schema:
+            type: integer
+          description: ID de la Parroquia.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WorkerInviteRequest'
+      responses:
+        '200':
+          description: Usuario existente asociado exitosamente.
+          content:
+            application/json:
+              schema:
+                oneOf:
+                  - $ref: '#/components/schemas/WorkerInviteExistingResponse'
+                  - $ref: '#/components/schemas/WorkerInviteNewResponse'
+        '400':
+          description: Datos de entrada inválidos.
+        '401':
+          description: No autorizado.
+
+  /api/parish/associations/{associationId}/roles:
+    get:
+      tags:
+        - Gestión de Cuentas (Roles)
+      summary: Ver Roles Activos de un Trabajador Asociado
+      description: Lista todos los roles activos que tiene un trabajador ({associationId}) en la parroquia.
+      parameters:
+        - in: path
+          name: associationId
+          schema:
+            type: integer
+          description: ID de la asociación laboral del trabajador.
+          required: true
+      responses:
+        '200':
+          description: Roles activos listados exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WorkerRolesResponse'
+        '401':
+          description: No autorizado.
+        '404':
+          description: Asociación no encontrada.
+
+    post:
+      tags:
+        - Gestión de Cuentas (Roles)
+      summary: Asignar Nuevo Rol a Usuario
+      description: Asigna un rol específico de la parroquia a un trabajador activo.
+      parameters:
+        - in: path
+          name: associationId
+          schema:
+            type: integer
+          description: ID de la asociación laboral del trabajador.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignmentRequest'
+      responses:
+        '201':
+          description: Rol asignado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleAssignmentResponse'
+        '400':
+          description: Datos de entrada inválidos (ej. Rol ya asignado).
+        '401':
+          description: No autorizado.
+        '404':
+          description: Asociación o Rol no encontrado.
+
+  /api/parish/user-roles/{userRoleId}:
+    patch:
+      tags:
+        - Gestión de Cuentas (Roles)
+      summary: Revocar Rol de Usuario (Borrado Lógico)
+      description: Finaliza la asignación de un rol, estableciendo la fecha de revocación en la tabla 'user_role'.
+      parameters:
+        - in: path
+          name: userRoleId
+          schema:
+            type: integer
+          description: ID de la asignación de rol (user_role) a revocar.
+          required: true
+      requestBody:
+        description: Cuerpo de la solicitud vacío (no se requiere body para esta acción).
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Rol revocado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleRevocationResponse'
+        '401':
+          description: No autorizado.
+        '404':
+          description: Asignación de rol no encontrada.
+
+  /api/parish/associations/{associationId}/status:
+    patch:
+      tags:
+        - Gestión de Cuentas (Asociación)
+      summary: Desactivar/Activar Asociación Laboral (Toggle Estado)
+      description: Suspende/reestablece temporalmente la cuenta de trabajo del usuario, cambiando el campo 'active' de la asociación.
+      parameters:
+        - in: path
+          name: associationId
+          schema:
+            type: integer
+          description: ID de la asociación laboral a modificar.
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssociationStatusRequest'
+      responses:
+        '200':
+          description: Estado de la asociación actualizado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssociationStatusResponse'
+        '401':
+          description: No autorizado.
+        '404':
+          description: Asociación no encontrada.
+
+  /api/parish/associations/{associationId}:
+    delete:
+      tags:
+        - Gestión de Cuentas (Asociación)
+      summary: Dar de Baja Definitiva de la Asociación Laboral (Borrado Lógico)
+      description: Finaliza permanentemente la relación laboral del trabajador con la parroquia, actualizando la fecha de fin ('end_date') y 'active=false' en la tabla 'association'.
+      parameters:
+        - in: path
+          name: associationId
+          schema:
+            type: integer
+          description: ID de la asociación laboral a finalizar.
+          required: true
+      responses:
+        '200':
+          description: Asociación laboral finalizada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AssociationDeleteResponse'
+        '401':
+          description: No autorizado.
+        '404':
+          description: Asociación no encontrada.
