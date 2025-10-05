@@ -1,0 +1,271 @@
+openapi: 3.0.0
+info:
+  title: Módulo Seguridad - Iniciar Sesión
+  description: APIs para autenticación de usuarios, incluyendo inicio de sesión y recuperación de contraseña.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs de autenticación
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+          description: Nombre de usuario o correo electrónico
+          example: "usuario@ejemplo.com"
+        password:
+          type: string
+          format: password
+          description: Contraseña del usuario
+          example: "MiContraseña123"
+
+    LoginResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: ID del usuario autenticado
+          example: 123
+        access_token:
+          type: string
+          description: Token de acceso JWT
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh_token:
+          type: string
+          description: Token de actualización
+          example: "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4="
+        expires_in:
+          type: integer
+          description: Tiempo de expiración del token en segundos
+          example: 3600
+        user_info:
+          type: object
+          properties:
+            full_name:
+              type: string
+              example: "Juan Pérez González"
+            email:
+              type: string
+              example: "usuario@ejemplo.com"
+            profile_image:
+              type: string
+              nullable: true
+              example: null
+
+    PasswordResetRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Correo electrónico del usuario para recuperación
+          example: "usuario@ejemplo.com"
+
+    VerificationCodeRequest:
+      type: object
+      required:
+        - email
+        - verification_code
+        - new_password
+      properties:
+        email:
+          type: string
+          format: email
+          description: Correo electrónico del usuario
+          example: "usuario@ejemplo.com"
+        verification_code:
+          type: string
+          description: Código de verificación enviado por correo
+          example: "123456"
+        new_password:
+          type: string
+          format: password
+          description: Nueva contraseña del usuario
+          example: "NuevaContraseña456"
+
+    StandardResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Inicio de sesión exitoso"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
+        error:
+          type: string
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+paths:
+  /api/auth/login:
+    post:
+      tags:
+        - Autenticación
+      summary: Iniciar Sesión de Usuario
+      description: Autentica al usuario con su nombre de usuario/email y contraseña, devolviendo un token de acceso.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Inicio de sesión exitoso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Inicio de sesión exitoso"
+                data:
+                  user_id: 123
+                  access_token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refresh_token: "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4="
+                  expires_in: 3600
+                  user_info:
+                    full_name: "Juan Pérez González"
+                    email: "usuario@ejemplo.com"
+                    profile_image: null
+                error: ""
+                traceback: ""
+        '401':
+          description: Credenciales inválidas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Credenciales inválidas"
+                data: {}
+                error: "Usuario o contraseña incorrectos"
+                traceback: ""
+
+  /api/auth/password-reset/request:
+    post:
+      tags:
+        - Recuperación de Contraseña
+      summary: Solicitar Recuperación de Contraseña
+      description: Envía un código de verificación al correo electrónico del usuario para iniciar el proceso de recuperación de contraseña.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PasswordResetRequest'
+      responses:
+        '200':
+          description: Código de verificación enviado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Se ha enviado un código de verificación a tu correo electrónico"
+                data:
+                  email: "usuario@ejemplo.com"
+                  expires_in: 300
+                error: ""
+                traceback: ""
+        '404':
+          description: Usuario no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Usuario no encontrado"
+                data: {}
+                error: "No existe una cuenta asociada a este correo electrónico"
+                traceback: ""
+
+  /api/auth/password-reset/verify:
+    post:
+      tags:
+        - Recuperación de Contraseña
+      summary: Verificar Código y Restablecer Contraseña
+      description: Verifica el código de recuperación enviado por correo y establece la nueva contraseña del usuario.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationCodeRequest'
+      responses:
+        '200':
+          description: Contraseña restablecida exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Contraseña restablecida exitosamente"
+                data:
+                  user_id: 123
+                  email: "usuario@ejemplo.com"
+                error: ""
+                traceback: ""
+        '400':
+          description: Código de verificación inválido o expirado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Código de verificación inválido"
+                data: {}
+                error: "El código de verificación es incorrecto o ha expirado"
+                traceback: ""
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Autenticación
+      summary: Cerrar Sesión
+      description: Invalida el token de acceso del usuario para cerrar la sesión de forma segura.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Sesión cerrada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Sesión cerrada exitosamente"
+                data: {}
+                error: ""
+                traceback: ""

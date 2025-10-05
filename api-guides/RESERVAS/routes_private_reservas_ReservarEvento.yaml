@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Módulo Reservas - Creación de Eventos por Cliente
-  description: API para registrar la reserva de un evento litúrgico por parte del usuario logueado, incluyendo el registro de los requisitos asociados.
+  title: Módulo Reservas - Reservar Evento (Cliente)
+  description: APIs para que el usuario (cliente) pueda seleccionar eventos disponibles, ver información de capillas/parroquias y realizar reservas.
   version: 1.0.0
 servers:
   - url: /
@@ -15,27 +15,171 @@ components:
       bearerFormat: JWT
       
   schemas:
+    ChapelParishInfo:
+      type: object
+      description: Información de la capilla y parroquia para la reserva
+      properties:
+        chapel_id:
+          type: integer
+          description: ID de la capilla
+          example: 101
+        chapel_name:
+          type: string
+          description: Nombre de la capilla
+          example: Capilla San José Obrero
+        parish_name:
+          type: string
+          description: Nombre de la parroquia
+          example: Parroquia Nuestra Señora de la Consolación
+
+    EventVariantInfo:
+      type: object
+      description: Información del evento disponible para reservar
+      properties:
+        id:
+          type: integer
+          description: ID de la variante del evento
+          example: 5
+        name:
+          type: string
+          description: Nombre del evento
+          example: Matrimonio Individual
+        description:
+          type: string
+          description: Descripción del evento
+          example: Ceremonia matrimonial privada
+        current_price:
+          type: number
+          format: float
+          description: Precio actual del evento
+          example: 350.00
+        chapel:
+          $ref: '#/components/schemas/ChapelParishInfo'
+
+    AvailableTimeSlot:
+      type: object
+      description: Horario disponible para la reserva
+      properties:
+        date:
+          type: string
+          format: date
+          description: Fecha disponible (YYYY-MM-DD)
+          example: "2025-10-15"
+        time:
+          type: string
+          format: time
+          description: Hora disponible (HH:MM)
+          example: "08:00"
+        time_display:
+          type: string
+          description: Hora formateada para mostrar
+          example: "08:00 a.m."
+
+    ReservationFormData:
+      type: object
+      description: Información del formulario de reserva
+      properties:
+        event_variant:
+          $ref: '#/components/schemas/EventVariantInfo'
+        available_dates:
+          type: array
+          description: Fechas disponibles para el evento
+          items:
+            type: string
+            format: date
+          example: ["2025-10-15", "2025-10-20", "2025-10-25"]
+        available_times:
+          type: array
+          description: Horarios disponibles
+          items:
+            $ref: '#/components/schemas/AvailableTimeSlot'
+
     ReservationCreateRequest:
       type: object
       required:
         - event_variant_id
         - event_date
-        - paid_amount
+        - event_time
       properties:
         event_variant_id:
           type: integer
-          description: ID de la EventVariant (tipo de acto litúrgico) seleccionada.
+          description: ID de la EventVariant (tipo de acto litúrgico) seleccionada
           example: 5
         event_date:
           type: string
-          format: date-time
-          description: Fecha y hora específicas del evento que se está reservando.
-          example: 2025-09-30T16:00:00Z
-        paid_amount:
-          type: number
-          format: float
-          description: Monto pagado al momento de crear la reserva.
-          example: 150.00
+          format: date
+          description: Fecha del evento (YYYY-MM-DD)
+          example: "2025-10-15"
+        event_time:
+          type: string
+          format: time
+          description: Hora del evento (HH:MM)
+          example: "08:00"
+
+    EventListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        chapel_id:
+          type: integer
+          description: Filtrar por capilla específica (opcional)
+          example: 101
+
+    EventSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search:
+          type: string
+          description: Término de búsqueda por nombre del evento
+          example: "Matrimonio"
+        chapel_id:
+          type: integer
+          description: Filtrar por capilla específica (opcional)
+          example: 101
+
+    AvailabilityRequest:
+      type: object
+      required:
+        - event_variant_id
+        - start_date
+        - end_date
+      properties:
+        event_variant_id:
+          type: integer
+          description: ID de la variante del evento
+          example: 5
+        start_date:
+          type: string
+          format: date
+          description: Fecha de inicio para consultar disponibilidad
+          example: "2025-10-01"
+        end_date:
+          type: string
+          format: date
+          description: Fecha de fin para consultar disponibilidad
+          example: "2025-10-31"
 
     StandardResponse:
       type: object
@@ -43,7 +187,7 @@ components:
         message:
           type: string
           description: Lo que el backend indica al frontend que debe mostrar
-          example: "Reserva creada exitosamente"
+          example: "Eventos disponibles obtenidos exitosamente"
         data:
           description: La información, puede ser un arreglo
           oneOf:
@@ -65,12 +209,164 @@ security:
   - bearerAuth: []
 
 paths:
+  /api/client/events/list:
+    post:
+      tags:
+        - Selección de Eventos (Cliente)
+      summary: Listar Eventos Disponibles para Reserva
+      description: Obtiene un listado paginado de los eventos disponibles que el cliente puede reservar, incluyendo información de capillas y parroquias.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventListRequest'
+      responses:
+        '200':
+          description: Listado exitoso de eventos disponibles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Eventos disponibles obtenidos exitosamente"
+                data:
+                  total_records: 15
+                  total_pages: 2
+                  current_page: 1
+                  items:
+                    - id: 5
+                      name: Matrimonio Individual
+                      description: Ceremonia matrimonial privada
+                      current_price: 350.00
+                      chapel:
+                        chapel_id: 101
+                        chapel_name: Capilla San José Obrero
+                        parish_name: Parroquia Nuestra Señora de la Consolación
+                error: ""
+                traceback: ""
+
+  /api/client/events/search:
+    post:
+      tags:
+        - Selección de Eventos (Cliente)
+      summary: Buscar Eventos Disponibles para Reserva
+      description: Busca eventos disponibles por nombre u otros criterios para la reserva del cliente.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventSearchRequest'
+      responses:
+        '200':
+          description: Resultados de búsqueda de eventos disponibles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Búsqueda de eventos completada exitosamente"
+                data:
+                  total_records: 3
+                  total_pages: 1
+                  current_page: 1
+                  items:
+                    - id: 5
+                      name: Matrimonio Individual
+                      description: Ceremonia matrimonial privada
+                      current_price: 350.00
+                      chapel:
+                        chapel_id: 101
+                        chapel_name: Capilla San José Obrero
+                        parish_name: Parroquia Nuestra Señora de la Consolación
+                error: ""
+                traceback: ""
+
+  /api/client/events/{id}/reservation-form:
+    get:
+      tags:
+        - Formulario de Reserva (Cliente)
+      summary: Obtener Información del Formulario de Reserva
+      description: Obtiene la información necesaria para el formulario de reserva, incluyendo datos del evento, capilla/parroquia y fechas/horarios disponibles.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID de la variante del evento a reservar
+          required: true
+      responses:
+        '200':
+          description: Información del formulario de reserva obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Información del formulario de reserva obtenida exitosamente"
+                data:
+                  event_variant:
+                    id: 5
+                    name: Matrimonio Individual
+                    description: Ceremonia matrimonial privada
+                    current_price: 350.00
+                    chapel:
+                      chapel_id: 101
+                      chapel_name: Capilla San José Obrero
+                      parish_name: Parroquia Nuestra Señora de la Consolación
+                  available_dates: ["2025-10-15", "2025-10-20", "2025-10-25"]
+                  available_times:
+                    - date: "2025-10-15"
+                      time: "08:00"
+                      time_display: "08:00 a.m."
+                    - date: "2025-10-15"
+                      time: "10:00"
+                      time_display: "10:00 a.m."
+                error: ""
+                traceback: ""
+
+  /api/client/events/availability/check:
+    post:
+      tags:
+        - Consulta de Disponibilidad (Cliente)
+      summary: Verificar Disponibilidad de Fechas y Horarios
+      description: Consulta la disponibilidad de fechas y horarios específicos para un evento determinado.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AvailabilityRequest'
+      responses:
+        '200':
+          description: Disponibilidad consultada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Disponibilidad consultada exitosamente"
+                data:
+                  available_slots:
+                    - date: "2025-10-15"
+                      time: "08:00"
+                      time_display: "08:00 a.m."
+                    - date: "2025-10-15"
+                      time: "10:00"
+                      time_display: "10:00 a.m."
+                    - date: "2025-10-20"
+                      time: "14:00"
+                      time_display: "02:00 p.m."
+                error: ""
+                traceback: ""
+
   /api/client/reservations/create:
     post:
       tags:
-        - Reserva Evento (Cliente)
-      summary: Crear la Reserva (Paso Final)
-      description: Registra la reserva para un evento específico. El sistema asocia la reserva al usuario logueado y copia los requisitos activos.
+        - Crear Reserva (Cliente)
+      summary: Crear Nueva Reserva de Evento
+      description: Registra la reserva para un evento específico en la fecha y hora seleccionadas. El sistema asocia la reserva al usuario logueado.
       requestBody:
         required: true
         content:
@@ -89,5 +385,10 @@ paths:
                 data:
                   reservation_id: 1234
                   status: "RESERVED"
+                  event_name: "Matrimonio Individual"
+                  event_date: "2025-10-15"
+                  event_time: "08:00"
+                  chapel_name: "Capilla San José Obrero"
+                  parish_name: "Parroquia Nuestra Señora de la Consolación"
                 error: ""
                 traceback: ""

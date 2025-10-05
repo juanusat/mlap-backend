@@ -1,0 +1,492 @@
+openapi: 3.0.0
+info:
+  title: Módulo Seguridad - Registrar Cuenta
+  description: APIs para el registro de nuevas cuentas de usuario con información personal completa.
+  version: 1.0.0
+servers:
+  - url: /
+    description: URL base para las APIs de registro
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      
+  schemas:
+    DocumentType:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: ID del tipo de documento
+          example: 1
+        name:
+          type: string
+          description: Nombre del tipo de documento
+          example: "DNI"
+        code:
+          type: string
+          description: Código abreviado del tipo de documento
+          example: "DNI"
+
+    UserRegistrationRequest:
+      type: object
+      required:
+        - first_names
+        - paternal_surname
+        - maternal_surname
+        - email
+        - document_type_id
+        - document_number
+        - username
+        - password
+        - password_confirmation
+      properties:
+        first_names:
+          type: string
+          description: Nombres del usuario
+          example: "Juan Carlos"
+        paternal_surname:
+          type: string
+          description: Apellido paterno
+          example: "Pérez"
+        maternal_surname:
+          type: string
+          description: Apellido materno
+          example: "González"
+        email:
+          type: string
+          format: email
+          description: Correo electrónico (debe ser único)
+          example: "juan.perez@ejemplo.com"
+        document_type_id:
+          type: integer
+          description: ID del tipo de documento seleccionado
+          example: 1
+        document_number:
+          type: string
+          description: Número del documento de identidad
+          example: "12345678"
+        username:
+          type: string
+          description: Nombre de usuario (debe ser único)
+          example: "juanperez"
+        password:
+          type: string
+          format: password
+          description: Contraseña del usuario
+          example: "MiContraseña123"
+        password_confirmation:
+          type: string
+          format: password
+          description: Confirmación de la contraseña
+          example: "MiContraseña123"
+
+    RegistrationResponse:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: ID del usuario creado
+          example: 456
+        person_id:
+          type: integer
+          description: ID de la persona creada
+          example: 789
+        username:
+          type: string
+          description: Nombre de usuario registrado
+          example: "juanperez"
+        email:
+          type: string
+          description: Email registrado
+          example: "juan.perez@ejemplo.com"
+        full_name:
+          type: string
+          description: Nombre completo del usuario
+          example: "Juan Carlos Pérez González"
+        verification_required:
+          type: boolean
+          description: Indica si se requiere verificación por email
+          example: true
+
+    EmailValidationRequest:
+      type: object
+      required:
+        - email
+      properties:
+        email:
+          type: string
+          format: email
+          description: Email a validar
+          example: "test@ejemplo.com"
+
+    UsernameValidationRequest:
+      type: object
+      required:
+        - username
+      properties:
+        username:
+          type: string
+          description: Nombre de usuario a validar
+          example: "testuser"
+
+    DocumentValidationRequest:
+      type: object
+      required:
+        - document_type_id
+        - document_number
+      properties:
+        document_type_id:
+          type: integer
+          description: ID del tipo de documento
+          example: 1
+        document_number:
+          type: string
+          description: Número del documento
+          example: "12345678"
+
+    ValidationResponse:
+      type: object
+      properties:
+        available:
+          type: boolean
+          description: Indica si el valor está disponible para uso
+          example: true
+        message:
+          type: string
+          description: Mensaje sobre la disponibilidad
+          example: "Email disponible para registro"
+
+    StandardResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Lo que el backend indica al frontend que debe mostrar
+          example: "Usuario registrado exitosamente"
+        data:
+          description: La información, puede ser un arreglo
+          oneOf:
+            - type: object
+            - type: array
+            - type: integer
+            - type: string
+          example: {}
+        error:
+          type: string
+          description: Es vacío si no hay ningún error
+          example: ""
+        traceback:
+          type: string
+          description: Todo el error generado en el backend si la respuesta es código 500
+          example: ""
+
+paths:
+  /api/auth/register/document-types/list:
+    post:
+      tags:
+        - Registro - Catálogos
+      summary: Listar Tipos de Documento Disponibles
+      description: Obtiene la lista de tipos de documento disponibles para el registro (DNI, C.N.E, Pasaporte, etc.).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Tipos de documento obtenidos exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Tipos de documento obtenidos exitosamente"
+                data:
+                  - id: 1
+                    name: "DNI"
+                    code: "DNI"
+                  - id: 2
+                    name: "C.N.E"
+                    code: "CNE"
+                  - id: 3
+                    name: "Pasaporte"
+                    code: "PASSPORT"
+                error: ""
+                traceback: ""
+
+  /api/auth/register/validate/email:
+    post:
+      tags:
+        - Registro - Validaciones
+      summary: Validar Disponibilidad de Email
+      description: Verifica si el email está disponible para registro.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EmailValidationRequest'
+      responses:
+        '200':
+          description: Validación de email completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Validación completada"
+                data:
+                  available: true
+                  message: "Email disponible para registro"
+                error: ""
+                traceback: ""
+        '409':
+          description: Email ya está en uso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Email no disponible"
+                data:
+                  available: false
+                  message: "Este email ya está registrado"
+                error: "Email ya existe en el sistema"
+                traceback: ""
+
+  /api/auth/register/validate/username:
+    post:
+      tags:
+        - Registro - Validaciones
+      summary: Validar Disponibilidad de Nombre de Usuario
+      description: Verifica si el nombre de usuario está disponible para registro.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UsernameValidationRequest'
+      responses:
+        '200':
+          description: Validación de username completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Validación completada"
+                data:
+                  available: true
+                  message: "Nombre de usuario disponible"
+                error: ""
+                traceback: ""
+        '409':
+          description: Username ya está en uso.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Nombre de usuario no disponible"
+                data:
+                  available: false
+                  message: "Este nombre de usuario ya está en uso"
+                error: "Username ya existe en el sistema"
+                traceback: ""
+
+  /api/auth/register/validate/document:
+    post:
+      tags:
+        - Registro - Validaciones
+      summary: Validar Disponibilidad de Documento
+      description: Verifica si el número de documento está disponible para registro.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DocumentValidationRequest'
+      responses:
+        '200':
+          description: Validación de documento completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Validación completada"
+                data:
+                  available: true
+                  message: "Número de documento disponible"
+                error: ""
+                traceback: ""
+        '409':
+          description: Documento ya está registrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Documento no disponible"
+                data:
+                  available: false
+                  message: "Este documento ya está registrado"
+                error: "Documento ya existe en el sistema"
+                traceback: ""
+
+  /api/auth/register/create:
+    post:
+      tags:
+        - Registro de Usuario
+      summary: Registrar Nueva Cuenta de Usuario
+      description: Crea una nueva cuenta de usuario con toda la información personal requerida.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistrationRequest'
+      responses:
+        '201':
+          description: Usuario registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Usuario registrado exitosamente. Se ha enviado un email de verificación."
+                data:
+                  user_id: 456
+                  person_id: 789
+                  username: "juanperez"
+                  email: "juan.perez@ejemplo.com"
+                  full_name: "Juan Carlos Pérez González"
+                  verification_required: true
+                error: ""
+                traceback: ""
+        '400':
+          description: Error en los datos de registro.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Error en los datos de registro"
+                data: {}
+                error: "Las contraseñas no coinciden"
+                traceback: ""
+        '409':
+          description: Conflicto - datos duplicados.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Error de registro"
+                data: {}
+                error: "El email o nombre de usuario ya está en uso"
+                traceback: ""
+
+  /api/auth/register/verify-email:
+    post:
+      tags:
+        - Verificación de Cuenta
+      summary: Verificar Email de Cuenta Registrada
+      description: Verifica el email del usuario mediante un token enviado por correo durante el registro.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - verification_token
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email del usuario a verificar
+                  example: "juan.perez@ejemplo.com"
+                verification_token:
+                  type: string
+                  description: Token de verificación enviado por email
+                  example: "abc123def456"
+      responses:
+        '200':
+          description: Email verificado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Email verificado exitosamente. Tu cuenta ha sido activada."
+                data:
+                  user_id: 456
+                  email: "juan.perez@ejemplo.com"
+                  verified_at: "2025-10-05T15:30:00Z"
+                error: ""
+                traceback: ""
+        '400':
+          description: Token de verificación inválido.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Token de verificación inválido"
+                data: {}
+                error: "El token de verificación es incorrecto o ha expirado"
+                traceback: ""
+
+  /api/auth/register/resend-verification:
+    post:
+      tags:
+        - Verificación de Cuenta
+      summary: Reenviar Email de Verificación
+      description: Reenvía el email de verificación para usuarios que aún no han verificado su cuenta.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Email del usuario para reenviar verificación
+                  example: "juan.perez@ejemplo.com"
+      responses:
+        '200':
+          description: Email de verificación reenviado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Email de verificación reenviado exitosamente"
+                data:
+                  email: "juan.perez@ejemplo.com"
+                  sent_at: "2025-10-05T15:35:00Z"
+                error: ""
+                traceback: ""
+        '404':
+          description: Usuario no encontrado.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Usuario no encontrado"
+                data: {}
+                error: "No existe una cuenta con este email"
+                traceback: ""
