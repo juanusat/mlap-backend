@@ -1,0 +1,119 @@
+Lo que quiero que hagas es que corrijas las apis de los archivos mencionados en cada una de las secciones, porque los archivos ya estan bien encaminados. También crea los archivos que se indican.
+
+Este archivo contiene las reglas para la creación de rutas en el API. arregla(modifica de ser necesario) las apis de los archivos mencionados en cada una de las secciones. También crea los archivos que se indican.
+OBLIGATORIA: seguir el formato de las reglas del archivo REGLAS.md.
+
+## Anotación para rutas de búsqueda
+
+LOS métodos SEARCH/CREATE/LIST deben obligatoriamente de ser POST.
+Los métodos GET no tienen parámetros de entrada en el request, a menos que sea la página y limite (page, limit)
+
+
+MODULO ACTOS LITÚRGICOS
+--------
+*Gestionar Actos Liturgicos(Eventos)
+ARCHIVO A MODIFICAR: routes_private_actos_GestionarActos.yaml
+
+-Search(nombre): Busca por el nombre del evento
+-Boton Add: tipo de evento(combo con los eventos), nombre evento, descripción, capilla(combo de capillas), tipo de evento(privado o comunitario), numero de personas (solo si es comunitario se debe modificar)
+-TABLA: id, nombre evento, descripción, capilla, tipo, personas(cantidad), estado(es un swicth. Ej.Activo)
+-Boton View: nombre evento, descripción, capilla(combo de capillas), tipo de evento(privado o comunitario), numero de personas (solo si es comunitario se debe modificar)
+-Boton edit: nombre evento, descripción, capilla(combo de capillas), tipo de evento(privado o comunitario), numero de personas (solo si es comunitario se debe modificar)
+-Boton delete: caja de confirmación de eliminacion
+--------
+*Gestionar requisitos 
+ARCHIVO A MODIFICAR: routes_private_actos_GestionarRequisitos.yaml
+
+-Boton Select: Abre panel lateral
+	-Listar eventos
+	-Se selecciona un evento
+	-Search evento(nombre)
+-Search requisito(nombre): busca por el nombre del requisito
+-Tabla(Listado de requisitos): ID, Nombre, descripcion, estado(es un swicth. Ej.Activo)
+-Boton view: nombre requisito, descripcion
+-Boton edit: nombre requisito, descripcion
+-Boton delete: caja de confirmacion de eliminacion
+--------
+*Gestionar horarios
+ARCHIVO A MODIFICAR: routes_private_actos_GestionarHorarios.yaml
+
+-cuadrilla semanal(Listar horario) (hora inicio-hora fin) desde 8 am hasta 18 pm
+-Boton add(modal agregar excepcion-disponibilidad): fecha(dd/MM/YYYY), hora inicio(HH:MM) - hora fin(HH:MM), motivo
+-Boton edit(modal agregar excepcion-disponibilidad):fecha(dd/MM/YYYY), hora inicio(HH:MM) - hora fin(HH:MM), motivo
+-Boton add(modal agregar excepcion-NO disponibilidad): fecha(dd/MM/YYYY), hora inicio(HH:MM) - hora fin(HH:MM), motivo
+-Boton edit(modal agregar excepcion-NO disponibilidad):fecha(dd/MM/YYYY), hora inicio(HH:MM) - hora fin(HH:MM), motivo
+--------
+*Gestionar reservas
+ARCHIVO A MODIFICAR: routes_private_actos_GestionarReservas.yaml
+
+-Tabla(Listado reservas): ID, Usuario, evento, fecha, monto, estado(Ej. Reservado, Cancelado)
+-Search(evento): Busca por el evento
+-Boton View: Evento, fecha, usuario, monto, estado
+-Boton edit: cambiar estado de reserva
+----------------------------------------------------------------------
+MÓDULO RESERVAS
+-----
+*Reservas pendientes
+ARCHIVO A MODIFICAR: routes_private_reservas_ReservasPendientes.yaml
+
+-Tabla(Listado): ID, evento, fecha(dd/MM/YYYY), Monto, Estado(Ej. Reservado, este no es un switch sino es solo texto dentro de la tabla)
+-Search(evento): Ej. Unción de los enfermos
+-Boton delete:Es un boton de confirmación de eliminación 
+----
+*Historial de reservas
+ARCHIVO A MODIFICAR: routes_private_reservas_HistorialReservas.yaml
+
+-Tabla(Listado): ID, Evento, fecha(dd/MM/YYYY), Monto, Estado(Ej. Reservado, este no es un switch sino es solo texto dentro de la tabla)
+-Boton View: Muestra un panel de detalles de la reserva, con la siguiente informacion: Evento(ej. Funeral), fecha(dd/MM/YYYY), Monto, Estado(Ej. Reservado), Pago(Ej. Pendiente), Y una lista de requisitos(Y un checkbox que indica si cada requisito esta marcado o no;ej. Requisito 1, Requisito 2)
+----
+*Reservar Evento
+ARCHIVO A MODIFICAR: routes_private_reservas_ReservarEvento.yaml
+
+te describo que es solo una pantalla que se muestra la siguiente información:
+capilla/Parroquia(Ej. Parroquia Nuestra señora de la consolación), Evento(Ej. Matrimonio individual), Seleccionar Fecha(dd/MM/YYYY), Hora: "08:00 a.m.". Estos dos últimos son los únicos en los que se puede escribir.
+Y boton de cancelar y aceptar
+------------------------------------------------------------------------------------
+MÓDULO SEGURIDAD
+----
+*Gestión de cuentas
+ARCHIVO A MODIFICAR: routes_private_seguridad_GestionarCuentas.yaml
+
+
+-Tabla(Listado):ID, Nombre, Apellidos, Correo, estado(es un swicth. Ej. Active)
+-Search(puede buscar por la columna nombre o columna apellido).
+-Boton add: Se invita a un usuario por un campo de correo electronico(input) y luego hay botones de cancelar y aceptar.
+-Boton view: lista todos los roles del usuario 1 en un panel lateral(Ej. Administrador, Parroco)
+-Boton add role: hay un combobox donde se puede añadir los roles a el usuario(Ej. Secreatrio, Vicario)
+-Boton delete: Caja de confirmación de eliminación de un usuario con botones cancelar, aceptar.
+----
+*Gestion de roles
+ARCHIVO A MODIFICAR: routes_private_seguridad_GestionarRoles.yaml
+
+-Tabla(Listado): ID, Rol, Descripcion, estado(es un swicth. Ej. Active)
+-Search(rol): Busca por el nombre del rol(Ej. Rol de Ejemplo 10)
+- Boton add: inputs para Nombre de rol, descripcion.
+- Boton view: Nombre de rol, descripcion.
+- Boton permission: muestra un modal donde se encuentra una matriz en la que se pueden cambiar los permisos de un rol.
+Por ejemplo, hay filas para los distintos módulos (Ej. Usuario, Actos Liturgicos, parroquia,etc.)* las columnas con las acciones que puede realizar: ver, añadir, editar, eliminar. Y como se define estos permisos, mediante switches en la matriz(5*5)(E, en la posición 3-3 esta activado el Switch, en la posición 4-4 esta desactivado el swicth y así varia en toda la matriz). Y luego se cancela o guarda según el botón que presiones en el modal.
+----
+###ESTOS SON ARCHIVOS QUE DEBERAS CREAR, siguiendo las reglas del archivo REGLAS.md y siguiendo el formato de response. Pertenecen al módulo seguridad.####
+----
+Iniciar Sesión
+ARCHIVO A CREAR dentro de la carpeta SEGURIDAD: routes_private_seguridad_IniciarSesion.yaml
+
+Solo tiene campos donde se ingresa el usuario y la contraseña y el botón iniciar sesión y aparte un apartado de recuperación  de contraseña que abre un modal donde se ingresa el correo y posteriormente un input donde se ingresa un código de verificación.
+----
+Iniciar Sesión
+ARCHIVO A CREAR dentro de la carpeta SEGURIDAD: routes_private_seguridad_RegistrarCuenta.yaml
+
+Cuenta con inputs para los:
+Nombres, Apellido paterno, Apellido materno, correo electrónico, un combobox de tipo de documento(Ej. DNI, C.N.E, Pasaporte), a su costado el número de ese documento, usuario, contraseña y repetir contraseña.
+----
+Seleccionar Parroquia
+ARCHIVO A CREAR dentro de la carpeta SEGURIDAD: routes_private_seguridad_Seleccionarparroquia.yaml 
+
+Esta pantalla debe Listar las parroquias en la que trabaja un usuario con permisos.
+Solo aparece en la página las parroquias a seleccionar: Ej. parroquia 1, parroquia 2 ,etc.
+
+Una vez seleccionada se puede seleccionar en un listado de roles a seleccionar: por defecto apareces como administrador, pero tambien están de ejemplo secretario, párroco, etc.
+
