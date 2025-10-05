@@ -381,7 +381,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleCreationResponse'
+                $ref: '#/components/schemas/StandardResponse'
 
 
   /api/parish/roles/{roleId}:
@@ -429,7 +429,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleUpdateResponse'
+                $ref: '#/components/schemas/StandardResponse'
 
     delete:
       tags:
@@ -449,7 +449,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleDeleteResponse'
+                $ref: '#/components/schemas/StandardResponse'
      
   /api/parish/roles/{roleId}/status:
     patch:
@@ -476,7 +476,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleStatusResponse'
+                $ref: '#/components/schemas/StandardResponse'
      
   /api/parish/roles/{roleId}/permissions:
     put:
@@ -503,4 +503,4 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RolePermissionsUpdateResponse'
+                $ref: '#/components/schemas/StandardResponse'

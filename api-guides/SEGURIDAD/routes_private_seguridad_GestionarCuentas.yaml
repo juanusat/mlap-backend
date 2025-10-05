@@ -456,7 +456,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleAssignmentResponse'
+                $ref: '#/components/schemas/StandardResponse'
 
 
   /api/parish/user-roles/{userRoleId}:
@@ -485,7 +485,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleRevocationResponse'
+                $ref: '#/components/schemas/StandardResponse'
       
   /api/parish/associations/{associationId}/status:
     patch:
@@ -512,7 +512,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AssociationStatusResponse'
+                $ref: '#/components/schemas/StandardResponse'
      
   /api/parish/associations/{associationId}:
     delete:
@@ -533,5 +533,5 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/AssociationDeleteResponse'
+                $ref: '#/components/schemas/StandardResponse'
     
