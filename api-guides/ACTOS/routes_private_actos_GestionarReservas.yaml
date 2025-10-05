@@ -307,18 +307,7 @@ paths:
                       status: RESERVED
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_RESERVATIONS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+
 
   /api/acts/reservations/search:
     post:
@@ -356,18 +345,6 @@ paths:
                       status: RESERVED
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_RESERVATIONS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/reservations/{id}:
     get:
@@ -411,19 +388,7 @@ paths:
                   paid_amount: 449.00
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Reserva no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-          
+ 
     put:
       tags:
         - Gestión de Reservas
@@ -455,30 +420,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso EDIT_RESERVATIONS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Reserva no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
     patch:
       tags:
@@ -510,30 +451,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso EDIT_RESERVATIONS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Reserva no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
     delete:
       tags:
@@ -559,25 +476,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_RESERVATIONS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Reserva no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+    
   /api/acts/reservations/{id}/status:
     post:
       tags:
@@ -609,27 +508,4 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos (ej. estado no permitido para el cambio).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_RESERVATION_STATUS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Reserva no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+    

@@ -315,13 +315,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+    
   /api/parish/{parishId}/roles/search:
     post:
       tags:
@@ -361,13 +355,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+     
   /api/parish/{parishId}/roles/create:
     post:
       tags:
@@ -394,10 +382,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleCreationResponse'
-        '400':
-          description: Datos de entrada inválidos (ej. Nombre de rol ya existe).
-        '401':
-          description: No autorizado.
+
 
   /api/parish/roles/{roleId}:
     get:
@@ -419,11 +404,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
-          
+     
     put:
       tags:
         - Gestión de Roles
@@ -449,12 +430,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleUpdateResponse'
-        '400':
-          description: Datos de entrada inválidos (ej. Nombre ya existe).
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
 
     delete:
       tags:
@@ -475,11 +450,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleDeleteResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
-
+     
   /api/parish/roles/{roleId}/status:
     patch:
       tags:
@@ -506,11 +477,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleStatusResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
-
+     
   /api/parish/roles/{roleId}/permissions:
     put:
       tags:
@@ -537,9 +504,3 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RolePermissionsUpdateResponse'
-        '400':
-          description: Datos de entrada inválidos.
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol o alguno de los permisos no encontrado.

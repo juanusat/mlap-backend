@@ -253,12 +253,6 @@ paths:
                     chapel_name: Capilla San José
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado (JWT inválido o ausente).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/requirements/chapel/list:
     post:
@@ -292,18 +286,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_REQUIREMENTS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+  
 
   /api/acts/requirements/chapel/search:
     post:
@@ -337,18 +320,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_REQUIREMENTS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+  
 
   /api/acts/requirements/chapel/create:
     post:
@@ -375,24 +347,7 @@ paths:
                   id: 102
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso CREATE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+      
 
   /api/acts/requirements/chapel/{id}:
     get:
@@ -424,18 +379,7 @@ paths:
                   active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+ 
           
     put:
       tags:
@@ -471,30 +415,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+      
 
     patch:
       tags:
@@ -526,31 +447,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+     
     delete:
       tags:
         - Gestión de Requisitos
@@ -575,25 +472,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+   
   /api/acts/requirements/chapel/{id}/deactivate:
     post:
       tags:
@@ -627,21 +506,3 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'

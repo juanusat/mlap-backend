@@ -327,13 +327,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+    
   /api/parish/{parishId}/workers/search:
     post:
       tags:
@@ -375,13 +369,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+    
   /api/parish/{parishId}/workers/create:
     post:
       tags:
@@ -414,18 +402,7 @@ paths:
                   association_id: 456
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+       
 
   /api/security/parish-workers/{id}/roles/list:
     post:
@@ -453,11 +430,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Asociación no encontrada.
-
+    
   /api/security/parish-workers/{id}/roles/create:
     post:
       tags:
@@ -484,12 +457,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleAssignmentResponse'
-        '400':
-          description: Datos de entrada inválidos (ej. Rol ya asignado).
-        '401':
-          description: No autorizado.
-        '404':
-          description: Asociación o Rol no encontrado.
+
 
   /api/parish/user-roles/{userRoleId}:
     patch:
@@ -518,11 +486,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/RoleRevocationResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Asignación de rol no encontrada.
-
+      
   /api/parish/associations/{associationId}/status:
     patch:
       tags:
@@ -549,11 +513,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AssociationStatusResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Asociación no encontrada.
-
+     
   /api/parish/associations/{associationId}:
     delete:
       tags:
@@ -574,7 +534,4 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AssociationDeleteResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Asociación no encontrada.
+    

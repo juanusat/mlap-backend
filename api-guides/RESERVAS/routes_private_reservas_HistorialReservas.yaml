@@ -224,13 +224,7 @@ paths:
                       status: CANCELLED
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado (JWT inválido o ausente).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+    
   /api/client/reservations/history/search:
     post:
       tags:
@@ -264,13 +258,7 @@ paths:
                       status: CANCELLED
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado (JWT inválido o ausente).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+   
   /api/client/reservations/{id}:
     get:
       tags:
@@ -310,15 +298,4 @@ paths:
                       completed: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado (JWT inválido o la reserva no pertenece al usuario).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Reserva no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+    

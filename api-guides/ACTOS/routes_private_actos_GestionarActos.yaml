@@ -149,7 +149,6 @@ components:
     EventVariantCreateRequest:
       type: object
       required:
-        - chapel_id
         - event_id
         - name
         - description
@@ -157,10 +156,6 @@ components:
         - max_capacity
         - active
       properties:
-        chapel_id:
-          type: integer
-          description: ID de la capilla seleccionada.
-          example: 101
         event_id:
           type: integer
           description: ID del Evento Base seleccionado.
@@ -174,19 +169,14 @@ components:
           nullable: true
           description: Descripción de la variante.
           example: Bautizo masivo el tercer sábado del mes.
-        current_price:
-          type: number
-          format: float
-          description: Precio del acto.
-          example: 25.50
+        event_type:
+          type: string
+          enum: [PRIVATE, COMUNITY]
+          description: Tipo de acto (privado o comunitario).
         max_capacity:
           type: integer
           description: Número de personas/unidades (1 para Privado, >1 para Comunitario).
           example: 20
-        active:
-          type: boolean
-          description: Estado inicial.
-          example: true
 
     EventVariantUpdateRequest:
       type: object
@@ -292,14 +282,6 @@ components:
           type: string
           description: Término de búsqueda para nombre/descripción de la variante
           example: "Matrimonio"
-        chapel_id:
-          type: integer
-          description: ID de la capilla para filtrar
-          example: 101
-        active:
-          type: boolean
-          description: Filtrar por estado de actividad
-          example: true
           
 security:
   - bearerAuth: []
@@ -333,18 +315,7 @@ paths:
                     name: Bautizo
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado (JWT inválido o ausente).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: ""
-                data: {}
-                error: "No autorizado"
-                traceback: ""
-              
+
   /api/parish/chapels/search:
     post:
       tags:
@@ -372,17 +343,6 @@ paths:
                   - id: 102
                     name: Capilla La Candelaria
                 error: ""
-                traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: ""
-                data: {}
-                error: "No autorizado"
                 traceback: ""
 
   /api/acts/events/variants/list:
@@ -427,18 +387,6 @@ paths:
                       reservations_count: 0
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/events/variants/search:
     post:
@@ -482,18 +430,6 @@ paths:
                       reservations_count: 0
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/events/variants/create:
     post:
@@ -520,24 +456,6 @@ paths:
                   id: 10
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso CREATE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/events/variants/{id}:
     get:
@@ -572,18 +490,6 @@ paths:
                   active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
           
     put:
       tags:
@@ -622,31 +528,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+        
     patch:
       tags:
         - Gestión de Actos Litúrgicos
@@ -677,31 +559,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
     delete:
       tags:
         - Gestión de Actos Litúrgicos
@@ -726,25 +583,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
   /api/acts/events/variants/{id}/deactivate:
     post:
       tags:
@@ -778,21 +616,3 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'

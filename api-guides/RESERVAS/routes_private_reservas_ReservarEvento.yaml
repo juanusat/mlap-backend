@@ -91,15 +91,3 @@ paths:
                   status: "RESERVED"
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos (ej. fecha no disponible, ID de variante no existe, monto negativo).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado (JWT inválido o ausente).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
