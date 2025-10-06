@@ -108,12 +108,12 @@ components:
         event_date:
           type: string
           format: date
-          description: Fecha del evento (YYYY-MM-DD)
-          example: "2025-10-15"
+          description: Fecha del evento seleccionada por el usuario (YYYY-MM-DD)
+          example: "2025-09-30"
         event_time:
           type: string
           format: time
-          description: Hora del evento (HH:MM)
+          description: Hora del evento seleccionada por el usuario (HH:MM)
           example: "08:00"
 
     EventListRequest:
@@ -209,164 +209,42 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/client/events/list:
-    post:
-      tags:
-        - Selección de Eventos (Cliente)
-      summary: Listar Eventos Disponibles para Reserva
-      description: Obtiene un listado paginado de los eventos disponibles que el cliente puede reservar, incluyendo información de capillas y parroquias.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventListRequest'
-      responses:
-        '200':
-          description: Listado exitoso de eventos disponibles.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Eventos disponibles obtenidos exitosamente"
-                data:
-                  total_records: 15
-                  total_pages: 2
-                  current_page: 1
-                  items:
-                    - id: 5
-                      name: Matrimonio Individual
-                      description: Ceremonia matrimonial privada
-                      current_price: 350.00
-                      chapel:
-                        chapel_id: 101
-                        chapel_name: Capilla San José Obrero
-                        parish_name: Parroquia Nuestra Señora de la Consolación
-                error: ""
-                traceback: ""
-
-  /api/client/events/search:
-    post:
-      tags:
-        - Selección de Eventos (Cliente)
-      summary: Buscar Eventos Disponibles para Reserva
-      description: Busca eventos disponibles por nombre u otros criterios para la reserva del cliente.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/EventSearchRequest'
-      responses:
-        '200':
-          description: Resultados de búsqueda de eventos disponibles.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Búsqueda de eventos completada exitosamente"
-                data:
-                  total_records: 3
-                  total_pages: 1
-                  current_page: 1
-                  items:
-                    - id: 5
-                      name: Matrimonio Individual
-                      description: Ceremonia matrimonial privada
-                      current_price: 350.00
-                      chapel:
-                        chapel_id: 101
-                        chapel_name: Capilla San José Obrero
-                        parish_name: Parroquia Nuestra Señora de la Consolación
-                error: ""
-                traceback: ""
-
-  /api/client/events/{id}/reservation-form:
+  /api/client/reservation/form/{event_id}:
     get:
       tags:
         - Formulario de Reserva (Cliente)
-      summary: Obtener Información del Formulario de Reserva
-      description: Obtiene la información necesaria para el formulario de reserva, incluyendo datos del evento, capilla/parroquia y fechas/horarios disponibles.
+      summary: Obtener Información para Formulario de Reserva
+      description: Obtiene la información inicial para mostrar en los campos de solo lectura de la pantalla (capilla/parroquia y evento). Los campos de fecha y hora son editables por el usuario.
       parameters:
         - in: path
-          name: id
+          name: event_id
           schema:
             type: integer
-          description: ID de la variante del evento a reservar
+          description: ID del evento a reservar
           required: true
       responses:
         '200':
-          description: Información del formulario de reserva obtenida exitosamente.
+          description: Información del formulario obtenida exitosamente.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
               example:
-                message: "Información del formulario de reserva obtenida exitosamente"
+                message: "Información del formulario obtenida exitosamente"
                 data:
-                  event_variant:
-                    id: 5
-                    name: Matrimonio Individual
-                    description: Ceremonia matrimonial privada
-                    current_price: 350.00
-                    chapel:
-                      chapel_id: 101
-                      chapel_name: Capilla San José Obrero
-                      parish_name: Parroquia Nuestra Señora de la Consolación
-                  available_dates: ["2025-10-15", "2025-10-20", "2025-10-25"]
-                  available_times:
-                    - date: "2025-10-15"
-                      time: "08:00"
-                      time_display: "08:00 a.m."
-                    - date: "2025-10-15"
-                      time: "10:00"
-                      time_display: "10:00 a.m."
+                  chapel_parish: "Consolación"
+                  event_name: "Matrimonio individual"
                 error: ""
                 traceback: ""
 
-  /api/client/events/availability/check:
-    post:
-      tags:
-        - Consulta de Disponibilidad (Cliente)
-      summary: Verificar Disponibilidad de Fechas y Horarios
-      description: Consulta la disponibilidad de fechas y horarios específicos para un evento determinado.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/AvailabilityRequest'
-      responses:
-        '200':
-          description: Disponibilidad consultada exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Disponibilidad consultada exitosamente"
-                data:
-                  available_slots:
-                    - date: "2025-10-15"
-                      time: "08:00"
-                      time_display: "08:00 a.m."
-                    - date: "2025-10-15"
-                      time: "10:00"
-                      time_display: "10:00 a.m."
-                    - date: "2025-10-20"
-                      time: "14:00"
-                      time_display: "02:00 p.m."
-                error: ""
-                traceback: ""
 
-  /api/client/reservations/create:
+
+  /api/client/reservation/create:
     post:
       tags:
-        - Crear Reserva (Cliente)
-      summary: Crear Nueva Reserva de Evento
-      description: Registra la reserva para un evento específico en la fecha y hora seleccionadas. El sistema asocia la reserva al usuario logueado.
+        - Formulario de Reserva (Cliente)
+      summary: Crear Nueva Reserva
+      description: Crea una nueva reserva con la fecha y hora seleccionadas en el formulario. Corresponde al botón "Aceptar" de la pantalla.
       requestBody:
         required: true
         content:
@@ -385,10 +263,6 @@ paths:
                 data:
                   reservation_id: 1234
                   status: "RESERVED"
-                  event_name: "Matrimonio Individual"
-                  event_date: "2025-10-15"
-                  event_time: "08:00"
-                  chapel_name: "Capilla San José Obrero"
-                  parish_name: "Parroquia Nuestra Señora de la Consolación"
+                  confirmation_message: "Su reserva ha sido confirmada para Matrimonio individual el día 30/09/2025 a las 08:00 a.m."
                 error: ""
                 traceback: ""

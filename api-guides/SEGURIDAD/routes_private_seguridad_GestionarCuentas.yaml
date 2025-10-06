@@ -430,6 +430,27 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Roles activos del trabajador obtenidos exitosamente"
+                data:
+                  total_records: 3
+                  total_pages: 1
+                  current_page: 1
+                  items:
+                    - user_role_id: 101
+                      role_id: 1
+                      role_name: "Administrador"
+                      assignment_date: "2024-01-15"
+                    - user_role_id: 102
+                      role_id: 2
+                      role_name: "Secretario"
+                      assignment_date: "2024-02-10"
+                    - user_role_id: 103
+                      role_id: 3
+                      role_name: "Vicario"
+                      assignment_date: "2024-03-05"
+                error: ""
+                traceback: ""
     
   /api/security/parish-workers/{id}/roles/create:
     post:

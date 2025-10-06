@@ -182,10 +182,6 @@ components:
           type: string
           description: Término de búsqueda para filtrar por nombre del evento
           example: "Unción"
-        status:
-          $ref: '#/components/schemas/HistoryReservationStatus'
-          description: Filtrar por estado específico de conclusión o cancelación
-          example: COMPLETED
 
 security:
   - bearerAuth: []
@@ -230,7 +226,7 @@ paths:
       tags:
         - Historial de Reservas (Cliente)
       summary: Buscar en Historial de Reservas del Usuario
-      description: Busca reservas concluidas o canceladas del usuario por nombre del evento.
+      description: Busca reservas concluidas o canceladas del usuario únicamente por nombre del evento.
       requestBody:
         required: true
         content:

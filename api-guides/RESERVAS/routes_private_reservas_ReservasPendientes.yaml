@@ -167,8 +167,6 @@ paths:
                       event_date: '2025-01-13'
                       paid_amount: 346.00
                       status: RESERVED
-                      chapel_name: Capilla San José
-                      parish_name: Parroquia Central
                 error: ""
                 traceback: ""
    
@@ -203,8 +201,6 @@ paths:
                       event_date: '2025-01-13'
                       paid_amount: 346.00
                       status: RESERVED
-                      chapel_name: Capilla San José
-                      parish_name: Parroquia Central
                 error: ""
                 traceback: ""
       
