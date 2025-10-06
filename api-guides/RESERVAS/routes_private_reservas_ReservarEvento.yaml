@@ -1,7 +1,7 @@
 openapi: 3.0.0
 info:
-  title: Módulo Reservas - Creación de Eventos por Cliente
-  description: API para registrar la reserva de un evento litúrgico por parte del usuario logueado, incluyendo el registro de los requisitos asociados.
+  title: Módulo Reservas - Reservar Evento (Cliente)
+  description: APIs para que el usuario (cliente) pueda seleccionar eventos disponibles, ver información de capillas/parroquias y realizar reservas.
   version: 1.0.0
 servers:
   - url: /
@@ -15,27 +15,171 @@ components:
       bearerFormat: JWT
       
   schemas:
+    ChapelParishInfo:
+      type: object
+      description: Información de la capilla y parroquia para la reserva
+      properties:
+        chapel_id:
+          type: integer
+          description: ID de la capilla
+          example: 101
+        chapel_name:
+          type: string
+          description: Nombre de la capilla
+          example: Capilla San José Obrero
+        parish_name:
+          type: string
+          description: Nombre de la parroquia
+          example: Parroquia Nuestra Señora de la Consolación
+
+    EventVariantInfo:
+      type: object
+      description: Información del evento disponible para reservar
+      properties:
+        id:
+          type: integer
+          description: ID de la variante del evento
+          example: 5
+        name:
+          type: string
+          description: Nombre del evento
+          example: Matrimonio Individual
+        description:
+          type: string
+          description: Descripción del evento
+          example: Ceremonia matrimonial privada
+        current_price:
+          type: number
+          format: float
+          description: Precio actual del evento
+          example: 350.00
+        chapel:
+          $ref: '#/components/schemas/ChapelParishInfo'
+
+    AvailableTimeSlot:
+      type: object
+      description: Horario disponible para la reserva
+      properties:
+        date:
+          type: string
+          format: date
+          description: Fecha disponible (YYYY-MM-DD)
+          example: "2025-10-15"
+        time:
+          type: string
+          format: time
+          description: Hora disponible (HH:MM)
+          example: "08:00"
+        time_display:
+          type: string
+          description: Hora formateada para mostrar
+          example: "08:00 a.m."
+
+    ReservationFormData:
+      type: object
+      description: Información del formulario de reserva
+      properties:
+        event_variant:
+          $ref: '#/components/schemas/EventVariantInfo'
+        available_dates:
+          type: array
+          description: Fechas disponibles para el evento
+          items:
+            type: string
+            format: date
+          example: ["2025-10-15", "2025-10-20", "2025-10-25"]
+        available_times:
+          type: array
+          description: Horarios disponibles
+          items:
+            $ref: '#/components/schemas/AvailableTimeSlot'
+
     ReservationCreateRequest:
       type: object
       required:
         - event_variant_id
         - event_date
-        - paid_amount
+        - event_time
       properties:
         event_variant_id:
           type: integer
-          description: ID de la EventVariant (tipo de acto litúrgico) seleccionada.
+          description: ID de la EventVariant (tipo de acto litúrgico) seleccionada
           example: 5
         event_date:
           type: string
-          format: date-time
-          description: Fecha y hora específicas del evento que se está reservando.
-          example: 2025-09-30T16:00:00Z
-        paid_amount:
-          type: number
-          format: float
-          description: Monto pagado al momento de crear la reserva.
-          example: 150.00
+          format: date
+          description: Fecha del evento seleccionada por el usuario (YYYY-MM-DD)
+          example: "2025-09-30"
+        event_time:
+          type: string
+          format: time
+          description: Hora del evento seleccionada por el usuario (HH:MM)
+          example: "08:00"
+
+    EventListRequest:
+      type: object
+      required:
+        - page
+        - limit
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        chapel_id:
+          type: integer
+          description: Filtrar por capilla específica (opcional)
+          example: 101
+
+    EventSearchRequest:
+      type: object
+      required:
+        - page
+        - limit
+        - search
+      properties:
+        page:
+          type: integer
+          description: Número de página
+          example: 1
+        limit:
+          type: integer
+          description: Límite de registros por página
+          example: 10
+        search:
+          type: string
+          description: Término de búsqueda por nombre del evento
+          example: "Matrimonio"
+        chapel_id:
+          type: integer
+          description: Filtrar por capilla específica (opcional)
+          example: 101
+
+    AvailabilityRequest:
+      type: object
+      required:
+        - event_variant_id
+        - start_date
+        - end_date
+      properties:
+        event_variant_id:
+          type: integer
+          description: ID de la variante del evento
+          example: 5
+        start_date:
+          type: string
+          format: date
+          description: Fecha de inicio para consultar disponibilidad
+          example: "2025-10-01"
+        end_date:
+          type: string
+          format: date
+          description: Fecha de fin para consultar disponibilidad
+          example: "2025-10-31"
 
     StandardResponse:
       type: object
@@ -43,7 +187,7 @@ components:
         message:
           type: string
           description: Lo que el backend indica al frontend que debe mostrar
-          example: "Reserva creada exitosamente"
+          example: "Eventos disponibles obtenidos exitosamente"
         data:
           description: La información, puede ser un arreglo
           oneOf:
@@ -65,12 +209,42 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/client/reservations/create:
+  /api/client/reservation/form/{event_id}:
+    get:
+      tags:
+        - Formulario de Reserva (Cliente)
+      summary: Obtener Información para Formulario de Reserva
+      description: Obtiene la información inicial para mostrar en los campos de solo lectura de la pantalla (capilla/parroquia y evento). Los campos de fecha y hora son editables por el usuario.
+      parameters:
+        - in: path
+          name: event_id
+          schema:
+            type: integer
+          description: ID del evento a reservar
+          required: true
+      responses:
+        '200':
+          description: Información del formulario obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Información del formulario obtenida exitosamente"
+                data:
+                  chapel_parish: "Consolación"
+                  event_name: "Matrimonio individual"
+                error: ""
+                traceback: ""
+
+
+
+  /api/client/reservation/create:
     post:
       tags:
-        - Reserva Evento (Cliente)
-      summary: Crear la Reserva (Paso Final)
-      description: Registra la reserva para un evento específico. El sistema asocia la reserva al usuario logueado y copia los requisitos activos.
+        - Formulario de Reserva (Cliente)
+      summary: Crear Nueva Reserva
+      description: Crea una nueva reserva con la fecha y hora seleccionadas en el formulario. Corresponde al botón "Aceptar" de la pantalla.
       requestBody:
         required: true
         content:
@@ -89,17 +263,6 @@ paths:
                 data:
                   reservation_id: 1234
                   status: "RESERVED"
+                  confirmation_message: "Su reserva ha sido confirmada para Matrimonio individual el día 30/09/2025 a las 08:00 a.m."
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos (ej. fecha no disponible, ID de variante no existe, monto negativo).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado (JWT inválido o ausente).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'

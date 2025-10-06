@@ -93,19 +93,10 @@ components:
           type: integer
           description: Número máximo de personas/unidades de reserva (1 para privado, >1 para comunitario).
           example: 1
-        current_price:
-          type: number
-          format: float
-          description: Precio actual de la variante.
-          example: 50.00
         active:
           type: boolean
           description: Estado de la variante (Activo/Inactivo).
           example: true
-        reservations_count:
-          type: integer
-          description: Total de reservas activas asociadas a esta variante.
-          example: 0
 
     EventVariantDetail:
       type: object
@@ -128,15 +119,15 @@ components:
           type: integer
           description: ID de la capilla seleccionada.
           example: 101
+        event_type:
+          type: string
+          enum: [PRIVATE, COMUNITY]
+          description: Tipo de evento (privado o comunitario).
+          example: PRIVATE
         event_id:
           type: integer
           description: ID del Evento Base (catálogo).
           example: 5
-        current_price:
-          type: number
-          format: float
-          description: Precio actual.
-          example: 50.00
         max_capacity:
           type: integer
           description: Número máximo de personas/unidades de reserva.
@@ -149,18 +140,12 @@ components:
     EventVariantCreateRequest:
       type: object
       required:
-        - chapel_id
         - event_id
         - name
         - description
-        - current_price
-        - max_capacity
-        - active
+        - chapel_id
+        - event_type
       properties:
-        chapel_id:
-          type: integer
-          description: ID de la capilla seleccionada.
-          example: 101
         event_id:
           type: integer
           description: ID del Evento Base seleccionado.
@@ -174,19 +159,20 @@ components:
           nullable: true
           description: Descripción de la variante.
           example: Bautizo masivo el tercer sábado del mes.
-        current_price:
-          type: number
-          format: float
-          description: Precio del acto.
-          example: 25.50
+        chapel_id:
+          type: integer
+          description: ID de la Capilla seleccionada donde se realizará el evento.
+          example: 101
+        event_type:
+          type: string
+          enum: [PRIVATE, COMUNITY]
+          description: Tipo de acto (privado o comunitario).
+          example: COMUNITY
         max_capacity:
           type: integer
-          description: Número de personas/unidades (1 para Privado, >1 para Comunitario).
+          description: Número máximo de personas/unidades. Requerido solo para eventos de tipo COMUNITY (>1). Para eventos PRIVATE se establece automáticamente en 1.
           example: 20
-        active:
-          type: boolean
-          description: Estado inicial.
-          example: true
+          minimum: 2
 
     EventVariantUpdateRequest:
       type: object
@@ -200,19 +186,24 @@ components:
           nullable: true
           description: Descripción de la variante.
           example: Ceremonia privada con música en vivo.
-        current_price:
-          type: number
-          format: float
-          description: Precio del acto.
-          example: 60.00
+        chapel_id:
+          type: integer
+          description: ID de la Capilla donde se realizará el evento.
+          example: 102
+        event_type:
+          type: string
+          enum: [PRIVATE, COMUNITY]
+          description: Tipo de evento (privado o comunitario).
+          example: PRIVATE
+        event_id:
+          type: integer
+          description: ID del Evento Base (catálogo).
+          example: 5
         max_capacity:
           type: integer
-          description: Número de personas/unidades.
-          example: 1
-        active:
-          type: boolean
-          description: Estado (Switch).
-          example: false
+          description: Número de personas/unidades. Solo aplicable para eventos de tipo COMUNITY.
+          example: 25
+          minimum: 2
           
     EventVariantListResponse:
       type: object
@@ -292,99 +283,11 @@ components:
           type: string
           description: Término de búsqueda para nombre/descripción de la variante
           example: "Matrimonio"
-        chapel_id:
-          type: integer
-          description: ID de la capilla para filtrar
-          example: 101
-        active:
-          type: boolean
-          description: Filtrar por estado de actividad
-          example: true
           
 security:
   - bearerAuth: []
 
 paths:
-  /api/catalogs/events/search:
-    post:
-      tags:
-        - Catálogos Auxiliares
-      summary: Buscar Catálogo de Eventos Base
-      description: Obtiene el catálogo de Eventos Base definidos por la Diócesis con búsqueda y paginación, para la selección inicial al crear un Acto Litúrgico.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SearchRequest'
-      responses:
-        '200':
-          description: Listado exitoso de eventos base.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Catálogo de eventos base obtenido exitosamente"
-                data:
-                  - id: 1
-                    name: Matrimonio
-                  - id: 2
-                    name: Bautizo
-                error: ""
-                traceback: ""
-        '401':
-          description: No autorizado (JWT inválido o ausente).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: ""
-                data: {}
-                error: "No autorizado"
-                traceback: ""
-              
-  /api/parish/chapels/search:
-    post:
-      tags:
-        - Catálogos Auxiliares
-      summary: Buscar Capillas de la Parroquia
-      description: Obtiene el listado de Capillas que pertenecen a la Parroquia activa con búsqueda y paginación, para la selección al crear un Acto Litúrgico.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SearchRequest'
-      responses:
-        '200':
-          description: Listado exitoso de capillas.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Listado de capillas obtenido exitosamente"
-                data:
-                  - id: 101
-                    name: Capilla San José Obrero
-                  - id: 102
-                    name: Capilla La Candelaria
-                error: ""
-                traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: ""
-                data: {}
-                error: "No autorizado"
-                traceback: ""
-
   /api/acts/events/variants/list:
     post:
       tags:
@@ -422,23 +325,9 @@ paths:
                         name: Matrimonio
                       variant_type: Privado
                       max_capacity: 1
-                      current_price: 50.00
                       active: true
-                      reservations_count: 0
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/events/variants/search:
     post:
@@ -477,30 +366,21 @@ paths:
                         name: Matrimonio
                       variant_type: Privado
                       max_capacity: 1
-                      current_price: 50.00
                       active: true
-                      reservations_count: 0
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/events/variants/create:
     post:
       tags:
         - Gestión de Actos Litúrgicos
       summary: Crear un Nuevo Acto Litúrgico
-      description: Registra una nueva variante de evento para una capilla. Requiere permiso CREATE_EVENT_VARIANT.
+      description: |
+        Registra una nueva variante de evento para una capilla. Requiere permiso CREATE_EVENT_VARIANT.
+        
+        **Lógica de Capacidad:**
+        - Para eventos **PRIVATE**: max_capacity se establece automáticamente en 1 (no se debe enviar en la petición)
+        - Para eventos **COMUNITY**: max_capacity es requerido y debe ser mayor a 1
       requestBody:
         required: true
         content:
@@ -520,24 +400,6 @@ paths:
                   id: 10
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso CREATE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/events/variants/{id}:
     get:
@@ -566,24 +428,12 @@ paths:
                   name: Matrimonio Individual
                   description: Ceremonia privada.
                   chapel_id: 101
+                  event_type: PRIVATE
                   event_id: 5
-                  current_price: 50.00
                   max_capacity: 1
                   active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
           
     put:
       tags:
@@ -602,14 +452,41 @@ paths:
         content:
           application/json:
             schema:
-              allOf: # Usar allOf o similar si se requiere que sea un reemplazo completo (PUT)
-                - $ref: '#/components/schemas/EventVariantCreateRequest'
-                - type: object
-                  properties:
-                    chapel_id:
-                      readOnly: true
-                    event_id:
-                      readOnly: true
+              type: object
+              required:
+                - name
+                - description
+                - chapel_id
+                - event_type
+                - event_id
+                - max_capacity
+              properties:
+                name:
+                  type: string
+                  description: Nombre del Acto Litúrgico.
+                  example: Matrimonio Individual Actualizado
+                description:
+                  type: string
+                  nullable: true
+                  description: Descripción de la variante.
+                  example: Ceremonia matrimonial privada actualizada.
+                chapel_id:
+                  type: integer
+                  description: ID de la Capilla donde se realizará el evento.
+                  example: 101
+                event_type:
+                  type: string
+                  enum: [PRIVATE, COMUNITY]
+                  description: Tipo de evento (privado o comunitario).
+                  example: PRIVATE
+                event_id:
+                  type: integer
+                  description: ID del Evento Base (catálogo).
+                  example: 5
+                max_capacity:
+                  type: integer
+                  description: Número máximo de personas/unidades de reserva.
+                  example: 1
       responses:
         '200':
           description: Acto Litúrgico actualizado exitosamente.
@@ -622,31 +499,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+        
     patch:
       tags:
         - Gestión de Actos Litúrgicos
@@ -677,31 +530,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
     delete:
       tags:
         - Gestión de Actos Litúrgicos
@@ -726,73 +554,3 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
-  /api/acts/events/variants/{id}/deactivate:
-    post:
-      tags:
-        - Gestión de Actos Litúrgicos
-      summary: Dar de Baja/Desactivar un Acto Litúrgico (Baja Lógica)
-      description: Realiza una baja lógica (desactiva) de la variante de evento. Requiere permiso DELETE_EVENT_VARIANT.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID de la variante de evento (Acto Litúrgico) a desactivar.
-          required: true
-      requestBody:
-        description: Cuerpo de la solicitud vacío (no se requiere body).
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-      responses:
-        '200':
-          description: Acto Litúrgico desactivado exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Acto Litúrgico desactivado exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_EVENT_VARIANT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Acto Litúrgico no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'

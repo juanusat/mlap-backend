@@ -288,12 +288,6 @@ paths:
                     end_time: '17:00:00'
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
     
   /api/acts/schedules/general/create:
     post:
@@ -320,24 +314,6 @@ paths:
                   id: 3
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos (ej. Solapamiento).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso MANAGE_SCHEDULE).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   /api/acts/schedules/general/{id}:
     get:
@@ -368,18 +344,6 @@ paths:
                   end_time: '12:00:00'
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Horario no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
     put:
       tags:
@@ -411,30 +375,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Horario no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
           
     patch:
       tags:
@@ -466,30 +406,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Horario no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
     delete:
       tags:
@@ -515,24 +431,6 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Horario no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
   # --- Horarios Específicos (Excepciones) ---
   /api/acts/schedules/specific/list:
@@ -571,12 +469,7 @@ paths:
                     reason: Mantenimiento general
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+ 
           
   /api/acts/schedules/specific/create:
     post:
@@ -603,24 +496,7 @@ paths:
                   id: 203
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos (ej. OPEN sin horas).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+     
 
   /api/acts/schedules/specific/{id}:
     get:
@@ -653,18 +529,6 @@ paths:
                   reason: Horario especial por evento
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Excepción no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
 
     put:
       tags:
@@ -698,30 +562,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Excepción no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+     
           
     patch:
       tags:
@@ -753,31 +594,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Excepción no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+    
     delete:
       tags:
         - Horarios Específicos (Excepciones)
@@ -802,21 +619,4 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Excepción no encontrada.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+    

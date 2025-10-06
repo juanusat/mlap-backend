@@ -27,10 +27,19 @@ components:
           type: string
           description: Nombre del Evento Base (ej. Matrimonio).
           example: Matrimonio
-        chapel_name:
+
+    EventSummary:
+      type: object
+      description: Resumen simple de un evento para listados.
+      properties:
+        order_number:
+          type: integer
+          description: Número de orden en la lista (1, 2, 3, ...).
+          example: 1
+        event_name:
           type: string
-          description: Nombre de la Capilla.
-          example: Capilla San José
+          description: Nombre del Evento Base.
+          example: Matrimonio
 
     RequirementData:
       type: object
@@ -133,10 +142,6 @@ components:
           nullable: true
           description: Descripción o detalles del requisito.
           example: No mayor a 6 meses.
-        active:
-          type: boolean
-          description: Estado del requisito (Switch).
-          example: false
 
     StandardResponse:
       type: object
@@ -247,18 +252,44 @@ paths:
                 data:
                   - id: 50
                     event_name: Matrimonio
-                    chapel_name: Capilla San José
                   - id: 51
                     event_name: Bautizo
-                    chapel_name: Capilla San José
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado (JWT inválido o ausente).
+
+  /api/acts/events/list:
+    post:
+      tags:
+        - Requisitos - Auxiliares
+      summary: Listar Eventos Disponibles
+      description: Obtiene una lista simple de eventos disponibles con número de orden y nombre del evento, para la selección de eventos en la gestión de requisitos.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Listado exitoso de eventos disponibles.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Eventos disponibles obtenidos exitosamente"
+                data:
+                  - order_number: 1
+                    event_name: Matrimonio
+                  - order_number: 2
+                    event_name: Bautizo
+                  - order_number: 3
+                    event_name: Confirmación
+                  - order_number: 4
+                    event_name: Primera Comunión
+                error: ""
+                traceback: ""
 
   /api/acts/requirements/chapel/list:
     post:
@@ -292,18 +323,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_REQUIREMENTS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+  
 
   /api/acts/requirements/chapel/search:
     post:
@@ -337,18 +357,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso READ_REQUIREMENTS).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+  
 
   /api/acts/requirements/chapel/create:
     post:
@@ -375,24 +384,7 @@ paths:
                   id: 102
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso CREATE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+      
 
   /api/acts/requirements/chapel/{id}:
     get:
@@ -424,18 +416,7 @@ paths:
                   active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+ 
           
     put:
       tags:
@@ -471,30 +452,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
+      
 
     patch:
       tags:
@@ -526,31 +484,7 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '400':
-          description: Datos de entrada inválidos.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso UPDATE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+     
     delete:
       tags:
         - Gestión de Requisitos
@@ -575,73 +509,3 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
-  /api/acts/requirements/chapel/{id}/deactivate:
-    post:
-      tags:
-        - Gestión de Requisitos
-      summary: Dar de Baja/Desactivar un Requisito Específico (Baja Lógica)
-      description: Realiza una baja lógica (desactiva el campo 'active') del requisito. Requiere permiso DELETE_REQUIREMENT.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID del requisito a desactivar.
-          required: true
-      requestBody:
-        description: Cuerpo de la solicitud vacío (no se requiere body).
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
-              properties: {}
-      responses:
-        '200':
-          description: Requisito desactivado exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Requisito desactivado exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '403':
-          description: Prohibido (Falta el permiso DELETE_REQUIREMENT).
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-        '404':
-          description: Requisito no encontrado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'

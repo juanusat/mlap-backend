@@ -315,13 +315,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+    
   /api/parish/{parishId}/roles/search:
     post:
       tags:
@@ -361,13 +355,7 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
-        '401':
-          description: No autorizado.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-
+     
   /api/parish/{parishId}/roles/create:
     post:
       tags:
@@ -393,11 +381,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleCreationResponse'
-        '400':
-          description: Datos de entrada inválidos (ej. Nombre de rol ya existe).
-        '401':
-          description: No autorizado.
+                $ref: '#/components/schemas/StandardResponse'
+
 
   /api/parish/roles/{roleId}:
     get:
@@ -419,11 +404,14 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
-          
+              example:
+                message: "Detalles del rol obtenidos exitosamente"
+                data:
+                  name: "Administrador"
+                  description: "Rol con permisos completos para la gestión de la parroquia y todos los módulos del sistema"
+                error: ""
+                traceback: ""
+     
     put:
       tags:
         - Gestión de Roles
@@ -448,13 +436,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleUpdateResponse'
-        '400':
-          description: Datos de entrada inválidos (ej. Nombre ya existe).
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
+                $ref: '#/components/schemas/StandardResponse'
 
     delete:
       tags:
@@ -474,12 +456,8 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleDeleteResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
-
+                $ref: '#/components/schemas/StandardResponse'
+     
   /api/parish/roles/{roleId}/status:
     patch:
       tags:
@@ -505,18 +483,76 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RoleStatusResponse'
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol no encontrado.
-
+                $ref: '#/components/schemas/StandardResponse'
+     
   /api/parish/roles/{roleId}/permissions:
+    get:
+      tags:
+        - Gestión de Roles (Permisos)
+      summary: Obtener Matriz de Permisos del Rol
+      description: Obtiene la matriz de permisos actual del rol, organizada por módulos y acciones (Ver, Añadir, Editar, Eliminar).
+      parameters:
+        - in: path
+          name: roleId
+          schema:
+            type: integer
+          description: ID del rol para consultar permisos.
+          required: true
+      responses:
+        '200':
+          description: Matriz de permisos obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Permisos del rol obtenidos exitosamente"
+                data:
+                  role_name: "Rol de Ejemplo 1"
+                  permissions_matrix:
+                    - module: "Actos litúrgicos"
+                      ver: false
+                      añadir: true
+                      editar: false
+                      eliminar: true
+                    - module: "Usuario"
+                      ver: true
+                      añadir: true
+                      editar: true
+                      eliminar: true
+                    - module: "Parroquia"
+                      ver: false
+                      añadir: true
+                      editar: false
+                      eliminar: true
+                    - module: "Seguridad"
+                      ver: false
+                      añadir: false
+                      editar: true
+                      eliminar: true
+                    - module: "Reservas"
+                      ver: true
+                      añadir: true
+                      editar: true
+                      eliminar: true
+                    - module: "Tipo de Documentos"
+                      ver: false
+                      añadir: true
+                      editar: true
+                      eliminar: false
+                    - module: "Aprobar parroquia"
+                      ver: false
+                      añadir: false
+                      editar: true
+                      eliminar: true
+                error: ""
+                traceback: ""
+
     put:
       tags:
         - Gestión de Roles (Permisos)
-      summary: Gestionar Permisos (Asignación/Revocación Masiva)
-      description: Asigna o revoca masivamente los permisos del sistema a un rol específico.
+      summary: Guardar Cambios en Matriz de Permisos
+      description: Guarda los cambios realizados en la matriz de permisos del rol (botón "Guardar" del modal).
       parameters:
         - in: path
           name: roleId
@@ -536,10 +572,9 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RolePermissionsUpdateResponse'
-        '400':
-          description: Datos de entrada inválidos.
-        '401':
-          description: No autorizado.
-        '404':
-          description: Rol o alguno de los permisos no encontrado.
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Permisos del rol actualizados exitosamente"
+                data: {}
+                error: ""
+                traceback: ""

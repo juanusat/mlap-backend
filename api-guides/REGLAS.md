@@ -11,6 +11,9 @@
 
 ## Anotación para rutas de búsqueda
 - Busca por nombre "si es lo principal" (depende de la tabla), requiere especificar página y tamaño de consulta
+## Anotación para rutas varias
+-LOS métodos SEARCH/CREATE/LIST deben obligatoriamente de ser POST.
+-Los métodos GET no tienen parámetros de entrada en el request, a menos que sea la página y limite (page, limit)
 
 
 # Respuesta de cualquier tipo de petición
