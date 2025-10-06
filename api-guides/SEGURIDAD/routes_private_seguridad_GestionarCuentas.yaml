@@ -214,7 +214,7 @@ components:
         message:
           type: string
           description: Lo que el backend indica al frontend que debe mostrar
-          example: "Trabajadores obtenidos exitosamente"
+          example: "Usuario(Trabajador) invitado exitosamente"
         data:
           description: La información, puede ser un arreglo
           oneOf:
@@ -478,35 +478,44 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Rol asignado exitosamente al trabajador"
+                data:
+                  user_role_id: 105
+                  role_name: "Secretario"
+                error: ""
+                traceback: ""
 
 
   /api/parish/user-roles/{userRoleId}:
-    patch:
+    delete:
       tags:
         - Gestión de Cuentas (Roles)
-      summary: Revocar Rol de Usuario (Borrado Lógico)
-      description: Finaliza la asignación de un rol, estableciendo la fecha de revocación en la tabla 'user_role'.
+      summary: Revocar Rol Específico de Usuario
+      description: Revoca un rol específico del usuario usando el user_role_id obtenido del listado. Corresponde al botón de eliminar (🗑️) de cada rol individual.
       parameters:
         - in: path
           name: userRoleId
           schema:
             type: integer
-          description: ID de la asignación de rol (user_role) a revocar.
+          description: ID de la asignación de rol específica a revocar (obtenido del listado de roles).
           required: true
-      requestBody:
-        description: Cuerpo de la solicitud vacío (no se requiere body para esta acción).
-        required: false
-        content:
-          application/json:
-            schema:
-              type: object
       responses:
         '200':
-          description: Rol revocado exitosamente.
+          description: Rol específico revocado exitosamente.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Rol revocado exitosamente"
+                data:
+                  user_role_id: 102
+                  role_name: "Secretario"
+                  revocation_date: "2025-10-06"
+                  worker_name: "Usuario1"
+                error: ""
+                traceback: ""
       
   /api/parish/associations/{associationId}/status:
     patch:
