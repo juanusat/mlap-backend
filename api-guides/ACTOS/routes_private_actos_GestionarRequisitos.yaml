@@ -194,10 +194,10 @@ components:
           type: integer
           description: Límite de registros por página
           example: 10
-        chapel_event_id:
-          type: integer
-          description: ID de la combinación Capilla-Evento para obtener sus requisitos
-          example: 50
+        # chapel_event_id:
+        #   type: integer
+        #   description: ID de la combinación Capilla-Evento para obtener sus requisitos
+        #   example: 50
 
     RequirementSearchRequest:
       type: object
@@ -215,10 +215,10 @@ components:
           type: integer
           description: Límite de registros por página
           example: 10
-        chapel_event_id:
-          type: integer
-          description: ID de la combinación Capilla-Evento para obtener sus requisitos
-          example: 50
+        # chapel_event_id:
+        #   type: integer
+        #   description: ID de la combinación Capilla-Evento para obtener sus requisitos
+        #   example: 50
         search:
           type: string
           description: Término de búsqueda para filtrar por nombre o descripción del requisito
