@@ -365,7 +365,7 @@ paths:
                 traceback: ""
     
   /api/acts/reservations/{id}/status:
-    post:
+    patch:
       tags:
         - Gestión de Reservas
       summary: Actualizar el Estado de una Reserva
