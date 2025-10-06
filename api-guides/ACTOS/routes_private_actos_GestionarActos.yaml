@@ -293,7 +293,7 @@ paths:
       tags:
         - Gestión de Actos Litúrgicos
       summary: Listar Actos Litúrgicos (Event Variants)
-      description: Obtiene un listado paginado de las variantes de eventos de la parroquia activa. Requiere permiso READ_EVENT_VARIANT.
+      description: Obtiene un listado paginado de las variantes de eventos. Requiere permiso READ_EVENT_VARIANT.
       requestBody:
         required: true
         content:
