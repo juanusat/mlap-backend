@@ -313,7 +313,7 @@ paths:
               example:
                 message: "Requisitos obtenidos exitosamente"
                 data:
-                  total_records: 2
+                  total_records: 25
                   total_pages: 1
                   current_page: 1
                   items:
@@ -347,7 +347,7 @@ paths:
               example:
                 message: "Búsqueda de requisitos completada exitosamente"
                 data:
-                  total_records: 1
+                  total_records: 25
                   total_pages: 1
                   current_page: 1
                   items:
@@ -409,11 +409,13 @@ paths:
               example:
                 message: "Detalles del requisito obtenidos exitosamente"
                 data:
-                  id: 101
-                  chapel_event_id: 50
-                  name: Certificado de Cursillo Pre-Matrimonial
-                  description: El certificado debe estar vigente...
-                  active: true
+                  total_records: 25
+                  requirement_details:
+                    id: 101
+                    chapel_event_id: 50
+                    name: Certificado de Cursillo Pre-Matrimonial
+                    description: El certificado debe estar vigente...
+                    active: true
                 error: ""
                 traceback: ""
  
