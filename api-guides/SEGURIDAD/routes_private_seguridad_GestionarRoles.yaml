@@ -384,7 +384,7 @@ paths:
                 $ref: '#/components/schemas/StandardResponse'
 
 
-  /api/parish/roles/{parishId}:
+  /api/parish/{parishId}/roles/{roleId}:
     get:
       tags:
         - Gestión de Roles
@@ -458,7 +458,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
      
-  /api/parish/roles/{parishId}/status:
+  /api/parish/{parishId}/roles/{roleId}/status:
     patch:
       tags:
         - Gestión de Roles
@@ -485,7 +485,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/StandardResponse'
      
-  /api/parish/roles/{parishId}/permissions:
+  /api/parish/{parishId}/roles/{roleId}/permissions:
     get:
       tags:
         - Gestión de Roles (Permisos)
