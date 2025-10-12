@@ -66,10 +66,11 @@ INSERT INTO public.permission (id, code, name, description, category) VALUES
 (43, 'D_PARROQUIA_CAPILLA', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.', 'PARROQUIA');
 
 -- document_type: Tipos de documento de identidad
-INSERT INTO public.document_type (id, code, name, active) VALUES
-(1, 'DNI', 'Documento Nacional de Identidad', TRUE),
-(2, 'PASAPORTE', 'Pasaporte', TRUE),
-(3, 'CE', 'Carné de Extranjería', TRUE);
+INSERT INTO public.document_type (id, code, name, active, description, created_at, updated_at) VALUES
+(1, 'DNI', 'Documento Nacional de Identidad', TRUE, 'Documento principal de identificación para ciudadanos.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(2, 'PASAPORTE', 'Pasaporte', TRUE, 'Documento de identificación utilizado para viajes internacionales.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+(3, 'CE', 'Carné de Extranjería', TRUE, 'Documento de identificación para residentes extranjeros en el país.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
 
 -- ====================================================================
 -- INSERCIÓN DE PERSONAS Y USUARIOS
