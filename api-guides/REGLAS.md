@@ -23,7 +23,10 @@
   "message": "Lo que el backend indica al fronted que debe mostrar",
   "data": {}, // La información, puede ser un arreglo
   "error": "Sin permisos suficientes", // Es vacío si no hay ningún error
-  "traceback": "string" // Todo el error generado en el backend si la respuesta es código 500
+  "traceback": "string", // Todo el error generado en el backend si la respuesta es código 500
+  "meta": {
+    "total_records": 1406 // Total de registro para identificar la página de navegación actual y las restantes (mostrar solo si data es arreglo)
+  }
 }
 ```
 
