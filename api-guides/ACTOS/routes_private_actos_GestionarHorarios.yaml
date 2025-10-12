@@ -1,622 +1,395 @@
-openapi: 3.0.0
+openapi: 3.0.1
 info:
   title: Gestión de Horarios de Capillas
-  description: APIs para la gestión de horarios de disponibilidad recurrentes (Generales) y excepciones (Específicos) de las capillas de la Parroquia.
+  description: |
+    Esta API maneja la disponibilidad general y las excepciones de horario para las capillas de una parroquia.
+    Permite a los administradores definir horarios semanales recurrentes y gestionar fechas específicas
+    de apertura o cierre.
   version: 1.0.0
 servers:
-  - url: /
-    description: URL base para las APIs
+  - url: /api
+    description: Servidor Principal
+
+paths:
+  /parishes/{parish_id}/chapels/{chapel_id}/general-schedules/list:
+    post:
+      tags:
+        - Horario General
+      summary: Obtener el horario semanal recurrente de una capilla
+      description: Devuelve todos los intervalos de disponibilidad general que definen el horario estándar de la capilla.
+      parameters:
+        - $ref: '#/components/parameters/parish_id'
+        - $ref: '#/components/parameters/chapel_id'
+      requestBody:
+        description: Aunque este listado no es paginado, se mantiene el método POST por consistencia.
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+      responses:
+        '200':
+          description: Lista de intervalos del horario general obtenida con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseGeneralScheduleList'
+
+  /parishes/{parish_id}/chapels/{chapel_id}/general-schedules/bulk-update:
+    post:
+      tags:
+        - Horario General
+      summary: Actualizar en bloque todo el horario semanal recurrente
+      description: Reemplaza completamente el horario general existente de una capilla con el nuevo conjunto de intervalos proporcionado. Se utiliza al guardar los cambios en la cuadrícula de edición.
+      parameters:
+        - $ref: '#/components/parameters/parish_id'
+        - $ref: '#/components/parameters/chapel_id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                schedules:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/GeneralScheduleInput'
+              example:
+                schedules:
+                  - day_of_week: 0 # Lunes
+                    start_time: "09:00:00"
+                    end_time: "12:00:00"
+                  - day_of_week: 1 # Martes
+                    start_time: "15:00:00"
+                    end_time: "18:00:00"
+      responses:
+        '200':
+          description: Horario general actualizado correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccess'
+
+  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/list:
+    post:
+      tags:
+        - Horarios Específicos (Excepciones)
+      summary: Listar excepciones de horario de forma paginada
+      description: Obtiene una lista paginada de excepciones (disponibilidad o no disponibilidad). Permite filtrar por tipo y rango de fechas.
+      parameters:
+        - $ref: '#/components/parameters/parish_id'
+        - $ref: '#/components/parameters/chapel_id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ListRequest'
+            examples:
+              proximas_disponibles:
+                summary: Próximas de disponibilidad
+                value:
+                  page: 1
+                  limit: 4
+                  filters:
+                    exception_type: "OPEN"
+                    date_range:
+                      start: "2025-10-12"
+              pasadas_no_disponibles:
+                summary: Pasadas de no disponibilidad
+                value:
+                  page: 1
+                  limit: 4
+                  filters:
+                    exception_type: "CLOSED"
+                    date_range:
+                      end: "2025-10-11"
+      responses:
+        '200':
+          description: Lista de excepciones obtenida con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSpecificScheduleList'
+
+  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/create:
+    post:
+      tags:
+        - Horarios Específicos (Excepciones)
+      summary: Crear una nueva excepción de horario
+      description: Registra una nueva excepción de disponibilidad ('OPEN') o no disponibilidad ('CLOSED') para una fecha específica.
+      parameters:
+        - $ref: '#/components/parameters/parish_id'
+        - $ref: '#/components/parameters/chapel_id'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecificScheduleInput'
+      responses:
+        '201':
+          description: Excepción creada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccess'
+
+  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/{schedule_id}:
+    parameters:
+      - $ref: '#/components/parameters/parish_id'
+      - $ref: '#/components/parameters/chapel_id'
+      - $ref: '#/components/parameters/schedule_id'
+    put:
+      tags:
+        - Horarios Específicos (Excepciones)
+      summary: Actualizar una excepción de horario existente
+      description: Modifica los detalles de una excepción específica identificada por su ID.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SpecificScheduleInput'
+      responses:
+        '200':
+          description: Excepción actualizada correctamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccess'
+    delete:
+      tags:
+        - Horarios Específicos (Excepciones)
+      summary: Eliminar una excepción de horario
+      description: Elimina permanentemente una excepción de la base de datos.
+      responses:
+        '200':
+          description: Excepción eliminada con éxito.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSuccess'
 
 components:
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
-      
+  parameters:
+    parish_id:
+      name: parish_id
+      in: path
+      required: true
+      description: ID de la parroquia a la que pertenece la capilla.
+      schema:
+        type: integer
+    chapel_id:
+      name: chapel_id
+      in: path
+      required: true
+      description: ID de la capilla para la cual se gestiona el horario.
+      schema:
+        type: integer
+    schedule_id:
+      name: schedule_id
+      in: path
+      required: true
+      description: ID de la excepción de horario específica.
+      schema:
+        type: integer
+
   schemas:
-    ScheduleGeneralData:
+    # ====== ESQUEMAS DE DATOS ======
+    GeneralSchedule:
       type: object
-      description: Horario de disponibilidad recurrente (General).
       properties:
         id:
           type: integer
-          description: ID del horario general.
           example: 1
         day_of_week:
           type: integer
-          description: Día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado).
-          minimum: 0
-          maximum: 6
-          example: 1
+          description: "Día de la semana (0=Lunes, 6=Domingo)"
+          example: 0
         start_time:
           type: string
           format: time
-          description: Hora de inicio (formato HH:MM:SS).
-          example: 08:00:00
+          example: "09:00:00"
         end_time:
           type: string
           format: time
-          description: Hora de fin (formato HH:MM:SS).
-          example: 12:00:00
+          example: "12:00:00"
 
-    ScheduleGeneralCreateRequest:
+    SpecificSchedule:
       type: object
-      required:
-        - chapel_id
-        - day_of_week
-        - start_time
-        - end_time
-      properties:
-        chapel_id:
-          type: integer
-          description: ID de la capilla a la que se aplica el horario.
-          example: 101
-        day_of_week:
-          type: integer
-          description: Día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado).
-          minimum: 0
-          maximum: 6
-          example: 1
-        start_time:
-          type: string
-          format: time
-          description: Hora de inicio (formato HH:MM:SS).
-          example: 14:00:00
-        end_time:
-          type: string
-          format: time
-          description: Hora de fin (formato HH:MM:SS).
-          example: 17:00:00
-
-    ScheduleGeneralUpdateRequest:
-      type: object
-      properties:
-        day_of_week:
-          type: integer
-          description: Día de la semana (0=Domingo, 1=Lunes, ..., 6=Sábado).
-          minimum: 0
-          maximum: 6
-          example: 2
-        start_time:
-          type: string
-          format: time
-          description: Nueva hora de inicio (formato HH:MM:SS).
-          example: 09:00:00
-        end_time:
-          type: string
-          format: time
-          description: Nueva hora de fin (formato HH:MM:SS).
-          example: 13:00:00
-
-    ScheduleSpecificData:
-      type: object
-      description: Horario de excepción (Específico).
       properties:
         id:
           type: integer
-          description: ID del horario específico/excepción.
-          example: 201
+          example: 15
         date:
           type: string
           format: date
-          description: Fecha de la excepción (YYYY-MM-DD).
-          example: 2025-08-17
-        exception_type:
-          type: string
-          enum: [OPEN, CLOSED]
-          description: Tipo de excepción ('OPEN' para disponibilidad, 'CLOSED' para no disponibilidad).
-          example: OPEN
+          example: "2025-11-01"
         start_time:
           type: string
           format: time
-          nullable: true
-          description: Hora de inicio. Nulo si exception_type es 'CLOSED'.
-          example: 12:00:00
+          example: "10:00:00"
         end_time:
           type: string
           format: time
-          nullable: true
-          description: Hora de fin. Nulo si exception_type es 'CLOSED'.
-          example: 14:00:00
+          example: "13:00:00"
+        exception_type:
+          type: string
+          enum: [OPEN, CLOSED]
+          example: "OPEN"
         reason:
           type: string
-          nullable: true
-          description: Razón de la excepción.
-          example: Horario especial por evento
+          example: "Misa especial"
 
-    ScheduleSpecificCreateRequest:
+    # ====== ESQUEMAS DE ENTRADA (REQUEST BODY) ======
+    GeneralScheduleInput:
       type: object
-      required:
-        - chapel_id
-        - date
-        - exception_type
       properties:
-        chapel_id:
+        day_of_week:
           type: integer
-          description: ID de la capilla.
-          example: 101
-        date:
-          type: string
-          format: date
-          description: Fecha de la excepción (YYYY-MM-DD).
-          example: 2025-08-17
-        exception_type:
-          type: string
-          enum: [OPEN, CLOSED]
-          description: Tipo de excepción.
-          example: OPEN
+          description: "Día de la semana (0=Lunes, 6=Domingo)"
+          example: 0
         start_time:
           type: string
           format: time
-          nullable: true
-          description: Hora de inicio. Requerido si 'OPEN'.
-          example: 12:00:00
+          example: "09:00:00"
         end_time:
           type: string
           format: time
-          nullable: true
-          description: Hora de fin. Requerido si 'OPEN'.
-          example: 14:00:00
-        reason:
-          type: string
-          nullable: true
-          description: Razón de la excepción.
-          example: Mantenimiento general
+          example: "12:00:00"
 
-    ScheduleSpecificUpdateRequest:
+    SpecificScheduleInput:
       type: object
       properties:
         date:
           type: string
           format: date
-          description: Nueva fecha de la excepción (YYYY-MM-DD).
-          example: 2025-08-18
-        exception_type:
-          type: string
-          enum: [OPEN, CLOSED]
-          description: Nuevo tipo de excepción.
-          example: CLOSED
+          example: "2025-12-25"
         start_time:
           type: string
           format: time
-          nullable: true
-          description: Nueva hora de inicio.
-          example: null
+          example: "10:00"
         end_time:
           type: string
           format: time
-          nullable: true
-          description: Nueva hora de fin.
-          example: null
+          example: "12:00"
+        exception_type:
+          type: string
+          enum: [OPEN, CLOSED]
+          example: "CLOSED"
         reason:
           type: string
-          nullable: true
-          description: Nueva razón de la excepción.
-          example: Festividad local
+          example: "Feriado por Navidad"
 
-    StandardResponse:
+    ListRequest:
+      type: object
+      properties:
+        page:
+          type: integer
+          description: Número de la página a obtener.
+          example: 1
+        limit:
+          type: integer
+          description: Cantidad de registros por página.
+          example: 4
+        filters:
+          type: object
+          properties:
+            exception_type:
+              type: string
+              enum: [OPEN, CLOSED]
+            date_range:
+              type: object
+              properties:
+                start:
+                  type: string
+                  format: date
+                  description: "Filtra fechas a partir de este día (inclusivo)."
+                end:
+                  type: string
+                  format: date
+                  description: "Filtra fechas hasta este día (inclusivo)."
+
+    # ====== ESQUEMAS DE RESPUESTA ======
+    ApiResponse:
       type: object
       properties:
         message:
           type: string
-          description: Lo que el backend indica al frontend que debe mostrar
-          example: "Horario creado exitosamente"
         data:
-          description: La información, puede ser un arreglo
-          oneOf:
-            - type: object
-            - type: array
-            - type: integer
-            - type: string
-          example: {}
+          type: object
+          nullable: true
         error:
           type: string
-          description: Es vacío si no hay ningún error
-          example: ""
         traceback:
           type: string
-          description: Todo el error generado en el backend si la respuesta es código 500
-          example: ""
+          nullable: true
+        meta:
+          type: object
+          properties:
+            total_records:
+              type: integer
 
-    GeneralScheduleListRequest:
-      type: object
-      required:
-        - chapel_id
+    ApiResponseSuccess:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
       properties:
-        chapel_id:
-          type: integer
-          description: ID de la capilla para la cual se buscan los horarios
-          example: 101
+        data:
+          type: object
+          properties:
+            id:
+              type: integer
+      example:
+        message: "Operación realizada con éxito."
+        data: { id: 123 }
+        error: ""
+        traceback: null
 
-    SpecificScheduleListRequest:
-      type: object
-      required:
-        - chapel_id
-        - start_date
-        - end_date
+    ApiResponseGeneralScheduleList:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
       properties:
-        chapel_id:
-          type: integer
-          description: ID de la capilla para la cual se buscan las excepciones
-          example: 101
-        start_date:
-          type: string
-          format: date
-          description: Fecha de inicio del rango (YYYY-MM-DD)
-          example: "2025-08-01"
-        end_date:
-          type: string
-          format: date
-          description: Fecha de fin del rango (YYYY-MM-DD)
-          example: "2025-08-31"
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/GeneralSchedule'
+      example:
+        message: "Horario general obtenido con éxito."
+        data:
+          - id: 1
+            day_of_week: 0
+            start_time: "09:00:00"
+            end_time: "12:00:00"
+          - id: 2
+            day_of_week: 1
+            start_time: "15:00:00"
+            end_time: "18:00:00"
+        error: ""
+        traceback: null
+        meta:
+          total_records: 2
 
-security:
-  - bearerAuth: []
-
-paths:
-  # --- Horarios Generales (Recurrentes) ---
-  /api/acts/schedules/general/list:
-    post:
-      tags:
-        - Horarios Generales (Recurrentes)
-      summary: Listar Horarios Generales de una Capilla
-      description: Obtiene todos los bloques de disponibilidad recurrente (normales) para una capilla específica, agrupados por día.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/GeneralScheduleListRequest'
-      responses:
-        '200':
-          description: Listado exitoso de horarios generales.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Horarios generales obtenidos exitosamente"
-                data:
-                  - id: 1
-                    day_of_week: 1
-                    start_time: '08:00:00'
-                    end_time: '12:00:00'
-                  - id: 2
-                    day_of_week: 1
-                    start_time: '14:00:00'
-                    end_time: '17:00:00'
-                error: ""
-                traceback: ""
-    
-  /api/acts/schedules/general/create:
-    post:
-      tags:
-        - Horarios Generales (Recurrentes)
-      summary: Crear un Nuevo Horario General
-      description: Añade un bloque de disponibilidad recurrente para una capilla. Requiere permiso MANAGE_SCHEDULE.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScheduleGeneralCreateRequest'
-      responses:
-        '201':
-          description: Horario general creado exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Horario creado exitosamente"
-                data:
-                  id: 3
-                error: ""
-                traceback: ""
-
-  /api/acts/schedules/general/{id}:
-    get:
-      tags:
-        - Horarios Generales (Recurrentes)
-      summary: Obtener Detalles de un Horario General
-      description: Obtiene la información completa de un horario general por su ID.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID del horario general.
-          required: true
-      responses:
-        '200':
-          description: Detalles del horario general obtenidos exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Detalles del horario general obtenidos exitosamente"
-                data:
-                  id: 1
-                  day_of_week: 1
-                  start_time: '08:00:00'
-                  end_time: '12:00:00'
-                error: ""
-                traceback: ""
-
-    put:
-      tags:
-        - Horarios Generales (Recurrentes)
-      summary: Actualizar (PUT) un Horario General
-      description: Modifica completamente un bloque de disponibilidad recurrente. Requiere permiso MANAGE_SCHEDULE.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID del horario general a modificar.
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScheduleGeneralUpdateRequest'
-      responses:
-        '200':
-          description: Horario general actualizado exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Horario actualizado exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-          
-    patch:
-      tags:
-        - Horarios Generales (Recurrentes)
-      summary: Actualizar (PATCH) Parcialmente un Horario General
-      description: Modifica parcialmente un bloque de disponibilidad recurrente. Requiere permiso MANAGE_SCHEDULE.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID del horario general a modificar.
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScheduleGeneralUpdateRequest'
-      responses:
-        '200':
-          description: Horario general actualizado exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Horario actualizado exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-
-    delete:
-      tags:
-        - Horarios Generales (Recurrentes)
-      summary: Eliminar un Horario General
-      description: Elimina un bloque de disponibilidad recurrente. Requiere permiso MANAGE_SCHEDULE.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID del horario general a eliminar.
-          required: true
-      responses:
-        '200':
-          description: Horario general eliminado exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Horario eliminado exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-
-  # --- Horarios Específicos (Excepciones) ---
-  /api/acts/schedules/specific/list:
-    post:
-      tags:
-        - Horarios Específicos (Excepciones)
-      summary: Listar Horarios Específicos (Excepciones)
-      description: Obtiene las excepciones (Disponibles y No Disponibles) para un rango de fechas de la capilla activa.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/SpecificScheduleListRequest'
-      responses:
-        '200':
-          description: Listado exitoso de excepciones.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Horarios específicos obtenidos exitosamente"
-                data:
-                  - id: 201
-                    date: '2025-08-17'
-                    exception_type: OPEN
-                    start_time: '12:00:00'
-                    end_time: '14:00:00'
-                    reason: Horario especial por evento
-                  - id: 202
-                    date: '2025-08-18'
-                    exception_type: CLOSED
-                    start_time: null
-                    end_time: null
-                    reason: Mantenimiento general
-                error: ""
-                traceback: ""
- 
-          
-  /api/acts/schedules/specific/create:
-    post:
-      tags:
-        - Horarios Específicos (Excepciones)
-      summary: Crear un Nuevo Horario Específico (Excepción)
-      description: Añade una excepción de disponibilidad ('OPEN') o no disponibilidad ('CLOSED'). Requiere permiso MANAGE_SCHEDULE.
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScheduleSpecificCreateRequest'
-      responses:
-        '201':
-          description: Excepción creada exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Excepción creada exitosamente"
-                data:
-                  id: 203
-                error: ""
-                traceback: ""
-     
-
-  /api/acts/schedules/specific/{id}:
-    get:
-      tags:
-        - Horarios Específicos (Excepciones)
-      summary: Obtener Detalles de un Horario Específico
-      description: Obtiene la información completa de una excepción por su ID.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID de la excepción.
-          required: true
-      responses:
-        '200':
-          description: Detalles de la excepción obtenidos exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Detalles de la excepción obtenidos exitosamente"
-                data:
-                  id: 201
-                  date: '2025-08-17'
-                  exception_type: OPEN
-                  start_time: '12:00:00'
-                  end_time: '14:00:00'
-                  reason: Horario especial por evento
-                error: ""
-                traceback: ""
-
-    put:
-      tags:
-        - Horarios Específicos (Excepciones)
-      summary: Actualizar (PUT) un Horario Específico
-      description: Modifica completamente una excepción de disponibilidad existente. Requiere permiso MANAGE_SCHEDULE.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID de la excepción a modificar.
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScheduleSpecificUpdateRequest'
-              # Nota: En un PUT estricto, todos los campos no opcionales de la creación deberían estar presentes,
-              # incluyendo 'date' y 'exception_type'. Usamos el esquema de actualización para permitir flexibilidad.
-      responses:
-        '200':
-          description: Excepción actualizada exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Excepción actualizada exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-     
-          
-    patch:
-      tags:
-        - Horarios Específicos (Excepciones)
-      summary: Actualizar (PATCH) Parcialmente un Horario Específico
-      description: Modifica parcialmente la información de una excepción existente. Requiere permiso MANAGE_SCHEDULE.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID de la excepción a modificar.
-          required: true
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ScheduleSpecificUpdateRequest'
-      responses:
-        '200':
-          description: Excepción actualizada exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Excepción actualizada exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-    
-    delete:
-      tags:
-        - Horarios Específicos (Excepciones)
-      summary: Eliminar un Horario Específico (Excepción)
-      description: Elimina una excepción de disponibilidad. Requiere permiso MANAGE_SCHEDULE.
-      parameters:
-        - in: path
-          name: id
-          schema:
-            type: integer
-          description: ID de la excepción a eliminar.
-          required: true
-      responses:
-        '200':
-          description: Excepción eliminada exitosamente.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/StandardResponse'
-              example:
-                message: "Excepción eliminada exitosamente"
-                data: {}
-                error: ""
-                traceback: ""
-    
+    ApiResponseSpecificScheduleList:
+      allOf:
+        - $ref: '#/components/schemas/ApiResponse'
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/SpecificSchedule'
+      example:
+        message: "Excepciones obtenidas con éxito."
+        data:
+          - id: 15
+            date: "2025-11-01"
+            start_time: "10:00:00"
+            end_time: "13:00:00"
+            exception_type: "OPEN"
+            reason: "Misa especial"
+        error: ""
+        traceback: null
+        meta:
+          total_records: 5
