@@ -1,5 +1,5 @@
 priv-*/
 .env
 .vscode/settings.json
-
+/node_modules
 bd_esp.sql
