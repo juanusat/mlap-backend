@@ -75,8 +75,8 @@ CREATE TABLE IF NOT EXISTS public.user (
 CREATE TABLE IF NOT EXISTS public.parish (
     id INTEGER NOT NULL,
     name VARCHAR(255) NOT NULL,
-    primary_color VARCHAR(7) DEFAULT '#b1b1b1ff' NOT NULL,
-    secondary_color VARCHAR(7) DEFAULT '#424242ff' NOT NULL,
+    primary_color VARCHAR(7) DEFAULT '#b1b1b1' NOT NULL,
+    secondary_color VARCHAR(7) DEFAULT '#424242 NOT NULL,
     admin_user_id INTEGER NOT NULL,
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
