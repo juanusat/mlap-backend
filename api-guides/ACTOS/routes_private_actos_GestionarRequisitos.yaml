@@ -228,7 +228,7 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/acts/events/{eventId}/requirements/search:
+  /api/chapel/events/search:
     post:
       tags:
         - Requisitos - Auxiliares
@@ -257,7 +257,7 @@ paths:
                 error: ""
                 traceback: ""
 
-  /api/acts/events/{eventId}/requirements/list:
+  /api/chapel/events/list:
     post:
       tags:
         - Requisitos - Auxiliares
@@ -291,7 +291,7 @@ paths:
                 error: ""
                 traceback: ""
 
-  /api/acts/requirements/chapel/list:
+  /api/chapel/event/{eventId}/requirements/list:
     post:
       tags:
         - Gestión de Requisitos
@@ -325,7 +325,7 @@ paths:
                 traceback: ""
   
 
-  /api/acts/requirements/chapel/search:
+  /api/chapel/event/{eventId}/requirements/search:
     post:
       tags:
         - Gestión de Requisitos
@@ -359,7 +359,7 @@ paths:
                 traceback: ""
   
 
-  /api/acts/requirements/chapel/create:
+  /api/chapel/event/{eventId}/requirements/create:
     post:
       tags:
         - Gestión de Requisitos
@@ -386,7 +386,7 @@ paths:
                 traceback: ""
       
 
-  /api/acts/requirements/chapel/{id}:
+  /api/chapel/event/{eventId}/requirements/{id}:
     get:
       tags:
         - Gestión de Requisitos
