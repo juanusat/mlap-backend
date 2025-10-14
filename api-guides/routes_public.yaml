@@ -1,6 +1,6 @@
 openapi: 3.0.0
 info:
-  title: Public API Routes
+  title: Parish Management API
   version: 1.0.0
 components:
   schemas:
@@ -21,10 +21,16 @@ components:
         traceback:
           type: string
           description: "Backend error message, returned only during testing phase"
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token
+
 paths:
   /api/account/login:
     post:
-      summary: User login
+      summary: User login (Step 1)
       tags:
         - Account
       requestBody:
@@ -43,12 +49,12 @@ paths:
                   example: "strongpassword"
       responses:
         "200":
-          description: Successful login
+          description: Successful login. Returns user info and associated parishes.
           headers:
             Set-Cookie:
               schema:
                 type: string
-                example: "jwt=...; Path=/; HttpOnly"
+                example: "token=...; Path=/; HttpOnly"
           content:
             application/json:
               schema:
@@ -61,15 +67,98 @@ paths:
                         properties:
                           user_name_full:
                             type: string
-                            example: "John Doe"
-              examples:
-                default:
-                  value:
-                    message: "Login successful"
-                    data:
-                      user_name_full: "John Doe"
-                    error: ""
-                    traceback: ""
+                            example: "Luis Barboza"
+                          associations:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 1
+                                name:
+                                  type: string
+                                  example: "La Consolación"
+
+  /api/account/select-parish:
+    post:
+      summary: Select Parish (Step 2)
+      tags:
+        - Account
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parishId:
+                  type: integer
+                  example: 1
+      responses:
+        "200":
+          description: Parish selected. Returns available roles in that parish.
+          headers:
+            Set-Cookie:
+              description: The JWT is updated with the parishId.
+              schema:
+                type: string
+                example: "token=...; Path=/; HttpOnly"
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          roles:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                  example: 2
+                                name:
+                                  type: string
+                                  example: "Secretario(a)"
+
+  /api/account/select-role:
+    post:
+      summary: Select Role (Step 3)
+      tags:
+        - Account
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                roleId:
+                  type: integer
+                  example: 2
+      responses:
+        "200":
+          description: Role selected. The session is now fully authenticated.
+          headers:
+            Set-Cookie:
+              description: The JWT is updated with the roleId.
+              schema:
+                type: string
+                example: "token=...; Path=/; HttpOnly"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+
   /api/account/register:
     post:
       summary: User registration
@@ -112,21 +201,17 @@ paths:
                       data:
                         type: object
                         description: "Empty object for this endpoint"
-              examples:
-                default:
-                  value:
-                    message: "User registered successfully"
-                    data: {}
-                    error: ""
-                    traceback: ""
+
   /api/account/logout:
     post:
       summary: User logout
       tags:
         - Account
+      security:
+        - cookieAuth: []
       responses:
         "200":
-          description: Successful logout
+          description: Successful logout. The session cookie is cleared.
           content:
             application/json:
               schema:
@@ -140,4 +225,4 @@ paths:
                           redirect_url:
                             type: string
                             format: url
-                            example: "/login"
+                            example: "/acceso"
