@@ -489,8 +489,8 @@ paths:
     get:
       tags:
         - Gestión de Roles (Permisos)
-      summary: Obtener Matriz de Permisos del Rol
-      description: Obtiene la matriz de permisos actual del rol, organizada por módulos y acciones (Ver, Añadir, Editar, Eliminar).
+      summary: Obtener Listado de Permisos del Rol
+      description: Obtiene el listado de permisos actual del rol, organizada por módulos y acciones.
       parameters:
         - in: path
           name: roleId
@@ -509,50 +509,260 @@ paths:
                 message: "Permisos del rol obtenidos exitosamente"
                 data:
                   role_name: "Rol de Ejemplo 1"
-                  permissions_matrix:
-                    - module: "Actos litúrgicos"
-                      ver: false
-                      añadir: true
-                      editar: false
-                      eliminar: true
-                    - module: "Usuario"
-                      ver: true
-                      añadir: true
-                      editar: true
-                      eliminar: true
-                    - module: "Parroquia"
-                      ver: false
-                      añadir: true
-                      editar: false
-                      eliminar: true
-                    - module: "Seguridad"
-                      ver: false
-                      añadir: false
-                      editar: true
-                      eliminar: true
-                    - module: "Reservas"
-                      ver: true
-                      añadir: true
-                      editar: true
-                      eliminar: true
-                    - module: "Tipo de Documentos"
-                      ver: false
-                      añadir: true
-                      editar: true
-                      eliminar: false
-                    - module: "Aprobar parroquia"
-                      ver: false
-                      añadir: false
-                      editar: true
-                      eliminar: true
+                  modules:
+                    - module_name: "Actos Litúrgicos"
+                      sections:
+                        - section_name: "Gestionar actos litúrgicos"
+                          permissions:
+                            - id: 1
+                              code: "C_ACTOS_LITURGICOS_ACTOS"
+                              name: "Crear acto litúrgico"
+                              description: "Permite crear nuevos actos litúrgicos."
+                              assigned: true
+                            - id: 2
+                              code: "U_ESTADO_ACTOS_LITURGICOS"
+                              name: "Actualizar estado acto litúrgico"
+                              description: "Permite cambiar el estado de los actos litúrgicos."
+                              assigned: true
+                            - id: 3
+                              code: "R_ACTOS_LITURGICOS_ACTOS"
+                              name: "Leer acto litúrgico"
+                              description: "Permite visualizar los detalles de los actos litúrgicos."
+                              assigned: true
+                            - id: 4
+                              code: "U_ACTOS_LITURGICOS_ACTOS"
+                              name: "Actualizar acto litúrgico"
+                              description: "Permite modificar la información de los actos litúrgicos."
+                              assigned: false
+                            - id: 5
+                              code: "D_ACTOS_LITURGICOS_ACTOS"
+                              name: "Eliminar acto litúrgico"
+                              description: "Permite eliminar actos litúrgicos."
+                              assigned: false
+                        - section_name: "Gestionar requisitos"
+                          permissions:
+                            - id: 6
+                              code: "C_ACTOS_LITURGICOS_REQ"
+                              name: "Crear requisitos"
+                              description: "Permite definir nuevos requisitos para actos litúrgicos."
+                              assigned: true
+                            - id: 7
+                              code: "U_ESTADO_REQ_ACTOS_LIT"
+                              name: "Actualizar estado requisitos"
+                              description: "Permite cambiar el estado de los requisitos."
+                              assigned: true
+                            - id: 8
+                              code: "R_ACTOS_LITURGICOS_REQ"
+                              name: "Leer requisitos"
+                              description: "Permite visualizar los requisitos definidos."
+                              assigned: true
+                            - id: 9
+                              code: "U_ACTOS_LITURGICOS_REQ"
+                              name: "Actualizar requisitos"
+                              description: "Permite modificar los requisitos existentes."
+                              assigned: false
+                            - id: 10
+                              code: "D_ACTOS_LITURGICOS_REQ"
+                              name: "Eliminar requisitos"
+                              description: "Permite eliminar requisitos."
+                              assigned: false
+                        - section_name: "Gestionar horarios"
+                          permissions:
+                            - id: 11
+                              code: "C_ACTOS_LITURGICOS_HORA"
+                              name: "Crear horario"
+                              description: "Permite definir nuevos horarios de actos litúrgicos."
+                              assigned: true
+                            - id: 12
+                              code: "U_ACTOS_LITURGICOS_HORA"
+                              name: "Actualizar horario"
+                              description: "Permite modificar horarios existentes."
+                              assigned: false
+                            - id: 13
+                              code: "C_EXCEP_DISP"
+                              name: "Crear Excepción - Disponibilidad"
+                              description: "Permite crear excepciones de disponibilidad en el horario."
+                              assigned: false
+                            - id: 14
+                              code: "U_EXCEP_DISP"
+                              name: "Actualizar Excepción - Disponibilidad"
+                              description: "Permite modificar excepciones de disponibilidad existentes."
+                              assigned: false
+                            - id: 15
+                              code: "D_EXCEP_DISP"
+                              name: "Eliminar Excepción - Disponibilidad"
+                              description: "Permite eliminar excepciones de disponibilidad."
+                              assigned: false
+                            - id: 16
+                              code: "C_EXCEP_NO_DISP"
+                              name: "Crear Excepción NO - Disponibilidad"
+                              description: "Permite crear excepciones de NO disponibilidad en el horario."
+                              assigned: false
+                            - id: 17
+                              code: "U_EXCEP_NO_DISP"
+                              name: "Actualizar Excepción NO - Disponibilidad"
+                              description: "Permite modificar excepciones de NO disponibilidad existentes."
+                              assigned: false
+                            - id: 18
+                              code: "D_EXCEP_NO_DISP"
+                              name: "Eliminar Excepción NO - Disponibilidad"
+                              description: "Permite eliminar excepciones de NO disponibilidad."
+                              assigned: false
+                        - section_name: "Gestionar Reservas"
+                          permissions:
+                            - id: 19
+                              code: "R_ACTOS_LITURGICOS_RESER"
+                              name: "Leer reservas"
+                              description: "Permite visualizar las reservas gestionadas."
+                              assigned: true
+                            - id: 20
+                              code: "U_ACTOS_LITURGICOS_RESER"
+                              name: "Actualizar reservas"
+                              description: "Permite modificar o cambiar el estado de las reservas gestionadas."
+                              assigned: true
+                    - module_name: "Reservas"
+                      sections:
+                        - section_name: "Reservas pendientes"
+                          permissions:
+                            - id: 21
+                              code: "D_RESERVAS_PEND"
+                              name: "Eliminar reserva (Pendientes)"
+                              description: "Permite eliminar o rechazar reservas que están pendientes de aprobación."
+                              assigned: false
+                        - section_name: "Historial de reservas"
+                          permissions:
+                            - id: 22
+                              code: "R_RESERVAS_HIST"
+                              name: "Leer reserva (Historial)"
+                              description: "Permite visualizar el historial completo de una reserva."
+                              assigned: true
+                        - section_name: "Reservar evento"
+                          permissions:
+                            - id: 23
+                              code: "C_RESERVAS_EVENTO"
+                              name: "Crear reserva"
+                              description: "Permite generar una nueva solicitud de reserva de evento."
+                              assigned: true
+                    - module_name: "Seguridad"
+                      sections:
+                        - section_name: "Gestionar cuentas"
+                          permissions:
+                            - id: 24
+                              code: "C_SEGURIDAD_ASOC_USER"
+                              name: "Crear asociación usuario"
+                              description: "Permite asociar un nuevo usuario al sistema."
+                              assigned: true
+                            - id: 25
+                              code: "U_ESTADO_ASOC_USER"
+                              name: "Actualizar estado asociación usuario"
+                              description: "Permite cambiar el estado de la asociación de un usuario."
+                              assigned: true
+                            - id: 26
+                              code: "R_SEGURIDAD_ASOC_USER"
+                              name: "Leer asociación usuario"
+                              description: "Permite visualizar la lista y detalles de las asociaciones de usuarios."
+                              assigned: true
+                            - id: 27
+                              code: "C_ROL_ASOC_USER"
+                              name: "Crear rol - asociación usuario"
+                              description: "Permite asignar un rol a un usuario al momento de la asociación."
+                              assigned: false
+                            - id: 28
+                              code: "D_SEGURIDAD_ASOC_USER"
+                              name: "Eliminar asociación usuario"
+                              description: "Permite desvincular o eliminar la asociación de un usuario."
+                              assigned: false
+                        - section_name: "Gestionar roles"
+                          permissions:
+                            - id: 29
+                              code: "C_SEGURIDAD_ROL"
+                              name: "Crear rol"
+                              description: "Permite crear nuevos roles de usuario."
+                              assigned: true
+                            - id: 30
+                              code: "U_ESTADO_ROL"
+                              name: "Actualizar estado rol"
+                              description: "Permite cambiar el estado de un rol (habilitar/deshabilitar)."
+                              assigned: true
+                            - id: 31
+                              code: "R_SEGURIDAD_ROL"
+                              name: "Leer rol"
+                              description: "Permite visualizar la lista de roles existentes."
+                              assigned: true
+                            - id: 32
+                              code: "U_SEGURIDAD_ROL_PERMS"
+                              name: "Actualizar rol - permisos"
+                              description: "Permite modificar los permisos asignados a un rol."
+                              assigned: true
+                            - id: 33
+                              code: "U_SEGURIDAD_ROL_DATA"
+                              name: "Actualizar rol"
+                              description: "Permite modificar la información básica de un rol (nombre, descripción)."
+                              assigned: false
+                            - id: 34
+                              code: "D_SEGURIDAD_ROL"
+                              name: "Eliminar rol"
+                              description: "Permite eliminar roles."
+                              assigned: false
+                    - module_name: "Parroquia"
+                      sections:
+                        - section_name: "Gestionar cuenta"
+                          permissions:
+                            - id: 35
+                              code: "R_PARROQUIA_INFO"
+                              name: "Leer información de la parroquia"
+                              description: "Permite visualizar los datos generales de la parroquia."
+                              assigned: true
+                            - id: 36
+                              code: "U_PARROQUIA_INFO"
+                              name: "Actualizar información de la parroquia"
+                              description: "Permite modificar los datos generales de la parroquia."
+                              assigned: false
+                            - id: 37
+                              code: "R_PARROQUIA_DATOS_CUENTA"
+                              name: "Leer Datos de la cuenta"
+                              description: "Permite visualizar la información de la cuenta bancaria/financiera de la parroquia."
+                              assigned: false
+                            - id: 38
+                              code: "U_PARROQUIA_DATOS_CUENTA"
+                              name: "Actualizar Datos de la cuenta"
+                              description: "Permite modificar la información de la cuenta bancaria/financiera de la parroquia."
+                              assigned: false
+                        - section_name: "Gestionar capilla"
+                          permissions:
+                            - id: 39
+                              code: "C_PARROQUIA_CAPILLA"
+                              name: "Crear capilla"
+                              description: "Permite registrar una nueva capilla."
+                              assigned: true
+                            - id: 40
+                              code: "U_ESTADO_CAPILLA"
+                              name: "Actualizar estado capilla"
+                              description: "Permite cambiar el estado de una capilla (habilitar/deshabilitar)."
+                              assigned: false
+                            - id: 41
+                              code: "R_PARROQUIA_CAPILLA"
+                              name: "Leer capilla"
+                              description: "Permite visualizar el listado y detalles de las capillas."
+                              assigned: true
+                            - id: 42
+                              code: "U_PARROQUIA_CAPILLA"
+                              name: "Actualizar capilla"
+                              description: "Permite modificar la información de una capilla."
+                              assigned: false
+                            - id: 43
+                              code: "D_PARROQUIA_CAPILLA"
+                              name: "Eliminar capilla"
+                              description: "Permite eliminar o inhabilitar una capilla."
+                              assigned: false
                 error: ""
                 traceback: ""
 
     put:
       tags:
         - Gestión de Roles (Permisos)
-      summary: Guardar Cambios en Matriz de Permisos
-      description: Guarda los cambios realizados en la matriz de permisos del rol (botón "Guardar" del modal).
+      summary: Guardar Cambios en listado de Permisos
+      description: Guarda los cambios realizados en el listado de permisos del rol (botón "Guardar" del modal).
       parameters:
         - in: path
           name: roleId
