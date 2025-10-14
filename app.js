@@ -6,7 +6,16 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
 
-app.use(cors());
+const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:4202';
+app.use(
+  cors({
+    origin: allowedOrigin,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 
 app.use('/api', apiRouter);
