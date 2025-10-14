@@ -228,7 +228,7 @@ security:
   - bearerAuth: []
 
 paths:
-  /api/acts/chapel-events/search:
+  /api/acts/events/{eventId}/requirements/search:
     post:
       tags:
         - Requisitos - Auxiliares
@@ -257,7 +257,7 @@ paths:
                 error: ""
                 traceback: ""
 
-  /api/acts/events/list:
+  /api/acts/events/{eventId}/requirements/list:
     post:
       tags:
         - Requisitos - Auxiliares
