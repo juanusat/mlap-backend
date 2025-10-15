@@ -5,19 +5,20 @@ info:
   description: |
     API para la gestión de parroquias.
     
-    ### Flujo de Autenticación Simplificado:
-    1.  **`/api/auth/login`**: El usuario inicia sesión. La respuesta incluye las parroquias a las que puede estar asociado como trabajador.
-    2.  **`/api/auth/select-parish`**: El usuario establece el contexto de su sesión.
-        - Si envía un `parishId`, trabajará sobre esa parroquia.
-        - Si envía `parishId: null`, actuará como un feligrés general, sin acceso a funciones de gestión.
-    3.  **`/api/auth/select-role`**: Si entró como trabajador, selecciona el rol con el que operará. La sesión queda completamente autenticada.
+    ### Flujo de Autenticación y Contexto:
+    1.  **`/api/auth/login`**: El usuario inicia sesión. La respuesta incluye su información básica, una lista de parroquias a las que está asociado y un booleano (`is_diocese_user`) que indica si tiene acceso a nivel de diócesis.
+    2.  **`/api/auth/select-context`**: Basado en la respuesta anterior, el usuario (desde la UI) elige su contexto de sesión:
+        - **Modo Trabajador de Parroquia**: Envía `context_type: 'PARISH'` y el `parishId` correspondiente.
+        - **Modo Feligrés**: Envía `context_type: 'PARISH'` y `parishId: null`.
+        - **Modo Diócesis**: Envía `context_type: 'DIOCESE'`.
+    3.  **`/api/auth/select-role`**: (Opcional, si aplica) Si entró como trabajador de parroquia, selecciona el rol con el que operará. La sesión queda completamente autenticada para realizar gestiones.
 
 # Definición de los tags para agrupar los endpoints
 tags:
   - name: Auth
-    description: Endpoints relacionados con la autenticación y gestión de la sesión del usuario.
+    description: Endpoints para autenticación y gestión de la sesión del usuario.
   - name: Chapels
-    description: Endpoints para la gestión de capillas de la parroquia actual.
+    description: Endpoints para la gestión de capillas (requiere contexto de parroquia).
 
 # Definición de las rutas (endpoints)
 paths:
@@ -26,8 +27,8 @@ paths:
     post:
       tags:
         - Auth
-      summary: User Registration
-      description: Registra un nuevo usuario en el sistema.
+      summary: Registro de Usuario
+      description: Registra un nuevo usuario (persona y credenciales) en el sistema.
       requestBody:
         required: true
         content:
@@ -36,13 +37,13 @@ paths:
               $ref: '#/components/schemas/RegisterRequest'
       responses:
         '201':
-          description: User created successfully.
+          description: Usuario creado exitosamente.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/BaseResponse'
         '400':
-          description: Bad Request (e.g., validation error).
+          description: Solicitud incorrecta (ej. error de validación).
           content:
             application/json:
               schema:
@@ -52,8 +53,8 @@ paths:
     post:
       tags:
         - Auth
-      summary: 'Step 1: User Login'
-      description: Autentica al usuario y devuelve su información básica junto con las parroquias a las que está asociado.
+      summary: 'Paso 1: Inicio de Sesión'
+      description: Autentica al usuario y devuelve su información, parroquias asociadas y si es un usuario de diócesis.
       requestBody:
         required: true
         content:
@@ -62,7 +63,7 @@ paths:
               $ref: '#/components/schemas/LoginRequest'
       responses:
         '200':
-          description: Successful login. Returns user info and associated parishes.
+          description: Login exitoso. Devuelve la información para que la UI presente las opciones de contexto.
           headers:
             Set-Cookie:
               $ref: '#/components/headers/SetCookieHeader'
@@ -71,21 +72,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/LoginSuccessResponse'
         '401':
-          description: Unauthorized (invalid credentials).
+          description: No autorizado (credenciales inválidas).
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
-  /api/auth/select-parish:
+  /api/auth/select-context:
     post:
       tags:
         - Auth
-      summary: 'Step 2: Set Session Context'
+      summary: 'Paso 2: Establecer Contexto de Sesión'
       description: |
-        Establece el contexto de la sesión del usuario.
-        - **Para modo trabajador**: Enviar el `parishId` de la parroquia a gestionar.
-        - **Para modo feligrés**: Enviar `null` en el campo `parishId`.
+        Establece el contexto de trabajo para la sesión actual.
+        - Para operar en una parroquia, usa `context_type: 'PARISH'` y el `parishId`.
+        - Para operar como feligrés general, usa `context_type: 'PARISH'` y `parishId: null`.
+        - Para operar como usuario diocesano, usa `context_type: 'DIOCESE'`.
       security:
         - cookieAuth: []
       requestBody:
@@ -93,10 +95,10 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SelectParishRequest'
+              $ref: '#/components/schemas/SelectContextRequest'
       responses:
         '200':
-          description: Session context set successfully. The session token is updated.
+          description: Contexto de sesión establecido. El token de sesión es actualizado.
           headers:
             Set-Cookie:
               $ref: '#/components/headers/SetCookieHeader'
@@ -111,13 +113,13 @@ paths:
     get:
       tags:
         - Auth
-      summary: Get User Roles for Parish
-      description: Devuelve la lista de roles que el usuario tiene asignados en la parroquia actualmente seleccionada en la sesión.
+      summary: Obtener Roles del Usuario en la Parroquia
+      description: Devuelve la lista de roles que el usuario tiene en la parroquia seleccionada en la sesión.
       security:
         - cookieAuth: []
       responses:
         '200':
-          description: List of user roles for the current parish.
+          description: Lista de roles del usuario.
           content:
             application/json:
               schema:
@@ -125,13 +127,13 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/ForbiddenParishNotSelected'
+          $ref: '#/components/responses/ForbiddenContextNotSet'
 
   /api/auth/select-role:
     post:
       tags:
         - Auth
-      summary: 'Step 3: Select Role'
+      summary: 'Paso 3: Seleccionar Rol'
       description: Establece el rol activo en la sesión del usuario para la parroquia actual. La sesión queda completamente autenticada para la gestión.
       security:
         - cookieAuth: []
@@ -143,7 +145,7 @@ paths:
               $ref: '#/components/schemas/SelectRoleRequest'
       responses:
         '200':
-          description: Role selected. The session is now fully authenticated.
+          description: Rol seleccionado. La sesión está completamente autenticada.
           headers:
             Set-Cookie:
               $ref: '#/components/headers/SetCookieHeader'
@@ -154,23 +156,23 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/ForbiddenParishNotSelected'
+          $ref: '#/components/responses/ForbiddenContextNotSet'
 
   /api/auth/logout:
     post:
       tags:
         - Auth
-      summary: User Logout
-      description: Cierra la sesión del usuario invalidando el token de sesión.
+      summary: Cerrar Sesión
+      description: Cierra la sesión del usuario invalidando el token.
       security:
         - cookieAuth: []
       responses:
         '200':
-          description: Successful logout. The session cookie is cleared.
+          description: Logout exitoso. La cookie de sesión es eliminada.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LogoutSuccessResponse'
+                $ref: '#/components/schemas/BaseResponse'
         '401':
           $ref: '#/components/responses/Unauthorized'
 
@@ -179,13 +181,13 @@ paths:
     get:
       tags:
         - Chapels
-      summary: Get Parish Chapels
-      description: Devuelve una lista de todas las capillas asociadas a la parroquia actualmente seleccionada en la sesión. Requiere modo trabajador.
+      summary: Obtener Capillas de la Parroquia
+      description: Devuelve una lista de todas las capillas asociadas a la parroquia seleccionada en la sesión. Requiere modo trabajador de parroquia.
       security:
         - cookieAuth: []
       responses:
         '200':
-          description: A list of chapels.
+          description: Una lista de capillas.
           content:
             application/json:
               schema:
@@ -193,7 +195,7 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
         '403':
-          $ref: '#/components/responses/ForbiddenParishNotSelected'
+          $ref: '#/components/responses/ForbiddenContextNotSet'
 
 # Componentes reutilizables (esquemas, respuestas, etc.)
 components:
@@ -202,27 +204,27 @@ components:
     cookieAuth:
       type: apiKey
       in: cookie
-      name: token
-      description: Session token stored in an HTTP-only cookie.
+      name: session_token # Un nombre más descriptivo
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
 
   # --- HEADERS ---
   headers:
-    SetCookieHeader: # <-- AÑADIDO: Definición reutilizable del Header
+    SetCookieHeader:
       description: Establece la cookie de sesión que contiene el JWT.
       schema:
         type: string
-        example: 'token=...; Path=/; HttpOnly; SameSite=Strict'
+        example: 'session_token=...; Path=/; HttpOnly; SameSite=Strict'
 
   # --- RESPONSES ---
   responses:
     Unauthorized:
-      description: Unauthorized. The provided session token is missing, invalid, or expired.
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
       content:
         application/json:
           schema:
             $ref: '#/components/schemas/ErrorResponse'
-    ForbiddenParishNotSelected:
-      description: Forbidden. A parish has not been selected for the session (user is in parishioner mode or has not completed step 2).
+    ForbiddenContextNotSet:
+      description: Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.
       content:
         application/json:
           schema:
@@ -236,28 +238,28 @@ components:
       properties:
         message:
           type: string
-          description: 'A descriptive message for the frontend.'
-          example: 'Operation successful'
+          description: 'Un mensaje descriptivo para la operación.'
+          example: 'Operación exitosa'
     ErrorResponse:
       type: object
       properties:
         message:
           type: string
-          description: 'A descriptive message for the frontend.'
-          example: 'An error occurred.'
+          description: 'Un mensaje de error general.'
+          example: 'Ocurrió un error.'
         error:
           type: string
-          description: 'The specific error details.'
-          example: 'Invalid credentials'
+          description: 'Detalles específicos del error.'
+          example: 'Credenciales inválidas'
 
     # AUTH REQUESTS
     RegisterRequest:
       type: object
-      required: [full_name, paternal_surname, email, password, username]
+      required: [first_names, paternal_surname, email, document, document_type_id, username, password]
       properties:
-        full_name:
+        first_names:
           type: string
-          example: 'Juan'
+          example: 'Juan Carlos'
         paternal_surname:
           type: string
           example: 'Pérez'
@@ -268,11 +270,11 @@ components:
           type: string
           format: email
           example: 'user@example.com'
-        type_doc_id:
+        document_type_id:
           type: integer
-          description: 'ID for the document type (e.g., DNI, Passport).'
+          description: 'ID del tipo de documento (ej. DNI, Pasaporte).'
           example: 1
-        doc_value:
+        document:
           type: string
           example: '12345678'
         username:
@@ -294,13 +296,18 @@ components:
           type: string
           format: password
           example: 'strongpassword'
-    SelectParishRequest:
+    SelectContextRequest:
       type: object
-      required: [parishId]
+      required: [context_type]
       properties:
+        context_type:
+          type: string
+          description: "Define el tipo de contexto a establecer en la sesión."
+          enum: [PARISH, DIOCESE]
+          example: 'PARISH'
         parishId:
           type: integer
-          description: 'The ID of the parish to activate. Send `null` to enter parishioner mode.'
+          description: 'ID de la parroquia a activar. Requerido si context_type es PARISH. Enviar `null` para modo feligrés.'
           nullable: true
           example: 1
     SelectRoleRequest:
@@ -309,10 +316,20 @@ components:
       properties:
         roleId:
           type: integer
-          description: 'The ID of the role to activate in the session.'
+          description: 'ID del rol a activar en la sesión.'
           example: 2
 
     # AUTH RESPONSES & DATA OBJECTS
+    UserInfo:
+      type: object
+      properties:
+        full_name:
+          type: string
+          example: 'Luis Barboza'
+        email:
+          type: string
+          format: email
+          example: 'lbarboza@example.com'
     ParishAssociation:
       type: object
       properties:
@@ -325,10 +342,13 @@ components:
     LoginResponseData:
       type: object
       properties:
-        user_name_full:
-          type: string
-          example: 'Luis Barboza'
-        associations:
+        user_info:
+          $ref: '#/components/schemas/UserInfo'
+        is_diocese_user:
+          type: boolean
+          description: 'Indica si el usuario tiene permisos a nivel de diócesis.'
+          example: false
+        parish_associations:
           type: array
           items:
             $ref: '#/components/schemas/ParishAssociation'
@@ -339,22 +359,7 @@ components:
           properties:
             data:
               $ref: '#/components/schemas/LoginResponseData'
-              
-    LogoutResponseData:
-      type: object
-      properties:
-        redirect_url:
-          type: string
-          format: uri-relative
-          example: '/login'
-    LogoutSuccessResponse:
-      allOf:
-        - $ref: '#/components/schemas/BaseResponse'
-        - type: object
-          properties:
-            data:
-              $ref: '#/components/schemas/LogoutResponseData'
-              
+            
     # ROLES
     Role:
       type: object
