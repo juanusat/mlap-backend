@@ -1,0 +1,439 @@
+openapi: 3.0.3
+info:
+  title: API Parroquia - Buscar Parroquia o Capilla (Map Search)
+  description: |
+    API para la gestión de la cuenta de la parroquia autenticada y sus capillas.
+
+    Autenticación requerida: JWT (Cookie)
+
+    Estructura de respuesta estándar:
+
+    {
+      "message": "Mensaje descriptivo de la operación",
+      "data": {}, 
+      "error": "",
+      "traceback": "",
+      "meta": {
+        "total_records": 0
+      }
+    }
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api
+    description: Servidor de desarrollo
+
+tags:
+  - name: Search Parroquia/Capilla
+    description: Endpoints para la búsqueda y selección en el mapa
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: JWT
+
+  schemas:
+    MapSearchItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          description: "parish | chapel"
+        address:
+          type: string
+        coordinates:
+          type: string
+          example: "-6.78177,-79.84091"
+        phone:
+          type: string
+          nullable: true
+
+    MapSearchListResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/MapSearchItem'
+        meta:
+          type: object
+          properties:
+            total_records:
+              type: integer
+              example: 0
+
+    ParishProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          example: "parish"
+        address:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        parish_priest:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        acts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              schedule:
+                type: string
+              active:
+                type: boolean
+
+    ChapelProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        type:
+          type: string
+          example: "chapel"
+        address:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        caretaker:
+          type: string
+          nullable: true
+        description:
+          type: string
+          nullable: true
+        parent_parish:
+          type: object
+          properties:
+            id:
+              type: integer
+            name:
+              type: string
+        acts:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: integer
+              name:
+                type: string
+              schedule:
+                type: string
+              active:
+                type: boolean
+
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        data:
+          oneOf:
+            - type: object
+            - type: array
+        error:
+          type: string
+        traceback:
+          type: string
+
+security:
+  - cookieAuth: []
+
+paths:
+  /api/parish/search:
+    post:
+      tags:
+        - Search Parroquia/Capilla
+      summary: Buscar parroquia o capilla por nombre
+      description: |
+        Busca por nombre tanto en parroquias como en capillas. Usado por la barra de búsqueda
+        en la pantalla principal (mapa). Requiere `page` y `limit`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - page
+                - limit
+              properties:
+                name_query:
+                  type: string
+                  description: "Texto para buscar por nombre de parroquia o capilla"
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+      responses:
+        "200":
+          description: Resultados de búsqueda de parroquias/capillas
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MapSearchListResponse'
+        "400":
+          description: Parámetros inválidos
+
+  /api/parish/list:
+    post:
+      tags:
+        - Search Parroquia/Capilla
+      summary: Obtener listado (combo) de parroquias para selección
+      description: |
+        Devuelve un listado abreviado de parroquias (sin paginación obligatoria) usado en combos.
+        Si se necesita filtrar por diocese o similar, pasar el parámetro correspondiente.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                diocese_id:
+                  type: integer
+                only_active:
+                  type: boolean
+                  example: true
+      responses:
+        "200":
+          description: Lista de parroquias (combo)
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                          meta:
+                            type: object
+                            properties:
+                              total_records:
+                                type: integer
+                                example: 0
+
+  /api/parish/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - Search Parroquia/Capilla
+      summary: Obtener detalle de una parroquia (incluye actos disponibles)
+      description: |
+        Devuelve información detallada de la parroquia seleccionada.
+        Campos: name, type (parish), address, phone, parish_priest, description, acts[]
+      responses:
+        "200":
+          description: Detalle de parroquia obtenido
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ParishProfile'
+        "404":
+          description: Parroquia no encontrada
+
+  /api/parish/chapels/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+    get:
+      tags:
+        - Search Parroquia/Capilla
+      summary: Obtener detalle de una capilla (incluye parroquia padre y actos disponibles)
+      description: |
+        Devuelve información detallada de la capilla seleccionada y su parroquia padre.
+        Campos: name, type (chapel), address, phone, caretaker, description, parent_parish, acts[]
+      responses:
+        "200":
+          description: Detalle de capilla obtenido
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ChapelProfile'
+        "404":
+          description: Capilla no encontrada
+
+  /api/acts/chapel-events/search:
+    post:
+      tags:
+        - Search Parroquia/Capilla
+      summary: Listar actos litúrgicos para una parroquia o capilla
+      description: |
+        Endpoint auxiliar que devuelve los actos (eventos) disponibles filtrados por `parish_id` o `chapel_id`.
+        Utilizado para poblar la lista de actos en el panel lateral del mapa y en el detalle.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parish_id:
+                  type: integer
+                chapel_id:
+                  type: integer
+                page:
+                  type: integer
+                  example: 1
+                limit:
+                  type: integer
+                  example: 10
+      responses:
+        "200":
+          description: Lista de actos disponibles
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          items:
+                            type: array
+                            items:
+                              type: object
+                              properties:
+                                id:
+                                  type: integer
+                                name:
+                                  type: string
+                                schedule:
+                                  type: string
+                                location_type:
+                                  type: string
+                                  description: "parish | chapel"
+                                location_id:
+                                  type: integer
+                          meta:
+                            type: object
+                            properties:
+                              total_records:
+                                type: integer
+                                example: 0
+
+  /api/parish/{id}/profile-url:
+    get:
+      tags:
+        - Search Parroquia/Capilla
+      summary: Obtener URL o identificador para navegar al perfil público
+      description: |
+        Devuelve la ruta o identificador que la UI usará para abrir el perfil público de la parroquia.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: URL de perfil
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                            example: "/parish/1/profile"
+
+  /api/chapel/{id}/profile-url:
+    get:
+      tags:
+        - Search Parroquia/Capilla
+      summary: Obtener URL o identificador para navegar al perfil público de la capilla
+      description: Devuelve la ruta o identificador que la UI usará para abrir el perfil público de la capilla.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: URL de perfil
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/BaseResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          url:
+                            type: string
+                            example: "/chapel/2/profile"
+
+# Notas:
+# - La UI principal (mapa) usará `/api/parish/search` para autocompletar y `/api/parish/list` para combos.
+# - Al seleccionar un elemento, la UI llamará a `/api/parish/{id}` o `/api/parish/chapels/{id}` según corresponda.
+# - Para poblar la lista de actos se usa `/api/acts/chapel-events/search` con `parish_id` o `chapel_id`.
+# - Mantener consistencia con `BaseResponse` utilizado en otros archivos del proyecto.
