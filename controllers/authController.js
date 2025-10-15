@@ -10,49 +10,75 @@ const cookieOptions = {
     path: '/',
 };
 
+const register = async (req, res, next) => {
+    try {
+        const { first_names, paternal_surname, maternal_surname, email, document_type_id, document, username, password } = req.body;
+        
+        await authService.register({
+            first_names,
+            paternal_surname,
+            maternal_surname,
+            email,
+            document_type_id,
+            document,
+            username,
+            password
+        });
+
+        res.status(201).json({
+            message: 'Usuario creado exitosamente'
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
     
-    res.cookie('token', result.token, cookieOptions);
+    res.cookie('session_token', result.token, cookieOptions);
 
     res.status(200).json({
-      message: 'Login successful',
+      message: 'Operación exitosa',
       data: {
-        user_name_full: result.user.user_name_full,
-        associations: result.associations,
-      },
-      error: '',
+        user_info: {
+          full_name: result.user.user_name_full,
+          email: result.user.email
+        },
+        is_diocese_user: result.is_diocese_user,
+        parish_associations: result.parish_associations
+      }
     });
   } catch (error) {
     next(error);
   }
 };
 
-const selectParish = async (req, res, next) => {
+const selectContext = async (req, res, next) => {
     try {
-        const { parishId } = req.body;
-        const currentToken = req.cookies.token;
+        const { context_type, parishId } = req.body;
+        const { userId } = req.user;
 
-        if (!currentToken) return res.status(401).json({ message: 'Authentication required' });
-
-        const decoded = jwt.verify(currentToken, config.jwtSecret);
-        const userId = decoded.userId;
-
-        // Crea un nuevo token que AHORA INCLUYE el parishId
-        const tokenPayload = { userId, parishId };
-        const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
+        let tokenPayload;
         
-        // Opcional: devuelve los roles para que el front elija el siguiente paso
-        const roles = await userModel.findUserRolesInParish(userId, parishId);
+        if (context_type === 'DIOCESE') {
+            tokenPayload = { userId, context_type: 'DIOCESE', parishId: null };
+        } else if (context_type === 'PARISH') {
+            tokenPayload = { userId, context_type: 'PARISH', parishId: parishId || null };
+        } else {
+            return res.status(400).json({
+                message: 'Solicitud incorrecta',
+                error: 'context_type debe ser PARISH o DIOCESE'
+            });
+        }
 
-        res.cookie('token', newToken, cookieOptions);
+        const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
+        res.cookie('session_token', newToken, cookieOptions);
 
         res.status(200).json({
-            message: 'Parish selected successfully',
-            data: { roles },
-            error: ''
+            message: 'Operación exitosa'
         });
     } catch (error) {
         next(error);
@@ -62,24 +88,21 @@ const selectParish = async (req, res, next) => {
 const selectRole = async (req, res, next) => {
     try {
         const { roleId } = req.body;
-        const currentToken = req.cookies.token;
+        const { userId, parishId, context_type } = req.user;
 
-        if (!currentToken) return res.status(401).json({ message: 'Authentication required' });
+        if (!parishId || context_type !== 'PARISH') {
+            return res.status(403).json({ 
+                message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.'
+            });
+        }
 
-        const decoded = jwt.verify(currentToken, config.jwtSecret);
-        const { userId, parishId } = decoded;
-
-        if (!parishId) return res.status(400).json({ message: 'A parish must be selected first' });
-
-        const tokenPayload = { userId, parishId, roleId };
+        const tokenPayload = { userId, context_type, parishId, roleId };
         const finalToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
 
-        res.cookie('token', finalToken, cookieOptions);
+        res.cookie('session_token', finalToken, cookieOptions);
 
         res.status(200).json({
-            message: 'Role selected successfully. Session is fully active.',
-            data: {},
-            error: ''
+            message: 'Operación exitosa'
         });
     } catch (error) {
         next(error);
@@ -87,51 +110,27 @@ const selectRole = async (req, res, next) => {
 };
 
 const logout = (req, res) => {
-    res.clearCookie('token', cookieOptions);
+    res.clearCookie('session_token', cookieOptions);
     res.status(200).json({ 
-        message: 'Logout successful',
-        data: { redirect_url: '/login' },
-        error: ''
+        message: 'Operación exitosa'
     });
-};
-
-const selectParishionerMode = async (req, res, next) => {
-    try {
-        const currentToken = req.cookies.token;
-        if (!currentToken) return res.status(401).json({ message: 'Authentication required' });
-
-        const decoded = jwt.verify(currentToken, config.jwtSecret);
-        const { userId } = decoded;
-
-        const tokenPayload = { userId, parishId: null, roleId: null };
-        const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
-
-        res.cookie('token', newToken, cookieOptions);
-
-        res.status(200).json({
-            message: 'Parishioner mode activated',
-            data: {},
-            error: ''
-        });
-    } catch (error) {
-        next(error);
-    }
 };
 
 const getRolesForCurrentParish = async (req, res, next) => {
     try {
-        const { userId, parishId } = req.user; // Obtenido del JWT
+        const { userId, parishId, context_type } = req.user;
 
-        if (!parishId) {
-            return res.status(403).json({ message: 'Forbidden: A parish must be selected to view roles.' });
+        if (!parishId || context_type !== 'PARISH') {
+            return res.status(403).json({ 
+                message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.'
+            });
         }
 
         const roles = await userModel.findUserRolesInParish(userId, parishId);
         
         res.status(200).json({
-            message: 'Roles retrieved successfully',
-            data: roles,
-            error: ''
+            message: 'Operación exitosa',
+            data: roles
         });
     } catch (error) {
         next(error);
@@ -139,10 +138,10 @@ const getRolesForCurrentParish = async (req, res, next) => {
 };
 
 module.exports = {
+  register,
   login,
-  selectParish,
+  selectContext,
   selectRole,
   logout,
-  selectParishionerMode,
   getRolesForCurrentParish
 };

@@ -23,15 +23,16 @@ const getMyParishes = async (req, res, next) => {
 // Esta función se usa DESPUÉS, no en el login.
 const getChapelsForCurrentParish = async (req, res, next) => {
     try {
-        const { parishId } = req.user; 
-        if (!parishId) {
-            return res.status(403).json({ message: 'Forbidden: A parish must be selected to view chapels.' });
+        const { parishId, context_type } = req.user; 
+        if (!parishId || context_type !== 'PARISH') {
+            return res.status(403).json({ 
+                message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.'
+            });
         }
         const chapels = await parishModel.findChapelsByParishId(parishId);
         res.status(200).json({
-            message: 'Chapels retrieved successfully',
-            data: chapels,
-            error: ''
+            message: 'Operación exitosa',
+            data: chapels
         });
     } catch (error) {
         next(error);
