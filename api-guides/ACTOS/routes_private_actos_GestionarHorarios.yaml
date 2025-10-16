@@ -11,7 +11,7 @@ servers:
     description: Servidor Principal
 
 paths:
-  /parishes/{parish_id}/chapels/{chapel_id}/general-schedules/list:
+  /api/parishes/{parish_id}/chapels/{chapel_id}/general-schedules/list:
     post:
       tags:
         - Horario General
@@ -36,7 +36,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseGeneralScheduleList'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/general-schedules/bulk-update:
+  /api/parishes/{parish_id}/chapels/{chapel_id}/general-schedules/bulk-update:
     post:
       tags:
         - Horario General
@@ -72,7 +72,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccess'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/list:
+  /api/parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/list:
     post:
       tags:
         - Horarios Específicos (Excepciones)
@@ -114,7 +114,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseSpecificScheduleList'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/create:
+  /api/parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/create:
     post:
       tags:
         - Horarios Específicos (Excepciones)
@@ -137,7 +137,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccess'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/{schedule_id}:
+  /api/parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/{schedule_id}:
     parameters:
       - $ref: '#/components/parameters/parish_id'
       - $ref: '#/components/parameters/chapel_id'
