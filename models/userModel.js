@@ -102,11 +102,50 @@ const findUserRolesInParish = async (userId, parishId) => {
     return rows;
 };
 
+const findUserSessionInfo = async (userId) => {
+  const query = `
+    SELECT 
+      u.id,
+      u.is_diocese,
+      p.first_names,
+      p.paternal_surname,
+      p.maternal_surname,
+      p.profile_photo
+    FROM public.user u
+    JOIN public.person p ON u.person_id = p.id
+    WHERE u.id = $1 AND u.active = TRUE;
+  `;
+  const { rows } = await db.query(query, [userId]);
+  return rows[0];
+};
+
+const findParishById = async (parishId) => {
+  const query = `
+    SELECT id, name
+    FROM public.parish
+    WHERE id = $1 AND active = TRUE;
+  `;
+  const { rows } = await db.query(query, [parishId]);
+  return rows[0];
+};
+
+const findRoleById = async (roleId) => {
+  const query = `
+    SELECT id, name
+    FROM public.role
+    WHERE id = $1 AND active = TRUE;
+  `;
+  const { rows } = await db.query(query, [roleId]);
+  return rows[0];
+};
 
 module.exports = {
   create,
   findByEmail,
   findUserAssociations,
   findUserRolesInParish,
-  isDioceseUser
+  isDioceseUser,
+  findUserSessionInfo,
+  findParishById,
+  findRoleById
 };

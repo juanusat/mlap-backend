@@ -137,11 +137,69 @@ const getRolesForCurrentParish = async (req, res, next) => {
     }
 };
 
+const getSession = async (req, res, next) => {
+    try {
+        const { userId, parishId, context_type, roleId } = req.user;
+
+        const userInfo = await userModel.findUserSessionInfo(userId);
+        if (!userInfo) {
+            return res.status(401).json({
+                message: 'No autorizado. El token de sesión falta, es inválido o ha expirado.'
+            });
+        }
+
+        const fullName = `${userInfo.first_names} ${userInfo.paternal_surname}${userInfo.maternal_surname ? ' ' + userInfo.maternal_surname : ''}`.trim();
+        
+        let profilePhoto = userInfo.profile_photo;
+        if (!profilePhoto) {
+            const firstNameInitial = userInfo.first_names.charAt(0).toUpperCase();
+            const lastNameInitial = userInfo.paternal_surname.charAt(0).toUpperCase();
+            profilePhoto = `//place-hold.it/80x80/1b9185/ffffff.jpeg&text=${firstNameInitial}${lastNameInitial}&bold&fontsize=30`;
+        }
+        
+        let parishInfo = null;
+        let availableRoles = null;
+        let currentRole = null;
+
+        if (context_type === 'PARISH' && parishId) {
+            parishInfo = await userModel.findParishById(parishId);
+            availableRoles = await userModel.findUserRolesInParish(userId, parishId);
+            
+            if (roleId) {
+                currentRole = await userModel.findRoleById(roleId);
+            }
+        }
+
+        const newToken = jwt.sign(req.user, config.jwtSecret, { expiresIn: '24h' });
+        res.cookie('session_token', newToken, cookieOptions);
+
+        res.status(200).json({
+            message: 'Operación exitosa',
+            data: {
+                person: {
+                    full_name: fullName,
+                    profile_photo: profilePhoto
+                },
+                is_diocese_user: userInfo.is_diocese,
+                parish: parishInfo ? {
+                    id: parishInfo.id,
+                    name: parishInfo.name
+                } : null,
+                available_roles: availableRoles,
+                current_role: currentRole
+            }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
   register,
   login,
   selectContext,
   selectRole,
   logout,
-  getRolesForCurrentParish
+  getRolesForCurrentParish,
+  getSession
 };
