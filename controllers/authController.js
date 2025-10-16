@@ -154,7 +154,7 @@ const getSession = async (req, res, next) => {
         if (!profilePhoto) {
             const firstNameInitial = userInfo.first_names.charAt(0).toUpperCase();
             const lastNameInitial = userInfo.paternal_surname.charAt(0).toUpperCase();
-            profilePhoto = `https://place-hold.it/80x80/1b9185/ffffff.jpeg&text=${firstNameInitial}${lastNameInitial}&bold&fontsize=30`;
+            profilePhoto = `//placehold.co/80/1b9185/ffffff/?text=${firstNameInitial}${lastNameInitial}&fontsize=30`;
         }
         
         let parishInfo = null;
