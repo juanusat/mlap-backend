@@ -1,143 +1,487 @@
 openapi: 3.0.0
 info:
-  title: Public API Routes
+  title: Parish Management API
   version: 1.0.0
+  description: |
+    API para la gestión de parroquias.
+    
+    ### Flujo de Autenticación y Contexto:
+    1.  **`/api/auth/login`**: El usuario inicia sesión. La respuesta incluye su información básica, una lista de parroquias a las que está asociado y un booleano (`is_diocese_user`) que indica si tiene acceso a nivel de diócesis.
+    2.  **`/api/auth/select-context`**: Basado en la respuesta anterior, el usuario (desde la UI) elige su contexto de sesión:
+        - **Modo Trabajador de Parroquia**: Envía `context_type: 'PARISH'` y el `parishId` correspondiente.
+        - **Modo Feligrés**: Envía `context_type: 'PARISH'` y `parishId: null`.
+        - **Modo Diócesis**: Envía `context_type: 'DIOCESE'`.
+    3.  **`/api/auth/select-role`**: (Opcional, si aplica) Si entró como trabajador de parroquia, selecciona el rol con el que operará. La sesión queda completamente autenticada para realizar gestiones.
+
+# Definición de los tags para agrupar los endpoints
+tags:
+  - name: Auth
+    description: Endpoints para autenticación y gestión de la sesión del usuario.
+  - name: Chapels
+    description: Endpoints para la gestión de capillas (requiere contexto de parroquia).
+
+# Definición de las rutas (endpoints)
+paths:
+  # --- AUTH ENDPOINTS ---
+  /api/auth/register:
+    post:
+      tags:
+        - Auth
+      summary: Registro de Usuario
+      description: Registra un nuevo usuario (persona y credenciales) en el sistema.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Usuario creado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '400':
+          description: Solicitud incorrecta (ej. error de validación).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/login:
+    post:
+      tags:
+        - Auth
+      summary: 'Paso 1: Inicio de Sesión'
+      description: Autentica al usuario y devuelve su información, parroquias asociadas y si es un usuario de diócesis.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login exitoso. Devuelve la información para que la UI presente las opciones de contexto.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginSuccessResponse'
+        '401':
+          description: No autorizado (credenciales inválidas).
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/auth/select-context:
+    post:
+      tags:
+        - Auth
+      summary: 'Paso 2: Establecer Contexto de Sesión'
+      description: |
+        Establece el contexto de trabajo para la sesión actual.
+        - Para operar en una parroquia, usa `context_type: 'PARISH'` y el `parishId`.
+        - Para operar como feligrés general, usa `context_type: 'PARISH'` y `parishId: null`.
+        - Para operar como usuario diocesano, usa `context_type: 'DIOCESE'`.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectContextRequest'
+      responses:
+        '200':
+          description: Contexto de sesión establecido. El token de sesión es actualizado.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/roles:
+    get:
+      tags:
+        - Auth
+      summary: Obtener Roles del Usuario en la Parroquia
+      description: Devuelve la lista de roles que el usuario tiene en la parroquia seleccionada en la sesión.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de roles del usuario.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolesSuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenContextNotSet'
+
+  /api/auth/select-role:
+    post:
+      tags:
+        - Auth
+      summary: 'Paso 3: Seleccionar Rol'
+      description: Establece el rol activo en la sesión del usuario para la parroquia actual. La sesión queda completamente autenticada para la gestión.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SelectRoleRequest'
+      responses:
+        '200':
+          description: Rol seleccionado. La sesión está completamente autenticada.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenContextNotSet'
+
+  /api/auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Cerrar Sesión
+      description: Cierra la sesión del usuario invalidando el token.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Logout exitoso. La cookie de sesión es eliminada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/auth/session:
+    get:
+      tags:
+        - Auth
+      summary: Obtener Información de la Sesión Actual
+      description: |
+        Devuelve información detallada de la sesión actual del usuario, incluyendo:
+        - Nombre completo de la persona
+        - Nombre de la parroquia en el contexto actual (null en modo feligrés)
+        - Lista de roles disponibles en la parroquia actual (null en modo feligrés)
+        - Rol actual seleccionado (null en modo feligrés o si no se ha seleccionado)
+        - Foto de perfil (ruta completa)
+        - Indicador si es usuario diocesano
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Información de la sesión actual con JWT actualizado.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionInfoSuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenContextNotSet'
+
+  # --- CHAPELS ENDPOINTS ---
+  /api/chapels:
+    get:
+      tags:
+        - Chapels
+      summary: Obtener Capillas de la Parroquia
+      description: Devuelve una lista de todas las capillas asociadas a la parroquia seleccionada en la sesión. Requiere modo trabajador de parroquia.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Una lista de capillas.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapelsSuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenContextNotSet'
+
+# Componentes reutilizables (esquemas, respuestas, etc.)
 components:
+  # --- SECURITY SCHEMES ---
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token # Un nombre más descriptivo
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
+
+  # --- HEADERS ---
+  headers:
+    SetCookieHeader:
+      description: Establece la cookie de sesión que contiene el JWT.
+      schema:
+        type: string
+        example: 'session_token=...; Path=/; HttpOnly; SameSite=Strict'
+
+  # --- RESPONSES ---
+  responses:
+    Unauthorized:
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ForbiddenContextNotSet:
+      description: Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  # --- SCHEMAS ---
   schemas:
+    # BASE SCHEMAS
     BaseResponse:
       type: object
       properties:
         message:
           type: string
-          description: "Message to be shown in the frontend"
-        data:
-          oneOf:
-            - type: object
-            - type: array
-          description: "The main data, can be an object or an array"
+          description: 'Un mensaje descriptivo para la operación.'
+          example: 'Operación exitosa'
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: 'Un mensaje de error general.'
+          example: 'Ocurrió un error.'
         error:
           type: string
-          description: "Error string or empty if everything is ok"
-        traceback:
+          description: 'Detalles específicos del error.'
+          example: 'Credenciales inválidas'
+
+    # AUTH REQUESTS
+    RegisterRequest:
+      type: object
+      required: [first_names, paternal_surname, email, document, document_type_id, username, password]
+      properties:
+        first_names:
           type: string
-          description: "Backend error message, returned only during testing phase"
-paths:
-  /api/account/login:
-    post:
-      summary: User login
-      tags:
-        - Account
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: user@example.com
-                password:
-                  type: string
-                  example: "strongpassword"
-      responses:
-        "200":
-          description: Successful login
-          headers:
-            Set-Cookie:
-              schema:
-                type: string
-                example: "jwt=...; Path=/; HttpOnly"
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          user_name_full:
-                            type: string
-                            example: "John Doe"
-              examples:
-                default:
-                  value:
-                    message: "Login successful"
-                    data:
-                      user_name_full: "John Doe"
-                    error: ""
-                    traceback: ""
-  /api/account/register:
-    post:
-      summary: User registration
-      tags:
-        - Account
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                full_name:
-                  type: string
-                paternal_surname:
-                  type: string
-                maternal_surname:
-                  type: string
-                email:
-                  type: string
-                  format: email
-                type_doc_id:
-                  type: integer
-                doc_value:
-                  type: string
-                username:
-                  type: string
-                password:
-                  type: string
-      responses:
-        "200":
-          description: Successful registration
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        description: "Empty object for this endpoint"
-              examples:
-                default:
-                  value:
-                    message: "User registered successfully"
-                    data: {}
-                    error: ""
-                    traceback: ""
-  /api/account/logout:
-    post:
-      summary: User logout
-      tags:
-        - Account
-      responses:
-        "200":
-          description: Successful logout
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          redirect_url:
-                            type: string
-                            format: url
-                            example: "/login"
+          example: 'Juan Carlos'
+        paternal_surname:
+          type: string
+          example: 'Pérez'
+        maternal_surname:
+          type: string
+          example: 'García'
+        email:
+          type: string
+          format: email
+          example: 'user@example.com'
+        document_type_id:
+          type: integer
+          description: 'ID del tipo de documento (ej. DNI, Pasaporte).'
+          example: 1
+        document:
+          type: string
+          example: '12345678'
+        username:
+          type: string
+          example: 'jperez'
+        password:
+          type: string
+          format: password
+          example: 'aVeryStrongP@ssword'
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: 'user@example.com'
+        password:
+          type: string
+          format: password
+          example: 'strongpassword'
+    SelectContextRequest:
+      type: object
+      required: [context_type]
+      properties:
+        context_type:
+          type: string
+          description: "Define el tipo de contexto a establecer en la sesión."
+          enum: [PARISH, DIOCESE]
+          example: 'PARISH'
+        parishId:
+          type: integer
+          description: 'ID de la parroquia a activar. Requerido si context_type es PARISH. Enviar `null` para modo feligrés.'
+          nullable: true
+          example: 1
+    SelectRoleRequest:
+      type: object
+      required: [roleId]
+      properties:
+        roleId:
+          type: integer
+          description: 'ID del rol a activar en la sesión.'
+          example: 2
+
+    # AUTH RESPONSES & DATA OBJECTS
+    UserInfo:
+      type: object
+      properties:
+        full_name:
+          type: string
+          example: 'Luis Barboza'
+        email:
+          type: string
+          format: email
+          example: 'lbarboza@example.com'
+    ParishAssociation:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: 'Parroquia La Consolación'
+    LoginResponseData:
+      type: object
+      properties:
+        user_info:
+          $ref: '#/components/schemas/UserInfo'
+        is_diocese_user:
+          type: boolean
+          description: 'Indica si el usuario tiene permisos a nivel de diócesis.'
+          example: false
+        parish_associations:
+          type: array
+          items:
+            $ref: '#/components/schemas/ParishAssociation'
+    LoginSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/LoginResponseData'
+            
+    # ROLES
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 2
+        name:
+          type: string
+          example: 'Secretario(a)'
+    RolesSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Role'
+
+    # SESSION INFO
+    SessionInfo:
+      type: object
+      properties:
+        person:
+          type: object
+          properties:
+            full_name:
+              type: string
+              description: 'Nombre completo de la persona (nombres + apellidos)'
+              example: 'Juan Carlos Pérez García'
+            profile_photo:
+              type: string
+              description: 'Ruta completa de la foto de perfil'
+              nullable: true
+              example: '/uploads/profiles/user_123_profile.jpg'
+        is_diocese_user:
+          type: boolean
+          description: 'Indica si el usuario tiene permisos a nivel de diócesis'
+          example: false
+        parish:
+          type: object
+          nullable: true
+          description: 'Información de la parroquia actual. Null cuando el usuario está en modo feligrés (parishId: null)'
+          properties:
+            id:
+              type: integer
+              description: 'ID de la parroquia actual'
+              example: 1
+            name:
+              type: string
+              description: 'Nombre de la parroquia en el contexto actual'
+              example: 'Parroquia La Consolación'
+        available_roles:
+          type: array
+          nullable: true
+          description: 'Lista de roles disponibles para el usuario en la parroquia actual. Null en modo feligrés'
+          items:
+            $ref: '#/components/schemas/Role'
+        current_role:
+          allOf:
+            - $ref: '#/components/schemas/Role'
+            - type: object
+              nullable: true
+              description: 'Rol actualmente seleccionado en la sesión. Null en modo feligrés o si no se ha seleccionado rol'
+    SessionInfoSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/SessionInfo'
+
+    # CHAPELS
+    Chapel:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 101
+        name:
+          type: string
+          example: 'Capilla San Martín de Porres'
+        address:
+          type: string
+          example: 'Av. Principal 123'
+    ChapelsSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Chapel'

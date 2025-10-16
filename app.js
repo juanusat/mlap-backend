@@ -1,13 +1,25 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
 const apiRouter = require('./routes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
 
-app.use(cors());
+const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:4202';
+app.use(
+  cors({
+    origin: allowedOrigin,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
+  })
+);
+
 app.use(express.json());
+// Parse cookies so auth middleware can read req.cookies.token
+app.use(cookieParser());
 
 app.use('/api', apiRouter);
 
