@@ -154,23 +154,26 @@ const getSession = async (req, res, next) => {
         if (!profilePhoto) {
             const firstNameInitial = userInfo.first_names.charAt(0).toUpperCase();
             const lastNameInitial = userInfo.paternal_surname.charAt(0).toUpperCase();
-            profilePhoto = `//place-hold.it/80x80/1b9185/ffffff.jpeg&text=${firstNameInitial}${lastNameInitial}&bold&fontsize=30`;
+            profilePhoto = `https://place-hold.it/80x80/1b9185/ffffff.jpeg&text=${firstNameInitial}${lastNameInitial}&bold&fontsize=30`;
         }
         
         let parishInfo = null;
         let availableRoles = null;
         let currentRole = null;
+        let isParishAdmin = false;
 
         if (context_type === 'PARISH' && parishId) {
             parishInfo = await userModel.findParishById(parishId);
             availableRoles = await userModel.findUserRolesInParish(userId, parishId);
+            isParishAdmin = await userModel.isParishAdmin(userId, parishId);
             
             if (roleId) {
                 currentRole = await userModel.findRoleById(roleId);
             }
         }
 
-        const newToken = jwt.sign(req.user, config.jwtSecret, { expiresIn: '24h' });
+        const tokenPayload = { userId, context_type, parishId, roleId };
+        const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
         res.cookie('session_token', newToken, cookieOptions);
 
         res.status(200).json({
@@ -181,6 +184,7 @@ const getSession = async (req, res, next) => {
                     profile_photo: profilePhoto
                 },
                 is_diocese_user: userInfo.is_diocese,
+                is_parish_admin: isParishAdmin,
                 parish: parishInfo ? {
                     id: parishInfo.id,
                     name: parishInfo.name
