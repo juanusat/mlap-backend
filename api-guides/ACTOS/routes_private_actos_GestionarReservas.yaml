@@ -293,6 +293,8 @@ paths:
                       status: RESERVED
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
 
 
   /api/acts/reservations/search:
@@ -331,6 +333,8 @@ paths:
                       status: RESERVED
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
 
   /api/acts/reservations/{id}:
     get:

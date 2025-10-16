@@ -11,15 +11,15 @@ servers:
     description: Servidor Principal
 
 paths:
-  /parishes/{parish_id}/chapels/{chapel_id}/general-schedules/list:
+  /api/parishes/{parishId}/chapels/{chapelId}/general-schedules/list:
     post:
       tags:
         - Horario General
       summary: Obtener el horario semanal recurrente de una capilla
       description: Devuelve todos los intervalos de disponibilidad general que definen el horario estándar de la capilla.
       parameters:
-        - $ref: '#/components/parameters/parish_id'
-        - $ref: '#/components/parameters/chapel_id'
+        - $ref: '#/components/parameters/parishId'
+        - $ref: '#/components/parameters/chapelId'
       requestBody:
         description: Aunque este listado no es paginado, se mantiene el método POST por consistencia.
         required: true
@@ -36,15 +36,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseGeneralScheduleList'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/general-schedules/bulk-update:
+  /api/parishes/{parishId}/chapels/{chapelId}/general-schedules/bulk-update:
     post:
       tags:
         - Horario General
       summary: Actualizar en bloque todo el horario semanal recurrente
       description: Reemplaza completamente el horario general existente de una capilla con el nuevo conjunto de intervalos proporcionado. Se utiliza al guardar los cambios en la cuadrícula de edición.
       parameters:
-        - $ref: '#/components/parameters/parish_id'
-        - $ref: '#/components/parameters/chapel_id'
+        - $ref: '#/components/parameters/parishId'
+        - $ref: '#/components/parameters/chapelId'
       requestBody:
         required: true
         content:
@@ -72,15 +72,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccess'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/list:
+  /api/parishes/{parishId}/chapels/{chapelId}/specific-schedules/list:
     post:
       tags:
         - Horarios Específicos (Excepciones)
       summary: Listar excepciones de horario de forma paginada
       description: Obtiene una lista paginada de excepciones (disponibilidad o no disponibilidad). Permite filtrar por tipo y rango de fechas.
       parameters:
-        - $ref: '#/components/parameters/parish_id'
-        - $ref: '#/components/parameters/chapel_id'
+        - $ref: '#/components/parameters/parishId'
+        - $ref: '#/components/parameters/chapelId'
       requestBody:
         required: true
         content:
@@ -114,15 +114,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseSpecificScheduleList'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/create:
+  /api/parishes/{parishId}/chapels/{chapelId}/specific-schedules/create:
     post:
       tags:
         - Horarios Específicos (Excepciones)
       summary: Crear una nueva excepción de horario
       description: Registra una nueva excepción de disponibilidad ('OPEN') o no disponibilidad ('CLOSED') para una fecha específica.
       parameters:
-        - $ref: '#/components/parameters/parish_id'
-        - $ref: '#/components/parameters/chapel_id'
+        - $ref: '#/components/parameters/parishId'
+        - $ref: '#/components/parameters/chapelId'
       requestBody:
         required: true
         content:
@@ -137,11 +137,11 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponseSuccess'
 
-  /parishes/{parish_id}/chapels/{chapel_id}/specific-schedules/{schedule_id}:
+  /api/parishes/{parishId}/chapels/{chapelId}/specific-schedules/{scheduleId}:
     parameters:
-      - $ref: '#/components/parameters/parish_id'
-      - $ref: '#/components/parameters/chapel_id'
-      - $ref: '#/components/parameters/schedule_id'
+      - $ref: '#/components/parameters/parishId'
+      - $ref: '#/components/parameters/chapelId'
+      - $ref: '#/components/parameters/scheduleId'
     put:
       tags:
         - Horarios Específicos (Excepciones)
@@ -175,22 +175,22 @@ paths:
 
 components:
   parameters:
-    parish_id:
-      name: parish_id
+    parishId:
+      name: parishId
       in: path
       required: true
       description: ID de la parroquia a la que pertenece la capilla.
       schema:
         type: integer
-    chapel_id:
-      name: chapel_id
+    chapelId:
+      name: chapelId
       in: path
       required: true
       description: ID de la capilla para la cual se gestiona el horario.
       schema:
         type: integer
-    schedule_id:
-      name: schedule_id
+    scheduleId:
+      name: scheduleId
       in: path
       required: true
       description: ID de la excepción de horario específica.

@@ -169,6 +169,8 @@ paths:
                       status: RESERVED
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
    
   /api/client/reservations/pending/search:
     post:
@@ -203,6 +205,8 @@ paths:
                       status: RESERVED
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
       
   /api/client/reservations/{id}/cancel:
     post:

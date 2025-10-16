@@ -328,6 +328,8 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
 
   /api/acts/events/variants/search:
     post:
@@ -369,6 +371,8 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
 
   /api/acts/events/variants/create:
     post:
