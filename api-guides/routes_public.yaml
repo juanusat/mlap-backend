@@ -176,6 +176,36 @@ paths:
         '401':
           $ref: '#/components/responses/Unauthorized'
 
+  /api/auth/session:
+    get:
+      tags:
+        - Auth
+      summary: Obtener Información de la Sesión Actual
+      description: |
+        Devuelve información detallada de la sesión actual del usuario, incluyendo:
+        - Nombre completo de la persona
+        - Nombre de la parroquia en el contexto actual (null en modo feligrés)
+        - Lista de roles disponibles en la parroquia actual (null en modo feligrés)
+        - Rol actual seleccionado (null en modo feligrés o si no se ha seleccionado)
+        - Foto de perfil (ruta completa)
+        - Indicador si es usuario diocesano
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Información de la sesión actual con JWT actualizado.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SessionInfoSuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenContextNotSet'
+
   # --- CHAPELS ENDPOINTS ---
   /api/chapels:
     get:
@@ -379,6 +409,59 @@ components:
               type: array
               items:
                 $ref: '#/components/schemas/Role'
+
+    # SESSION INFO
+    SessionInfo:
+      type: object
+      properties:
+        person:
+          type: object
+          properties:
+            full_name:
+              type: string
+              description: 'Nombre completo de la persona (nombres + apellidos)'
+              example: 'Juan Carlos Pérez García'
+            profile_photo:
+              type: string
+              description: 'Ruta completa de la foto de perfil'
+              nullable: true
+              example: '/uploads/profiles/user_123_profile.jpg'
+        is_diocese_user:
+          type: boolean
+          description: 'Indica si el usuario tiene permisos a nivel de diócesis'
+          example: false
+        parish:
+          type: object
+          nullable: true
+          description: 'Información de la parroquia actual. Null cuando el usuario está en modo feligrés (parishId: null)'
+          properties:
+            id:
+              type: integer
+              description: 'ID de la parroquia actual'
+              example: 1
+            name:
+              type: string
+              description: 'Nombre de la parroquia en el contexto actual'
+              example: 'Parroquia La Consolación'
+        available_roles:
+          type: array
+          nullable: true
+          description: 'Lista de roles disponibles para el usuario en la parroquia actual. Null en modo feligrés'
+          items:
+            $ref: '#/components/schemas/Role'
+        current_role:
+          allOf:
+            - $ref: '#/components/schemas/Role'
+            - type: object
+              nullable: true
+              description: 'Rol actualmente seleccionado en la sesión. Null en modo feligrés o si no se ha seleccionado rol'
+    SessionInfoSuccessResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              $ref: '#/components/schemas/SessionInfo'
 
     # CHAPELS
     Chapel:
