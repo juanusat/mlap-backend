@@ -220,6 +220,8 @@ paths:
                       status: CANCELLED
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
     
   /api/client/reservations/history/search:
     post:
@@ -254,6 +256,8 @@ paths:
                       status: CANCELLED
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
    
   /api/client/reservations/{id}:
     get:
