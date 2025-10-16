@@ -189,6 +189,7 @@ paths:
         - Rol actual seleccionado (null en modo feligrés o si no se ha seleccionado)
         - Foto de perfil (ruta completa)
         - Indicador si es usuario diocesano
+        - Indicador si es el administrador/párroco de la parroquia actual
       security:
         - cookieAuth: []
       responses:
@@ -429,6 +430,10 @@ components:
         is_diocese_user:
           type: boolean
           description: 'Indica si el usuario tiene permisos a nivel de diócesis'
+          example: false
+        is_parish_admin:
+          type: boolean
+          description: 'Indica si el usuario es el administrador/párroco de la parroquia actual. Solo aplica cuando hay contexto de parroquia'
           example: false
         parish:
           type: object

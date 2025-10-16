@@ -139,6 +139,16 @@ const findRoleById = async (roleId) => {
   return rows[0];
 };
 
+const isParishAdmin = async (userId, parishId) => {
+  const query = `
+    SELECT 1
+    FROM public.parish
+    WHERE id = $1 AND admin_user_id = $2 AND active = TRUE;
+  `;
+  const { rows } = await db.query(query, [parishId, userId]);
+  return rows.length > 0;
+};
+
 module.exports = {
   create,
   findByEmail,
@@ -147,5 +157,6 @@ module.exports = {
   isDioceseUser,
   findUserSessionInfo,
   findParishById,
-  findRoleById
+  findRoleById,
+  isParishAdmin
 };
