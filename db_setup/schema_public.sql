@@ -389,3 +389,19 @@ CREATE TABLE IF NOT EXISTS public.event_audit_log (
     CONSTRAINT fk_event_audit_log_variant FOREIGN KEY (variant_id) REFERENCES public.event_variant(id),
     CONSTRAINT fk_event_audit_log_reservation FOREIGN KEY (reservation_id) REFERENCES public.reservation(id)
 );
+-- ====================================================================
+-- TABLAS ADICIONALES
+-- ====================================================================
+
+-- Tabla Notification: Almacena las notificaciones para los usuarios;
+CREATE TABLE IF NOT EXISTS public.notification (
+    id BIGSERIAL NOT NULL, 
+    user_id INTEGER NOT NULL,
+    title VARCHAR(100) NOT NULL, 
+    body VARCHAR(255),
+    read BOOLEAN DEFAULT FALSE NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,    
+    CONSTRAINT notification_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES public.user(id) ON DELETE CASCADE
+);
