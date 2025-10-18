@@ -315,6 +315,8 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
     
   /api/parish/{parishId}/roles/search:
     post:
@@ -355,6 +357,8 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
      
   /api/parish/{parishId}/roles/create:
     post:

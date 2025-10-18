@@ -256,6 +256,8 @@ paths:
                     event_name: Bautizo
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
 
   /api/chapel/events/list:
     post:
@@ -290,6 +292,8 @@ paths:
                     event_name: Primera Comunión
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
 
   /api/chapel/event/{eventId}/requirements/list:
     post:
@@ -323,6 +327,8 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
   
 
   /api/chapel/event/{eventId}/requirements/search:
@@ -357,6 +363,8 @@ paths:
                       active: true
                 error: ""
                 traceback: ""
+                meta:
+                  total_records: 100
   
 
   /api/chapel/event/{eventId}/requirements/create:
