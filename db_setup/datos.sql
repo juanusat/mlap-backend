@@ -72,6 +72,7 @@ INSERT INTO public.document_type (id, code, name, active, description, created_a
 (3, 'CE', 'Carné de Extranjería', TRUE, 'Documento de identificación para residentes extranjeros en el país.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
 
+
 -- ====================================================================
 -- INSERCIÓN DE PERSONAS Y USUARIOS
 -- ====================================================================
@@ -89,7 +90,16 @@ INSERT INTO public.user (id, person_id, username, password_hash, is_diocese, act
 (4, 4, 'antonioe@gmail.com', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE);
 
 INSERT INTO public.parish (id, name, admin_user_id, active) VALUES
-(1, 'La Consolación', 2, TRUE);
+(1, 'La Consolación', 2, TRUE); 
+
+INSERT INTO public.chapel (id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, active) VALUES 
+(1, 1, 'Capilla San Judas Tadeo', '-12.0464, -77.0428', 'Av. Garcilaso de la Vega 1500, Lima', 
+'sanjudas.lc@parroquia.org', '+51 1 4567890', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE);
+(2, 1, 'Capilla Nuestra Señora del Carmen', '-12.0917, -77.0253', 'Calle Junín 320, Barranco', 
+'carmen.lc@parroquia.org', '+51 1 9876543', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE);
+(3, 1, 'Capilla Santa Rosa de Lima', '-11.995, -77.078', 'Jr. Callao 800, Cercado de Lima', 
+'santarosa.lc@parroquia.org', '+51 1 3210987', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE);
+
 
 INSERT INTO public.association (id, user_id, parish_id, active) VALUES
 (1, 2, 1, TRUE),
