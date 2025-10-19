@@ -98,3 +98,10 @@ UsuarioRol (UserRole)
     - Un usuario puede tener múltiples roles en la misma parroquia
     - Mantiene historial de cuándo se asignó o revocó cada rol
     - Vincula la asociación (usuario-parroquia) con los roles específicos
+
+Notificacion (Notification)
+    - Almacena las notificaciones enviadas a los usuarios del sistema
+    - Cada notificación tiene un título, cuerpo descriptivo y estado de lectura
+    - Permite rastrear qué notificaciones han sido leídas por cada usuario
+    - Se eliminan en cascada cuando se elimina el usuario asociado
+    - Registra fecha de creación y última actualización
