@@ -99,4 +99,111 @@ INSERT INTO public.role (id, parish_id, name, description, active) VALUES
 (1, 1, 'Secretario(a)', 'Apoyo administrativo y de gestión en la parroquia.', TRUE);
 
 INSERT INTO public.user_role (id, association_id, role_id) VALUES
-(1, 2, 1);
+(1, 2, 1); 
+
+-------------------------------------------------------------------
+-- Eventos BASE -- 
+INSERT INTO public.event (id, name, description, active) VALUES
+(1, 'Bautismo', 'Sacramento de iniciación cristiana.', TRUE),
+(2, 'Primera Comunión', 'Celebración de la Eucaristía por primera vez.', TRUE),
+(3, 'Confirmación', 'Sacramento que fortalece la gracia del bautismo.', TRUE),
+(4, 'Matrimonio', 'Sacramento de la unión conyugal.', TRUE),
+(5, 'Misa Dominical', 'Eucaristía regular del domingo.', TRUE),
+(6, 'Funeral / Exequias', 'Celebración para difuntos.', TRUE),
+(7, 'Catequesis', 'Proceso formativo para sacramentos.', TRUE),
+(8, 'Bendición de Casa', 'Servicio de bendición para propiedades.', TRUE),
+(9, 'Encuentro Pastoral', 'Reunión de grupos o movimientos pastorales.', TRUE),
+(10, 'Hora Santa / Adoración', 'Tiempo dedicado a la adoración eucarística.', TRUE); 
+
+-- Requisitos BASE de Eventos BASE -- 
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(1, 1, 'Registro Civil del Niño', 'Copia fiel del registro civil de nacimiento.', TRUE),
+(2, 1, 'Cédulas de Padrinos', 'Copia de documento de identidad de los padrinos.', TRUE),
+(3, 1, 'Certificado de Matrimonio Eclesiástico', 'Para padres casados por la Iglesia.', TRUE),
+(4, 1, 'Certificado de Charla Prebautismal', 'Comprobante de asistencia de los padres y padrinos.', TRUE),
+(5, 1, 'Licencia Parroquial', 'Documento de permiso si los padres no residen en la jurisdicción.', TRUE),
+(6, 1, 'Ficha de Datos de Contacto', 'Formulario con información de contacto de padres y padrinos.', TRUE),
+(7, 1, 'Copia Libro de Bautismo de Padrinos', 'Copia del acta de bautismo de los padrinos.', TRUE),
+(8, 1, 'Permiso de Obispado', 'Documento requerido en casos especiales y excepciones.', TRUE),
+(9, 1, 'Comprobante de Ofrenda', 'Recibo o constancia de pago de la ofrenda establecida.', TRUE),
+(10, 1, 'Ficha de Solicitud de Bautismo', 'Formulario de solicitud de sacramento diligenciado.', TRUE);
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(11, 2, 'Certificado de Bautismo', 'Copia del certificado de bautismo.', TRUE),
+(12, 2, 'Constancia de Catequesis', 'Certificado de haber completado el ciclo de catequesis.', TRUE),
+(13, 2, 'Ficha de Inscripción', 'Formulario de registro del niño/a.', TRUE),
+(14, 2, 'Foto Tipo Carnet', 'Una foto reciente del niño/a.', TRUE),
+(15, 2, 'Acta de Entrevista con el Párroco', 'Documento que confirma la idoneidad y fecha de la entrevista.', TRUE),
+(16, 2, 'Documento de Compromiso de Padres', 'Documento firmado por los padres.', TRUE),
+(17, 2, 'Copia de Documento del Representante', 'Copia del DNI/Cédula del acudiente.', TRUE),
+(18, 2, 'Paz y Salvo Parroquial', 'Certificado de que no hay deudas o pendientes (si viene de otra parroquia).', TRUE),
+(19, 2, 'Formulario de Datos de Contacto Tutor', 'Teléfono y email de contacto principal.', TRUE),
+(20, 2, 'Recibo de Inscripción', 'Comprobante de pago de la inscripción.', TRUE); 
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(21, 3, 'Certificado de Bautismo', 'Copia del certificado de bautismo.', TRUE),
+(22, 3, 'Certificado de Primera Comunión', 'Copia del certificado de Primera Comunión.', TRUE),
+(23, 3, 'Certificado de Asistencia a Catequesis', 'Comprobante del ciclo de preparación.', TRUE),
+(24, 3, 'Documento de Identidad del Joven', 'Copia del documento de identidad.', TRUE),
+(25, 3, 'Copia de Padrinos (Confirmados)', 'Copia de DNI/Cédula del padrino/madrina.', TRUE),
+(26, 3, 'Carta de Solicitud', 'Carta firmada solicitando el sacramento.', TRUE),
+(27, 3, 'Acta de Compromiso del Confirmando', 'Documento de compromiso firmado por el joven.', TRUE),
+(28, 3, 'Licencia Parroquial', 'Permiso si no reside en la zona.', TRUE),
+(29, 3, 'Comprobante de Ofrenda por el Sacramento', 'Comprobante de ofrenda.', TRUE),
+(30, 3, 'Ficha de Datos de Contacto Padrinos', 'Información de contacto de los padrinos.', TRUE);
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(31, 4, 'Partida de Bautismo Actualizada', 'De ambos contrayentes, reciente (máx. 3 meses).', TRUE),
+(32, 4, 'Partida de Confirmación', 'De ambos contrayentes.', TRUE),
+(33, 4, 'Documentos de Identidad', 'Copia de DNI/Cédula de ambos contrayentes.', TRUE),
+(34, 4, 'Certificado de Curso Prematrimonial', 'Constancia de asistencia al curso.', TRUE),
+(35, 4, 'Ficha de Testigos', 'Datos y copia de cédula de dos testigos (mayores de edad).', TRUE),
+(36, 4, 'Certificado de Soltería', 'Declaración jurada o documento legal que lo confirme.', TRUE),
+(37, 4, 'Comprobante de Avisos Parroquiales', 'Comprobante de publicación de avisos (si aplica).', TRUE),
+(38, 4, 'Licencia Matrimonial', 'Si uno de los novios es de otra jurisdicción.', TRUE),
+(39, 4, 'Recibo de Estipendio', 'Comprobante del pago del estipendio matrimonial.', TRUE),
+(40, 4, 'Compromiso Acta Civil', 'Documento que compromete a presentar acta de matrimonio civil.', TRUE); 
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(41, 5, 'Ficha de Registro de Asistencia', 'Formulario de registro de ingreso para control de aforo.', FALSE),
+(42, 5, 'Comprobante de Ofrenda', 'Recibo o constancia de la ofrenda económica entregada.', TRUE); 
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(43, 6, 'Certificado de Defunción', 'Copia del certificado oficial de defunción.', TRUE),
+(44, 6, 'Identificación del Solicitante', 'Copia del documento de identidad de quien solicita.', TRUE),
+(45, 6, 'Partida de Bautismo del Difunto', 'Si está disponible.', TRUE),
+(46, 6, 'Formulario de Solicitud de Exequias', 'Detalles logísticos del entierro o cremación.', TRUE),
+(47, 6, 'Datos de Contacto de la Funeraria', 'Información de la empresa fúnebre a cargo.', TRUE),
+(48, 6, 'Declaración de Tipo de Rito', 'Formulario especificando si es Misa de cuerpo presente o solo exequias.', TRUE),
+(49, 6, 'Ficha de Elección de Lecturas', 'Selección de lecturas bíblicas (si aplica).', FALSE),
+(50, 6, 'Testimonio de Vida (Opcional)', 'Nota o documento breve sobre la vida del difunto.', FALSE),
+(51, 6, 'Comprobante de Estipendio de Misa', 'Comprobante de pago del estipendio.', TRUE),
+(52, 6, 'Aprobación de la Diócesis', 'Documento de aprobación en casos especiales o fuera de horario.', TRUE); 
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(53, 7, 'Ficha de Matrícula', 'Formulario de inscripción completo del estudiante.', TRUE),
+(54, 7, 'Certificado de Bautismo', 'Copia del certificado de bautismo (si aplica).', TRUE),
+(55, 7, 'Comprobante de Cuota de Materiales', 'Recibo de pago de los materiales de estudio.', TRUE),
+(56, 7, 'Documento de Compromiso de Padres', 'Documento firmado por el acudiente aceptando las normas.', TRUE),
+(57, 7, 'Copia de DNI del Estudiante', 'Para registro interno de identidad.', FALSE),
+(58, 7, 'Comprobante de Adquisición de Libro', 'Recibo o factura de la adquisición del libro de texto.', TRUE),
+(59, 7, 'Ficha Médica Relevante', 'Documento con información de alergias o condiciones de salud.', FALSE); 
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(60, 8, 'Acta de Solicitud de Bendición', 'Documento que incluye la dirección y detalles de la propiedad.', TRUE),
+(61, 8, 'Formulario de Datos de Contacto Propietario', 'Nombre, teléfono y email de contacto.', TRUE),
+(62, 8, 'Comprobante de Ofrenda de Agradecimiento', 'Recibo de ofrenda sugerida por la bendición.', TRUE),
+(63, 8, 'Documento de Residencia', 'Acreditación de residencia dentro de la jurisdicción parroquial.', TRUE); 
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(64, 9, 'Agenda Oficial del Encuentro', 'Documento detallando los temas, horarios y objetivos.', TRUE),
+(65, 9, 'Ficha de Solicitud y Responsable', 'Documento que identifica al coordinador y el propósito del grupo.', TRUE),
+(66, 9, 'Acuerdo de Uso de Instalaciones', 'Documento firmado por el coordinador sobre las normas del espacio.', TRUE),
+(67, 9, 'Aprobación Escrita del Párroco', 'Documento formal con el permiso directo del administrador de la parroquia.', TRUE),
+(68, 9, 'Comprobante de Tasa de Uso', 'Recibo de pago por el uso de las instalaciones parroquiales.', TRUE); 
+
+INSERT INTO public.base_requirement (id, event_id, name, description, active) VALUES
+(69, 10, 'Guía Oficial de Oración', 'Documento o libreto con las meditaciones y oraciones a seguir.', FALSE),
+(70, 10, 'Acta de Permiso de Exposición', 'Documento que aprueba la exposición solemne del Santísimo.', TRUE),
+(71, 10, 'Lista Formal de Intenciones', 'Documento que contiene las intenciones de oración a presentar durante el rito.', FALSE);
+
