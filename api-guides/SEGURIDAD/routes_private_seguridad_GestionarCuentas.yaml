@@ -315,16 +315,12 @@ paths:
               example:
                 message: "Trabajadores obtenidos exitosamente"
                 data:
-                  total_records: 100
-                  total_pages: 10
-                  current_page: 1
-                  workers:
-                    - association_id: 1
-                      person_id: 101
-                      first_names: Usuario1
-                      paternal_surname: Apellido1
-                      email: usuario1@example.com
-                      active: true
+                  - association_id: 1
+                    person_id: 101
+                    first_names: Usuario1
+                    paternal_surname: Apellido1
+                    email: usuario1@example.com
+                    active: true
                 error: ""
                 traceback: ""
                 meta:
@@ -359,16 +355,12 @@ paths:
               example:
                 message: "Búsqueda de trabajadores completada exitosamente"
                 data:
-                  total_records: 5
-                  total_pages: 1
-                  current_page: 1
-                  workers:
-                    - association_id: 1
-                      person_id: 101
-                      first_names: Usuario1
-                      paternal_surname: Apellido1
-                      email: usuario1@example.com
-                      active: true
+                  - association_id: 1
+                    person_id: 101
+                    first_names: Usuario1
+                    paternal_surname: Apellido1
+                    email: usuario1@example.com
+                    active: true
                 error: ""
                 traceback: ""
                 meta:
@@ -439,22 +431,18 @@ paths:
               example:
                 message: "Roles activos del trabajador obtenidos exitosamente"
                 data:
-                  total_records: 3
-                  total_pages: 1
-                  current_page: 1
-                  items:
-                    - user_role_id: 101
-                      role_id: 1
-                      role_name: "Administrador"
-                      assignment_date: "2024-01-15"
-                    - user_role_id: 102
-                      role_id: 2
-                      role_name: "Secretario"
-                      assignment_date: "2024-02-10"
-                    - user_role_id: 103
-                      role_id: 3
-                      role_name: "Vicario"
-                      assignment_date: "2024-03-05"
+                  - user_role_id: 101
+                    role_id: 1
+                    role_name: "Administrador"
+                    assignment_date: "2024-01-15"
+                  - user_role_id: 102
+                    role_id: 2
+                    role_name: "Secretario"
+                    assignment_date: "2024-02-10"
+                  - user_role_id: 103
+                    role_id: 3
+                    role_name: "Vicario"
+                    assignment_date: "2024-03-05"
                 error: ""
                 traceback: ""
     
