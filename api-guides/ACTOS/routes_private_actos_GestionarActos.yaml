@@ -310,22 +310,18 @@ paths:
               example:
                 message: "Listado de actos litúrgicos obtenido exitosamente"
                 data:
-                  total_records: 1
-                  total_pages: 1
-                  current_page: 1
-                  items:
-                    - id: 1
-                      name: Matrimonio Individual
-                      description: Ceremonia privada.
-                      chapel:
-                        id: 101
-                        name: Capilla San José Obrero
-                      event_base:
-                        id: 5
-                        name: Matrimonio
-                      variant_type: Privado
-                      max_capacity: 1
-                      active: true
+                  - id: 1
+                    name: Matrimonio Individual
+                    description: Ceremonia privada.
+                    chapel:
+                      id: 101
+                      name: Capilla San José Obrero
+                    event_base:
+                      id: 5
+                      name: Matrimonio
+                    variant_type: Privado
+                    max_capacity: 1
+                    active: true
                 error: ""
                 traceback: ""
                 meta:
@@ -353,22 +349,18 @@ paths:
               example:
                 message: "Búsqueda de actos litúrgicos completada exitosamente"
                 data:
-                  total_records: 1
-                  total_pages: 1
-                  current_page: 1
-                  items:
-                    - id: 1
-                      name: Matrimonio Individual
-                      description: Ceremonia privada.
-                      chapel:
-                        id: 101
-                        name: Capilla San José Obrero
-                      event_base:
-                        id: 5
-                        name: Matrimonio
-                      variant_type: Privado
-                      max_capacity: 1
-                      active: true
+                  - id: 1
+                    name: Matrimonio Individual
+                    description: Ceremonia privada.
+                    chapel:
+                      id: 101
+                      name: Capilla San José Obrero
+                    event_base:
+                      id: 5
+                      name: Matrimonio
+                    variant_type: Privado
+                    max_capacity: 1
+                    active: true
                 error: ""
                 traceback: ""
                 meta:
