@@ -94,9 +94,9 @@ INSERT INTO public.parish (id, name, admin_user_id, active) VALUES
 
 INSERT INTO public.chapel (id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, active) VALUES 
 (1, 1, 'Capilla San Judas Tadeo', '-12.0464, -77.0428', 'Av. Garcilaso de la Vega 1500, Lima', 
-'sanjudas.lc@parroquia.org', '+51 1 4567890', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE);
+'sanjudas.lc@parroquia.org', '+51 1 4567890', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE),
 (2, 1, 'Capilla Nuestra Señora del Carmen', '-12.0917, -77.0253', 'Calle Junín 320, Barranco', 
-'carmen.lc@parroquia.org', '+51 1 9876543', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE);
+'carmen.lc@parroquia.org', '+51 1 9876543', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE),
 (3, 1, 'Capilla Santa Rosa de Lima', '-11.995, -77.078', 'Jr. Callao 800, Cercado de Lima', 
 'santarosa.lc@parroquia.org', '+51 1 3210987', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE);
 
