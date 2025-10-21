@@ -209,15 +209,11 @@ paths:
               example:
                 message: "Historial de reservas obtenido exitosamente"
                 data:
-                  total_records: 10
-                  total_pages: 4
-                  current_page: 1
-                  items:
-                    - id: 1
-                      event_name: Unción de los Enfermos
-                      event_date: 2024-12-19
-                      paid_amount: 283.00
-                      status: CANCELLED
+                  - id: 1
+                    event_name: Unción de los Enfermos
+                    event_date: 2024-12-19
+                    paid_amount: 283.00
+                    status: CANCELLED
                 error: ""
                 traceback: ""
                 meta:
@@ -245,15 +241,11 @@ paths:
               example:
                 message: "Búsqueda en historial completada exitosamente"
                 data:
-                  total_records: 2
-                  total_pages: 1
-                  current_page: 1
-                  items:
-                    - id: 1
-                      event_name: Unción de los Enfermos
-                      event_date: 2024-12-19
-                      paid_amount: 283.00
-                      status: CANCELLED
+                  - id: 1
+                    event_name: Unción de los Enfermos
+                    event_date: 2024-12-19
+                    paid_amount: 283.00
+                    status: CANCELLED
                 error: ""
                 traceback: ""
                 meta:
