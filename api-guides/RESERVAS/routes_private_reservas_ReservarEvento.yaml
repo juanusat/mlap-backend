@@ -237,7 +237,67 @@ paths:
                 error: ""
                 traceback: ""
 
-
+  /api/client/reservation/check-availability:
+    post:
+      tags:
+        - Formulario de Reserva (Cliente)
+      summary: Verificar Disponibilidad de Horario
+      description: Verifica si el horario seleccionado está disponible para el evento. Retorna true si está disponible, false si no lo está.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - event_variant_id
+                - event_date
+                - event_time
+              properties:
+                event_variant_id:
+                  type: integer
+                  description: ID de la variante del evento
+                  example: 5
+                event_date:
+                  type: string
+                  format: date
+                  description: Fecha del evento a verificar (YYYY-MM-DD)
+                  example: "2025-09-30"
+                event_time:
+                  type: string
+                  format: time
+                  description: Hora del evento a verificar (HH:MM)
+                  example: "08:00"
+      responses:
+        '200':
+          description: Verificación de disponibilidad completada.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              examples:
+                available:
+                  summary: Horario disponible
+                  value:
+                    message: "El horario está disponible"
+                    data:
+                      available: true
+                      event_date: "2025-09-30"
+                      event_time: "08:00"
+                    error: ""
+                    traceback: ""
+                not_available:
+                  summary: Horario no disponible
+                  value:
+                    message: "El horario no está disponible"
+                    data:
+                      available: false
+                      event_date: "2025-09-30"
+                      event_time: "08:00"
+                      reason: "Ya existe una reserva para este horario"
+                    error: ""
+                    traceback: ""
+        
 
   /api/client/reservation/create:
     post:

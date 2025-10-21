@@ -279,18 +279,14 @@ paths:
               example:
                 message: "Reservas obtenidas exitosamente"
                 data:
-                  total_records: 100
-                  total_pages: 10
-                  current_page: 1
-                  items:
-                    - id: 1
-                      user_person:
-                        id: 10
-                        full_name: Usuario 1
-                      event_variant_name: Funeral
-                      event_date: '2025-08-13T00:00:00Z'
-                      paid_amount: 449.00
-                      status: RESERVED
+                  - id: 1
+                    user_person:
+                      id: 10
+                      full_name: Usuario 1
+                    event_variant_name: Funeral
+                    event_date: '2025-08-13T00:00:00Z'
+                    paid_amount: 449.00
+                    status: RESERVED
                 error: ""
                 traceback: ""
                 meta:
@@ -319,18 +315,14 @@ paths:
               example:
                 message: "Búsqueda de reservas completada exitosamente"
                 data:
-                  total_records: 10
-                  total_pages: 1
-                  current_page: 1
-                  items:
-                    - id: 1
-                      user_person:
-                        id: 10
-                        full_name: Usuario 1
-                      event_variant_name: Funeral
-                      event_date: '2025-08-13T00:00:00Z'
-                      paid_amount: 449.00
-                      status: RESERVED
+                  - id: 1
+                    user_person:
+                      id: 10
+                      full_name: Usuario 1
+                    event_variant_name: Funeral
+                    event_date: '2025-08-13T00:00:00Z'
+                    paid_amount: 449.00
+                    status: RESERVED
                 error: ""
                 traceback: ""
                 meta:
@@ -399,4 +391,33 @@ paths:
                 data: {}
                 error: ""
                 traceback: ""
-    
+
+  /api/acts/reservations/{id}/reject:
+    patch:
+      tags:
+        - Gestión de Reservas
+      summary: Rechazar una Reserva
+      description: Cambia el estado de una reserva de 'RESERVED' a 'REJECTED'. Requiere permiso UPDATE_RESERVATION_STATUS.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID de la reserva a rechazar.
+          required: true
+          example: 1
+      responses:
+        '200':
+          description: Reserva rechazada exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Reserva rechazada exitosamente"
+                data: 
+                  id: 1
+                  status: "REJECTED"
+                error: ""
+                traceback: ""
+        
