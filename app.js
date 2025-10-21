@@ -7,7 +7,7 @@ const errorMiddleware = require('./middleware/errorMiddleware');
 
 const app = express();
 
-const allowedOrigin = process.env.CORS_ORIGIN || 'http://localhost:4202';
+const allowedOrigin = `${process.env.FRONTEND_URL}:${process.env.FRONTEND_PORT}`;
 app.use(
   cors({
     origin: allowedOrigin,
@@ -25,7 +25,7 @@ app.use('/api', apiRouter);
 
 app.use(errorMiddleware);
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.BACKEND_PORT;
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
