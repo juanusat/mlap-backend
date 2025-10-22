@@ -1,126 +1,44 @@
 openapi: 3.0.3
 info:
-  title: API Diócesis - Parroquias
-  description: |
-    API para la gestión de cuentas de parroquias.
-    
-    **Autenticación requerida:** JWT (Cookie)
-    
-    **Estructura de respuesta estándar:**
-    ```json
-    {
-      "message": "Mensaje descriptivo de la operación",
-      "data": {}, 
-      "error": "",
-      "traceback": ""
-    }
-    ```
+  title: API de Gestión de Parroquias (Diocesis)
   version: 1.0.0
-
-servers:
-  - url: http://localhost:8000/api
-    description: Servidor de desarrollo
-
-tags:
-  - name: Parroquias
-    description: CRUD completo de parroquias
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: JWT
-
-  schemas:
-    Parish:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: "Parroquia San José"
-        admin_username:
-          type: string
-          example: "admin_sanjose"
-        active:
-          type: boolean
-          example: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    ParishDetail:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: "Parroquia San José"
-        email:
-          type: string
-          example: "admin@sanjose.com"
-        username:
-          type: string
-          example: "admin_sanjose"
-        active:
-          type: boolean
-          example: true
-
-security:
-  - cookieAuth: []
-
 paths:
   /api/diocese/parishes/create:
     post:
       tags:
         - Parroquias
-      summary: Crear una nueva parroquia
-      description: |
-        Crea parroquia con usuario administrador.
-        Datos requeridos: nombres, correo, usuario y clave.
-        
-        **Permisos:** DIOCESE_CREATE_PARISH
+      summary: Crear una nueva parroquia con su usuario administrador asociado.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - name
-                - first_names
-                - email
-                - username
-                - password
               properties:
                 name:
                   type: string
-                  example: "Parroquia San José"
-                first_names:
-                  type: string
-                  example: "Juan Carlos"
+                  example: Parroquia San Marcos
+                  description: Nombre de la parroquia (Parish.name).
                 email:
                   type: string
-                  format: email
-                  example: "admin@sanjose.com"
+                  example: sanmarcos@parroquia.com
+                  description: Correo del administrador de la parroquia (Person.email).
                 username:
                   type: string
-                  example: "admin_sanjose"
+                  example: sanmarcos_admin
+                  description: Nombre de usuario del administrador (User.username).
                 password:
                   type: string
-                  format: password
-                  example: "SecurePass123"
+                  example: ClaveSegura123
+                  description: Clave inicial del administrador.
+              required:
+                - name
+                - email
+                - username
+                - password
       responses:
-        '201':
-          description: Parroquia creada exitosamente
+        '200':
+          description: Éxito. Parroquia y usuario administrador creados.
           content:
             application/json:
               schema:
@@ -128,55 +46,45 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Parroquia creada exitosamente"
+                    example: string
                   data:
                     type: object
-                    properties:
-                      parish_id:
-                        type: integer
-                        example: 1
+                    example: {}
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
-        '400':
-          description: Datos inválidos
-        '403':
-          description: Sin permisos
 
   /api/diocese/parishes/list:
     post:
       tags:
         - Parroquias
-      summary: Listar parroquias (paginado)
-      description: |
-        Solo busca por nombre, página y límite.
-        
-        **Permisos:** DIOCESE_VIEW_PARISH
+      summary: Listar parroquias con paginación.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - page
+                - limit
       responses:
         '200':
-          description: Lista obtenida exitosamente
+          description: Éxito. Lista de parroquias.
           content:
             application/json:
               schema:
@@ -184,76 +92,75 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Lista obtenida exitosamente"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Parish'
-                        example:
-                          - id: 1
-                            name: "Parroquia San José"
-                            admin_username: "admin_sanjose"
-                            active: true
-                          - id: 2
-                            name: "Parroquia San Pedro"
-                            admin_username: "admin_sanpedro"
-                            active: true
-                      total_count:
-                        type: integer
-                        example: 15
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
-                      total_pages:
-                        type: integer
-                        example: 2
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre de la parroquia.
+                          example: Parroquia 1
+                        email:
+                          type: string
+                          description: Correo del administrador.
+                          example: correo1@parroquia.com
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 100
+                        description: Total de registros disponibles.
 
   /api/diocese/parishes/search:
     post:
       tags:
         - Parroquias
-      summary: Buscar parroquias
-      description: |
-        Búsqueda por nombre de parroquia.
-        
-        **Permisos:** DIOCESE_VIEW_PARISH
+      summary: Buscar parroquias por nombre/correo con paginación.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
-                name_query:
+                query:
                   type: string
-                  example: "San José"
+                  example: "marcos"
+                  description: Término de búsqueda (por nombre o correo).
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - query
+                - page
+                - limit
       responses:
         '200':
-          description: Búsqueda exitosa
+          description: Éxito. Resultados de la búsqueda.
           content:
             application/json:
               schema:
@@ -261,45 +168,60 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Búsqueda exitosa"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/Parish'
-                      total_count:
-                        type: integer
-                        example: 3
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre de la parroquia.
+                          example: Parroquia San Marcos
+                        email:
+                          type: string
+                          description: Correo del administrador.
+                          example: sanmarcos@parroquia.com
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 5
+                        description: Total de registros que cumplen con la búsqueda.
 
   /api/diocese/parishes/{id}:
     get:
       tags:
         - Parroquias
-      summary: Ver detalle de una parroquia
-      description: |
-        Devuelve: nombre, correo y usuario.
-        
-        **Permisos:** DIOCESE_VIEW_PARISH
+      summary: Obtener el detalle de una parroquia por ID.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
+          description: ID de la parroquia.
       responses:
         '200':
-          description: Información obtenida
+          description: Éxito. Detalle de la parroquia.
           content:
             application/json:
               schema:
@@ -307,65 +229,228 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Parroquia obtenida exitosamente"
-                  data:
-                    $ref: '#/components/schemas/ParishDetail'
-                  error:
-                    type: string
-                    example: ""
-                  traceback:
-                    type: string
-                    example: ""
-        '404':
-          description: No encontrada
-
-    put:
-      tags:
-        - Parroquias
-      summary: Editar una parroquia
-      description: |
-        Diócesis solo actualiza el correo y el estado.
-        
-        **Permisos:** DIOCESE_EDIT_PARISH
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: string
-                  format: email
-                  example: "nuevo_admin@sanjose.com"
-                active:
-                  type: boolean
-                  example: true
-      responses:
-        '200':
-          description: Actualizada exitosamente
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  message:
-                    type: string
-                    example: "Parroquia actualizada exitosamente"
+                    example: string
                   data:
                     type: object
                     properties:
                       id:
                         type: integer
                         example: 1
+                        description: ID de la parroquia.
+                      name:
+                        type: string
+                        example: Parroquia San Marcos
+                        description: Nombre.
+                      email:
+                        type: string
+                        example: sanmarcos@parroquia.com
+                        description: Correo del administrador.
+                      username:
+                        type: string
+                        example: sanmarcos_admin
+                        description: Nombre de usuario del administrador.
                   error:
                     type: string
+                    nullable: true
                     example: ""
-        '404':
-          description: No encontrada
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+    put:
+      tags:
+        - Parroquias
+      summary: Actualizar COMPLETAMENTE la parroquia (Nombre, Correo, Usuario).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID de la parroquia a actualizar.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Parroquia San Marcos Nuevo
+                  description: Nombre de la parroquia.
+                email:
+                  type: string
+                  example: nuevo.marcos@parroquia.com
+                  description: Correo del administrador (Person.email).
+                username:
+                  type: string
+                  example: nuevo_marcos_admin
+                  description: Nombre de usuario del administrador (User.username).
+              required:
+                - name
+                - email
+                - username
+      responses:
+        '200':
+          description: Éxito. Parroquia actualizada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+    patch:
+      tags:
+        - Parroquias
+      summary: Actualizar PARCIALMENTE los datos (Nombre, Correo, Usuario) de la parroquia.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID de la parroquia.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: San Marcos Mod
+                  description: Nombre de la parroquia.
+                email:
+                  type: string
+                  example: mod.marcos@parroquia.com
+                  description: Correo del administrador (Person.email).
+                username:
+                  type: string
+                  example: mod_marcos_admin
+                  description: Nombre de usuario del administrador (User.username).
+      responses:
+        '200':
+          description: Éxito. Datos actualizados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+  /api/diocese/parishes/{id}/status:
+    patch:
+      tags:
+        - Parroquias
+      summary: Actualizar el estado (switch/active) de la parroquia.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID de la parroquia.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  example: false
+                  description: Estado de activación (switch).
+              required:
+                - active
+      responses:
+        '200':
+          description: Éxito. Estado actualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+  /api/diocese/parishes/{id}/delete:
+    delete:
+      tags:
+        - Parroquias
+      summary: Eliminar físicamente una parroquia por ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID de la parroquia a eliminar.
+      responses:
+        '200':
+          description: Éxito. Parroquia eliminada.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""

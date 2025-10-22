@@ -1,92 +1,33 @@
 openapi: 3.0.3
 info:
-  title: API Diócesis - Eventos Generales
-  description: |
-    API para la gestión de eventos generales del sistema.
-
-    **Autenticación requerida:** JWT (Cookie)
-
-    **Estructura de respuesta estándar:**
-    ```json
-    {
-      "message": "Mensaje descriptivo de la operación",
-      "data": {}, 
-      "error": "",
-      "traceback": ""
-    }
-    ```
+  title: API de Gestión de Eventos Generales (Diocesis)
   version: 1.0.0
-
-servers:
-  - url: http://localhost:8000/api
-    description: Servidor de desarrollo
-
-tags:
-  - name: Eventos Generales
-    description: CRUD completo de eventos generales
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: JWT
-
-  schemas:
-    Event:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: "Matrimonio"
-        description:
-          type: string
-          example: "Ceremonia de matrimonio religioso"
-        active:
-          type: boolean
-          example: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-security:
-  - cookieAuth: []
-
 paths:
   /api/diocese/events/create:
     post:
       tags:
         - Eventos Generales
-      summary: Crear un nuevo evento general
-      description: |
-        Registra un nuevo evento base del sistema.
-        Datos requeridos: nombre y descripción.
-
-        **Permisos:** DIOCESE_CREATE_EVENT
+      summary: Crear un nuevo evento general (tipo base).
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - name
               properties:
                 name:
                   type: string
-                  example: "Matrimonio"
+                  example: Misa Exequial
+                  description: Nombre del evento (Event.name).
                 description:
                   type: string
-                  example: "Ceremonia de matrimonio religioso"
+                  example: Misa especial para difuntos.
+                  description: Descripción del evento (Event.description).
+              required:
+                - name
       responses:
-        "201":
-          description: Evento creado exitosamente
+        '200':
+          description: Éxito. Evento general creado.
           content:
             application/json:
               schema:
@@ -94,56 +35,45 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Evento creado exitosamente"
+                    example: string
                   data:
                     type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
+                    example: {}
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
-        "400":
-          description: Datos inválidos
-        "403":
-          description: Sin permisos
 
   /api/diocese/events/list:
     post:
       tags:
         - Eventos Generales
-      summary: Listar eventos generales (paginado)
-      description: |
-        Obtiene una lista paginada de todos los eventos generales.
-        También se usa para listar eventos en el panel lateral derecho.
-
-        **Permisos:** DIOCESE_VIEW_EVENT
+      summary: Listar eventos generales con paginación.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - page
+                - limit
       responses:
-        "200":
-          description: Lista obtenida exitosamente
+        '200':
+          description: Éxito. Lista de eventos generales.
           content:
             application/json:
               schema:
@@ -151,81 +81,75 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Lista obtenida exitosamente"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/Event"
-                        example:
-                          - id: 1
-                            name: "Matrimonio"
-                            description: "Ceremonia de matrimonio"
-                            active: true
-                          - id: 2
-                            name: "Bautismo"
-                            description: "Sacramento del bautismo"
-                            active: true
-                          - id: 3
-                            name: "Primera Comunión"
-                            description: "Primera comunión de niños"
-                            active: true
-                      total_count:
-                        type: integer
-                        example: 8
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
-                      total_pages:
-                        type: integer
-                        example: 1
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre del evento.
+                          example: Evento 1
+                        description:
+                          type: string
+                          description: Descripción.
+                          example: Descripción detallada para el Evento 1.
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 100
+                        description: Total de registros disponibles.
 
   /api/diocese/events/search:
     post:
       tags:
         - Eventos Generales
-      summary: Buscar eventos generales
-      description: |
-        Obtiene una lista paginada y filtrada de eventos generales.
-        Solo busca por nombre, página y límite.
-
-        **Permisos:** DIOCESE_VIEW_EVENT
+      summary: Buscar eventos generales por nombre/descripción con paginación.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
-                name_query:
+                query:
                   type: string
-                  example: "matri"
+                  example: "bautismo"
+                  description: Término de búsqueda (por nombre o descripción).
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - query
+                - page
+                - limit
       responses:
-        "200":
-          description: Búsqueda exitosa
+        '200':
+          description: Éxito. Resultados de la búsqueda.
           content:
             application/json:
               schema:
@@ -233,51 +157,60 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Búsqueda exitosa"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: "#/components/schemas/Event"
-                        example:
-                          - id: 1
-                            name: "Matrimonio"
-                            description: "Ceremonia de matrimonio"
-                            active: true
-                      total_count:
-                        type: integer
-                        example: 1
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre del evento.
+                          example: Bautismo
+                        description:
+                          type: string
+                          description: Descripción.
+                          example: Sacramento de iniciación cristiana.
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 5
+                        description: Total de registros que cumplen con la búsqueda.
 
   /api/diocese/events/{id}:
     get:
       tags:
         - Eventos Generales
-      summary: Ver detalle de un evento general
-      description: |
-        Obtiene la información completa de un evento específico.
-        Devuelve: ID, nombre, descripción y estado.
-
-        **Permisos:** DIOCESE_VIEW_EVENT
+      summary: Obtener el detalle de un evento general por ID.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
+          description: ID del evento.
       responses:
-        "200":
-          description: Información obtenida exitosamente
+        '200':
+          description: Éxito. Detalle del evento.
           content:
             application/json:
               schema:
@@ -285,45 +218,43 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Evento obtenido exitosamente"
+                    example: string
                   data:
                     type: object
                     properties:
                       id:
                         type: integer
                         example: 1
+                        description: ID.
                       name:
                         type: string
-                        example: "Matrimonio"
+                        example: Bautismo
+                        description: Nombre.
                       description:
                         type: string
-                        example: "Ceremonia de matrimonio religioso"
-                      active:
-                        type: boolean
-                        example: true
+                        example: Sacramento de iniciación cristiana.
+                        description: Descripción.
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
-        "404":
-          description: Evento no encontrado
 
     put:
       tags:
         - Eventos Generales
-      summary: Editar un evento general
-      description: |
-        Actualiza la información completa de un evento general.
-
-        **Permisos:** DIOCESE_EDIT_EVENT
+      summary: Actualizar COMPLETAMENTE un evento general por ID.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
+          description: ID del evento a actualizar.
       requestBody:
         required: true
         content:
@@ -333,16 +264,17 @@ paths:
               properties:
                 name:
                   type: string
-                  example: "Matrimonio Civil y Religioso"
+                  example: Misa Dominical (Nuevo)
+                  description: Nuevo nombre del evento.
                 description:
                   type: string
-                  example: "Ceremonia completa de matrimonio"
-                active:
-                  type: boolean
-                  example: true
+                  example: Eucaristía regular del domingo (Descripción actualizada).
+                  description: Nueva descripción del evento.
+              required:
+                - name
       responses:
-        "200":
-          description: Evento actualizado
+        '200':
+          description: Éxito. Evento actualizado.
           content:
             application/json:
               schema:
@@ -350,15 +282,150 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Evento actualizado exitosamente"
+                    example: string
                   data:
                     type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
+                    example: {}
                   error:
                     type: string
+                    nullable: true
                     example: ""
-        "404":
-          description: Evento no encontrado
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+    patch:
+      tags:
+        - Eventos Generales
+      summary: Actualizar PARCIALMENTE los datos (Nombre, Descripción) de un evento general.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del evento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Misa modificada
+                  description: Nombre del evento.
+                description:
+                  type: string
+                  example: Descripción corta modificada.
+                  description: Descripción del evento.
+      responses:
+        '200':
+          description: Éxito. Datos actualizados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+  /api/diocese/events/{id}/status:
+    patch:
+      tags:
+        - Eventos Generales
+      summary: Actualizar el estado (switch/active) de un evento general.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del evento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  example: false
+                  description: Estado de activación (switch).
+              required:
+                - active
+      responses:
+        '200':
+          description: Éxito. Estado actualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+  /api/diocese/events/{id}/delete:
+    delete:
+      tags:
+        - Eventos Generales
+      summary: Eliminar físicamente un evento general por ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del evento a eliminar.
+      responses:
+        '200':
+          description: Éxito. Evento eliminado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
