@@ -1,133 +1,72 @@
 openapi: 3.0.3
 info:
-  title: API Módulo Usuario - Gestión de Mi Cuenta
-  description: |
-    API para la gestión de la cuenta del usuario autenticado ("Mi Cuenta").
-    
-    **Autenticación requerida:** JWT (Cookie)
-    
-    **Estructura de respuesta estándar:**
-    ```json
-    {
-      "message": "Mensaje descriptivo de la operación",
-      "data": {}, 
-      "error": "",
-      "traceback": ""
-    }
-    ```
+  title: API de Gestión de Cuenta de Usuario
   version: 1.0.0
-
-servers:
-  - url: http://localhost:8000/api
-    description: Servidor de desarrollo
-
-tags:
-  - name: Gestionar Mi Cuenta Usuario
-    description: Operaciones sobre la cuenta del usuario autenticado
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: JWT
-
-  schemas:
-    BaseResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          description: "Mensaje descriptivo de la operación"
-        data:
-          oneOf:
-            - type: object
-            - type: array
-            - type: string
-            - type: integer
-          description: "La información principal devuelta por el servicio"
-        error:
-          type: string
-          description: "Mensaje de error, o vacío si todo está OK"
-        traceback:
-          type: string
-          description: "Detalles del error del backend (solo en modo debug)"
-
-    UserAccountDetail:
-      type: object
-      description: Detalle completo de la cuenta del usuario autenticado.
-      properties:
-        id:
-          type: integer
-          example: 5
-        first_name:
-          type: string
-          example: "Juan"
-        paternal_last_name:
-          type: string
-          example: "Pérez"
-        maternal_last_name:
-          type: string
-          example: "García"
-        document_id:
-          type: string
-          example: "1234567"
-          description: Número de documento de identidad.
-        profile_photo:
-          type: string
-          example: "usuario.jpg"
-          nullable: true
-          description: Nombre del archivo de foto de perfil.
-        username:
-          type: string
-          example: "juanperez"
-        email:
-          type: string
-          example: "juan.perez@ejemplo.com"
-        active:
-          type: boolean
-          example: true
-
-security:
-  - cookieAuth: []
-
 paths:
-# ==============================================================================
-# 1. GESTIONAR MI CUENTA USUARIO
-# ==============================================================================
   /api/user/account:
     get:
       tags:
-        - Gestionar Mi Cuenta Usuario
-      summary: 1.1 Obtener información de la cuenta del usuario
-      description: |
-        Obtiene la información personal y los datos de acceso del usuario autenticado.
-        
-        **Permisos:** USER_VIEW_ACCOUNT (Se asume que el usuario siempre puede ver su propia cuenta).
+        - Perfil de Usuario
+      summary: Obtener la información completa del perfil del usuario autenticado.
       responses:
         '200':
-          description: Información obtenida exitosamente
+          description: Éxito. Información del perfil obtenida.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
                     properties:
-                      data:
-                        $ref: '#/components/schemas/UserAccountDetail'
-        '401':
-          description: No autenticado
-
+                      id:
+                        type: integer
+                        description: ID del usuario (tabla user).
+                      first_names:
+                        type: string
+                        example: Juan
+                        description: Nombres.
+                      paternal_surname:
+                        type: string
+                        example: Pérez
+                        description: Apellido paterno.
+                      maternal_surname:
+                        type: string
+                        example: García
+                        description: Apellido materno.
+                      document:
+                        type: string
+                        example: 12345678
+                        description: Documento de Identidad.
+                      profile_photo:
+                        type: string
+                        example: usuario.jpg
+                        description: Foto perfil.
+                      username:
+                        type: string
+                        example: juanperez
+                        description: Usuario.
+                      email:
+                        type: string
+                        example: juan.perez@ejemplo.com
+                        description: Correo.
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+  
   /api/user/account/info:
     patch:
       tags:
-        - Gestionar Mi Cuenta Usuario
-      summary: 1.2 Actualizar Información Personal del Usuario
-      description: |
-        Actualiza **parcialmente** la información personal del usuario: nombres, apellidos, documento de identidad y foto de perfil.
-        
-        **Permisos:** USER_EDIT_ACCOUNT
+        - Perfil de Usuario
+      summary: Actualizar la Información Personal (Nombres, Apellidos, Documento, Foto).
       requestBody:
         required: true
         content:
@@ -135,52 +74,54 @@ paths:
             schema:
               type: object
               properties:
-                first_name:
+                first_names:
                   type: string
-                  example: "Juan David"
-                paternal_last_name:
+                  example: Juan Carlos
+                paternal_surname:
                   type: string
-                  example: "Pérez"
-                maternal_last_name:
+                  example: Perez Soto
+                maternal_surname:
                   type: string
-                  example: "García López"
-                document_id:
+                  example: Garcia Lopez
+                document:
                   type: string
-                  example: "9876543"
+                  description: Documento de Identidad (para Person.document).
+                  example: 12345678
                 profile_photo:
                   type: string
-                  example: "usuario_nuevo.jpg"
-                  description: Nombre del archivo de foto de perfil asignado por el servidor.
+                  example: nueva_foto.png
+              required:
+                - first_names
+                - paternal_surname
+                - document
       responses:
         '200':
-          description: Información personal actualizada exitosamente
+          description: Éxito. Información personal actualizada.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 5
-        '400':
-          description: Datos inválidos
-        '401':
-          description: No autenticado
-
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+  
   /api/user/account/credentials:
     patch:
       tags:
-        - Gestionar Mi Cuenta Usuario
-      summary: 1.3 Actualizar Usuario, Correo y/o Contraseña
-      description: |
-        Actualiza **parcialmente** los datos de acceso: nombre de usuario, email y/o contraseña.
-        
-        **Permisos:** USER_EDIT_ACCOUNT
+        - Perfil de Usuario
+      summary: Actualizar Datos de la Cuenta (Usuario, Correo, Nueva Contraseña).
       requestBody:
         required: true
         content:
@@ -190,35 +131,42 @@ paths:
               properties:
                 username:
                   type: string
-                  example: "juandperez"
-                  description: Nuevo nombre de usuario (opcional)
+                  example: juancarlosperez
                 email:
                   type: string
-                  format: email
-                  example: "juan.david.perez@ejemplo.com"
-                  description: Nuevo correo electrónico (opcional)
-                password:
+                  example: juancarlosperez@ejemplo.com
+                new_password:
                   type: string
-                  format: password
-                  example: "MiClaveSegura2025"
-                  description: Nueva contraseña (opcional)
+                  nullable: true
+                  description: Nueva contraseña (campo 'Nueva contraseña').
+                  example: NuevaContra456
+                confirm_new_password:
+                  type: string
+                  nullable: true
+                  description: Confirmación de nueva contraseña (campo 'Confirmar contraseña').
+                  example: NuevaContra456
+              required:
+                - username
+                - email
       responses:
         '200':
-          description: Credenciales de cuenta actualizadas exitosamente
+          description: Éxito. Datos de la cuenta actualizados.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 5
-        '400':
-          description: Datos inválidos
-        '401':
-          description: No autenticado
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""

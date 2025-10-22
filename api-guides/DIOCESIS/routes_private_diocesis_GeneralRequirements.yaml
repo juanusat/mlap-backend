@@ -1,105 +1,19 @@
 openapi: 3.0.3
 info:
-  title: API Diócesis - Requisitos Generales
-  description: |
-    API para la gestión de requisitos base para eventos.
-    
-    **Autenticación requerida:** JWT (Cookie)
-    
-    **Estructura de respuesta estándar:**
-    ```json
-    {
-      "message": "Mensaje descriptivo de la operación",
-      "data": {}, 
-      "error": "",
-      "traceback": ""
-    }
-    ```
-    
-    **Nota:** Para listar eventos en el panel lateral derecho se usa:
-    `/diocese/events/list [POST]`
+  title: API de Requisitos Generales Anidados (Diocesis)
   version: 1.0.0
-
-servers:
-  - url: http://localhost:8000/api
-    description: Servidor de desarrollo
-
-tags:
-  - name: Requisitos Generales
-    description: CRUD completo de requisitos base para eventos
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: JWT
-
-  schemas:
-    BaseRequirement:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        event_id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: "Partida de Bautismo"
-        description:
-          type: string
-          example: "Documento que acredita el bautismo"
-        active:
-          type: boolean
-          example: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-security:
-  - cookieAuth: []
-
 paths:
-  /api/diocese/events/{id}/requirements/create:
-    post:
+  # ====================================================================
+  # 1. API para Seleccionar el Evento Base (Panel Lateral)
+  # ====================================================================
+  /api/diocese/events/select:
+    get:
       tags:
         - Requisitos Generales
-      summary: Crear un requisito base
-      description: |
-        Registra un requisito estándar para el evento especificado.
-        Datos requeridos: nombre y descripción.
-        
-        **Permisos:** DIOCESE_CREATE_REQ
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: integer
-          description: ID del evento al que pertenece el requisito
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - name
-              properties:
-                name:
-                  type: string
-                  example: "Partida de Bautismo"
-                description:
-                  type: string
-                  example: "Documento que acredita el bautismo previo"
+      summary: Listar solo IDs y Nombres de eventos para selección (Panel Lateral).
       responses:
-        '201':
-          description: Requisito creado exitosamente
+        '200':
+          description: Éxito. Lista simple de eventos para selector.
           content:
             application/json:
               schema:
@@ -107,64 +21,121 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Requisito creado exitosamente"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID del evento.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre del evento.
+                          example: Bautismo
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
-        '400':
-          description: Datos inválidos
-        '403':
-          description: Sin permisos
-        '404':
-          description: Evento no encontrado
+
+  # ====================================================================
+  # 2. APIs de Requisitos Generales (Anidado bajo Evento)
+  #    Rutas: /api/diocese/events/{id}/requirements/...
+  # ====================================================================
+
+  /api/diocese/events/{id}/requirements/create:
+    post:
+      tags:
+        - Requisitos Generales
+      summary: Crear un nuevo requisito base para el Evento {id}.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del evento al que pertenece el requisito.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Acta de Matrimonio Eclesiástico
+                  description: Nombre del requisito (BaseRequirement.name).
+                description:
+                  type: string
+                  example: Copia del acta matrimonial de los padres.
+                  description: Descripción del requisito.
+              required:
+                - name
+      responses:
+        '200':
+          description: Éxito. Requisito base creado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
 
   /api/diocese/events/{id}/requirements/list:
     post:
       tags:
         - Requisitos Generales
-      summary: Listar requisitos de un evento (paginado)
-      description: |
-        Obtiene una lista paginada de requisitos base para un evento específico.
-        
-        **Permisos:** DIOCESE_VIEW_REQ
+      summary: Listar requisitos base del Evento {id} con paginación.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
-          description: ID del evento
+            example: 1
+          description: ID del evento cuyos requisitos se listan.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - page
+                - limit
       responses:
         '200':
-          description: Lista obtenida exitosamente
+          description: Éxito. Lista de requisitos base.
           content:
             application/json:
               schema:
@@ -172,88 +143,83 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Lista obtenida exitosamente"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/BaseRequirement'
-                        example:
-                          - id: 1
-                            event_id: 1
-                            name: "Partida de Bautismo"
-                            description: "Documento de bautismo"
-                            active: true
-                          - id: 2
-                            event_id: 1
-                            name: "Certificado de Confirmación"
-                            description: "Certificado de confirmación"
-                            active: true
-                      total_count:
-                        type: integer
-                        example: 5
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
-                      total_pages:
-                        type: integer
-                        example: 1
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID del requisito.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre del requisito.
+                          example: Certificado de Bautismo
+                        description:
+                          type: string
+                          description: Descripción.
+                          example: Copia del acta de bautismo.
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
-        '404':
-          description: Evento no encontrado
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 25
+                        description: Total de registros disponibles.
 
   /api/diocese/events/{id}/requirements/search:
     post:
       tags:
         - Requisitos Generales
-      summary: Buscar requisitos de un evento
-      description: |
-        Obtiene una lista paginada y filtrada de requisitos base para un evento específico.
-        Búsqueda por nombre.
-        
-        **Permisos:** DIOCESE_VIEW_REQ
+      summary: Buscar requisitos base del Evento {id} por nombre/descripción.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
-          description: ID del evento
+            example: 1
+          description: ID del evento al que pertenece la búsqueda.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
-                name_query:
+                query:
                   type: string
-                  example: "partida"
+                  example: "certificado"
+                  description: Término de búsqueda (por nombre o descripción).
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - query
+                - page
+                - limit
       responses:
         '200':
-          description: Búsqueda exitosa
+          description: Éxito. Resultados de la búsqueda.
           content:
             application/json:
               schema:
@@ -261,54 +227,67 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Búsqueda exitosa"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/BaseRequirement'
-                      total_count:
-                        type: integer
-                        example: 2
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID del requisito.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre del requisito.
+                          example: Certificado de Bautismo
+                        description:
+                          type: string
+                          description: Descripción.
+                          example: Copia del acta de bautismo.
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
-        '404':
-          description: Evento no encontrado
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 3
+                        description: Total de registros que cumplen con la búsqueda.
 
   /api/diocese/events/{event_id}/requirements/{id}:
     get:
       tags:
         - Requisitos Generales
-      summary: Ver detalle de un requisito
-      description: |
-        Obtiene la información completa de un requisito base específico.
-        
-        **Permisos:** DIOCESE_VIEW_REQ
+      summary: Obtener el detalle de un requisito por ID (Ver).
       parameters:
         - name: event_id
           in: path
           required: true
           schema:
             type: integer
-          description: ID del evento
+            example: 1
+          description: ID del evento padre.
         - name: id
           in: path
           required: true
           schema:
             type: integer
-          description: ID del requisito
+            example: 10
+          description: ID del requisito.
       responses:
         '200':
-          description: Información obtenida exitosamente
+          description: Éxito. Detalle del requisito.
           content:
             application/json:
               schema:
@@ -316,39 +295,50 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Requisito obtenido exitosamente"
+                    example: string
                   data:
-                    $ref: '#/components/schemas/BaseRequirement'
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 10
+                        description: ID.
+                      name:
+                        type: string
+                        example: Ficha de Solicitud de Bautismo
+                        description: Nombre.
+                      description:
+                        type: string
+                        example: Formulario de solicitud de sacramento diligenciado.
+                        description: Descripción.
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
-        '404':
-          description: Requisito no encontrado
 
     put:
       tags:
         - Requisitos Generales
-      summary: Editar un requisito
-      description: |
-        Actualiza la información completa de un requisito base.
-        
-        **Permisos:** DIOCESE_EDIT_REQ
+      summary: Actualizar COMPLETAMENTE un requisito por ID (Editar - PUT).
       parameters:
         - name: event_id
           in: path
           required: true
           schema:
             type: integer
-          description: ID del evento
+            example: 1
+          description: ID del evento padre.
         - name: id
           in: path
           required: true
           schema:
             type: integer
-          description: ID del requisito
+            example: 10
+          description: ID del requisito a actualizar.
       requestBody:
         required: true
         content:
@@ -358,16 +348,17 @@ paths:
               properties:
                 name:
                   type: string
-                  example: "Partida de Bautismo Original"
+                  example: Formulario de Solicitud (Nuevo)
+                  description: Nuevo nombre.
                 description:
                   type: string
-                  example: "Documento original actualizado"
-                active:
-                  type: boolean
-                  example: true
+                  example: Descripción del formulario actualizada.
+                  description: Nueva descripción.
+              required:
+                - name
       responses:
         '200':
-          description: Requisito actualizado
+          description: Éxito. Requisito actualizado.
           content:
             application/json:
               schema:
@@ -375,15 +366,171 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Requisito actualizado exitosamente"
+                    example: string
                   data:
                     type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
+                    example: {}
                   error:
                     type: string
+                    nullable: true
                     example: ""
-        '404':
-          description: Requisito no encontrado
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+    patch:
+      tags:
+        - Requisitos Generales
+      summary: Actualizar PARCIALMENTE los datos (Nombre, Descripción) de un requisito (Editar - PATCH).
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del evento padre.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 10
+          description: ID del requisito.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: Ficha modificada
+                  description: Nombre del requisito.
+                description:
+                  type: string
+                  example: Descripción corta modificada.
+                  description: Descripción del requisito.
+      responses:
+        '200':
+          description: Éxito. Datos actualizados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+  
+  /api/diocese/events/{event_id}/requirements/{id}/status:
+    patch:
+      tags:
+        - Requisitos Generales
+      summary: Actualizar el estado (switch/active) de un requisito.
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del evento padre.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 10
+          description: ID del requisito.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  example: false
+                  description: Estado de activación (switch).
+              required:
+                - active
+      responses:
+        '200':
+          description: Éxito. Estado actualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+  /api/diocese/events/{event_id}/requirements/{id}/delete:
+    delete:
+      tags:
+        - Requisitos Generales
+      summary: Eliminar físicamente un requisito por ID.
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del evento padre.
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 10
+          description: ID del requisito a eliminar.
+      responses:
+        '200':
+          description: Éxito. Requisito eliminado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""

@@ -1,96 +1,39 @@
 openapi: 3.0.3
 info:
-  title: API Diócesis - Tipos de Documento
-  description: |
-    API para la gestión de tipos de documentos de identidad.
-    
-    **Autenticación requerida:** JWT (Cookie)
-    
-    **Estructura de respuesta estándar:**
-    ```json
-    {
-      "message": "Mensaje descriptivo de la operación",
-      "data": {}, 
-      "error": "",
-      "traceback": ""
-    }
-    ```
+  title: API de Gestión de Tipos de Documentos (Diocesis)
   version: 1.0.0
-
-servers:
-  - url: http://localhost:8000/api
-    description: Servidor de desarrollo
-
-tags:
-  - name: Tipos de Documento
-    description: CRUD completo de tipos de documentos de identidad
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: JWT
-
-  schemas:
-    DocumentType:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        code:
-          type: string
-          example: "DNI"
-        name:
-          type: string
-          example: "Documento Nacional de Identidad"
-        description:
-          type: string
-          example: "Documento de identidad nacional"
-        active:
-          type: boolean
-          example: true
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-security:
-  - cookieAuth: []
-
 paths:
   /api/diocese/document-types/create:
     post:
       tags:
-        - Tipos de Documento
-      summary: Crear un nuevo tipo de documento
-      description: |
-        **Permisos:** DIOCESE_CREATE_DOCTYPE
+        - Tipos de Documentos
+      summary: Crear un nuevo tipo de documento.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - code
-                - name
               properties:
-                code:
-                  type: string
-                  example: "DNI"
                 name:
                   type: string
-                  example: "Documento Nacional de Identidad"
+                  example: Carnet de Sanidad
+                  description: Nombre del tipo de documento.
                 description:
                   type: string
-                  example: "Documento oficial de identidad"
+                  example: Certificado de salud.
+                  description: Descripción del tipo de documento.
+                code:
+                  type: string
+                  example: CARNET_SANIDAD
+                  description: Nombre corto o código del tipo de documento (corresponde a DocumentType.code).
+              required:
+                - name
+                - code
+                - description
       responses:
-        '201':
-          description: Creado exitosamente
+        '200':
+          description: Éxito. Tipo de documento creado.
           content:
             application/json:
               schema:
@@ -98,49 +41,45 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Tipo de documento creado exitosamente"
+                    example: string
                   data:
                     type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
+                    example: {}
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
 
   /api/diocese/document-types/list:
     post:
       tags:
-        - Tipos de Documento
-      summary: Listar tipos de documento (paginado)
-      description: |
-        **Permisos:** DIOCESE_VIEW_DOCTYPE
+        - Tipos de Documentos
+      summary: Listar tipos de documentos con paginación.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - page
+                - limit
       responses:
         '200':
-          description: Lista obtenida exitosamente
+          description: Éxito. Lista de tipos de documentos.
           content:
             application/json:
               schema:
@@ -148,66 +87,75 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Lista obtenida exitosamente"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/DocumentType'
-                      total_count:
-                        type: integer
-                        example: 25
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
-                      total_pages:
-                        type: integer
-                        example: 3
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre.
+                          example: DNI
+                        description:
+                          type: string
+                          description: Descripción.
+                          example: Documento nacional de identidad
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 100
+                        description: Total de registros disponibles.
 
   /api/diocese/document-types/search:
     post:
       tags:
-        - Tipos de Documento
-      summary: Buscar tipos de documento
-      description: |
-        Búsqueda por nombre.
-        **Permisos:** DIOCESE_VIEW_DOCTYPE
+        - Tipos de Documentos
+      summary: Buscar tipos de documentos por nombre/descripción con paginación.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
-                name_query:
+                query:
                   type: string
                   example: "nacional"
+                  description: Término de búsqueda (por nombre o descripción).
                 page:
                   type: integer
                   example: 1
-                  minimum: 1
+                  description: Número de página para la paginación.
                 limit:
                   type: integer
                   example: 10
-                  minimum: 1
-                  maximum: 100
+                  description: Máximo de registros por página.
+              required:
+                - query
+                - page
+                - limit
       responses:
         '200':
-          description: Búsqueda exitosa
+          description: Éxito. Resultados de la búsqueda.
           content:
             application/json:
               schema:
@@ -215,44 +163,60 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Búsqueda exitosa"
+                    example: string
                   data:
-                    type: object
-                    properties:
-                      items:
-                        type: array
-                        items:
-                          $ref: '#/components/schemas/DocumentType'
-                      total_count:
-                        type: integer
-                        example: 5
-                      page:
-                        type: integer
-                        example: 1
-                      limit:
-                        type: integer
-                        example: 10
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID.
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre.
+                          example: DNI
+                        description:
+                          type: string
+                          description: Descripción.
+                          example: Documento nacional de identidad
+                        active:
+                          type: boolean
+                          description: Estado (switch).
+                          example: true
                   error:
                     type: string
+                    nullable: true
                     example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+                  meta:
+                    type: object
+                    properties:
+                      total_records:
+                        type: integer
+                        example: 5
+                        description: Total de registros que cumplen con la búsqueda.
 
   /api/diocese/document-types/{id}:
     get:
       tags:
-        - Tipos de Documento
-      summary: Ver detalle de un tipo de documento
-      description: |
-        Devuelve: nombre, descripción y código.
-        **Permisos:** DIOCESE_VIEW_DOCTYPE
+        - Tipos de Documentos
+      summary: Obtener el detalle de un tipo de documento por ID.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
+          description: ID del tipo de documento.
       responses:
         '200':
-          description: Información obtenida
+          description: Éxito. Detalle del tipo de documento.
           content:
             application/json:
               schema:
@@ -260,31 +224,47 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Tipo de documento obtenido exitosamente"
+                    example: string
                   data:
-                    $ref: '#/components/schemas/DocumentType'
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 1
+                        description: ID.
+                      name:
+                        type: string
+                        example: DNI
+                        description: Nombre.
+                      description:
+                        type: string
+                        example: Documento principal de identificación.
+                        description: Descripción.
+                      code:
+                        type: string
+                        example: DNI
+                        description: Nombre corto.
                   error:
                     type: string
+                    nullable: true
                     example: ""
                   traceback:
                     type: string
+                    nullable: true
                     example: ""
-        '404':
-          description: No encontrado
 
     put:
       tags:
-        - Tipos de Documento
-      summary: Editar tipo de documento
-      description: |
-        Devuelve: nombre, descripción y código.
-        **Permisos:** DIOCESE_EDIT_DOCTYPE
+        - Tipos de Documentos
+      summary: Actualizar COMPLETAMENTE un tipo de documento por ID.
       parameters:
         - name: id
           in: path
           required: true
           schema:
             type: integer
+            example: 1
+          description: ID del tipo de documento a actualizar.
       requestBody:
         required: true
         content:
@@ -294,19 +274,23 @@ paths:
               properties:
                 name:
                   type: string
-                  example: "Documento Nacional de Identidad"
-                code:
-                  type: string
-                  example: "DNI"
+                  example: Documento Nacional de Identidad (Nuevo)
+                  description: Nombre del tipo de documento.
                 description:
                   type: string
-                  example: "Documento oficial"
-                active:
-                  type: boolean
-                  example: true
+                  example: Documento principal de identificación actualizado.
+                  description: Descripción del tipo de documento.
+                code:
+                  type: string
+                  example: DNI_NUEVO
+                  description: Nombre corto o código.
+              required:
+                - name
+                - code
+                - description
       responses:
         '200':
-          description: Actualizado exitosamente
+          description: Éxito. Tipo de documento actualizado.
           content:
             application/json:
               schema:
@@ -314,13 +298,154 @@ paths:
                 properties:
                   message:
                     type: string
-                    example: "Tipo de documento actualizado exitosamente"
+                    example: string
                   data:
                     type: object
-                    properties:
-                      id:
-                        type: integer
-                        example: 1
+                    example: {}
                   error:
                     type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+    patch:
+      tags:
+        - Tipos de Documentos
+      summary: Actualizar PARCIALMENTE los datos (Nombre, Descripción, Código) de un tipo de documento.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del tipo de documento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: DNI modificado
+                  description: Nombre del tipo de documento.
+                description:
+                  type: string
+                  example: Documento principal modificado.
+                  description: Descripción del tipo de documento.
+                code:
+                  type: string
+                  example: DNI_MOD
+                  description: Nombre corto o código.
+      responses:
+        '200':
+          description: Éxito. Datos actualizados.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+  /api/diocese/document-types/{id}/status:
+    patch:
+      tags:
+        - Tipos de Documentos
+      summary: Actualizar el estado (switch/active) de un tipo de documento.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del tipo de documento.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                active:
+                  type: boolean
+                  example: false
+                  description: Estado de activación (switch).
+              required:
+                - active
+      responses:
+        '200':
+          description: Éxito. Estado actualizado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+
+  /api/diocese/document-types/{id}/delete:
+    delete:
+      tags:
+        - Tipos de Documentos
+      summary: Eliminar físicamente un tipo de documento por ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID del tipo de documento a eliminar.
+      responses:
+        '200':
+          description: Éxito. Tipo de documento eliminado.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
                     example: ""
