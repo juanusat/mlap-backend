@@ -140,11 +140,6 @@ paths:
                   nullable: true
                   description: Nueva contraseña (campo 'Nueva contraseña').
                   example: NuevaContra456
-                confirm_new_password:
-                  type: string
-                  nullable: true
-                  description: Confirmación de nueva contraseña (campo 'Confirmar contraseña').
-                  example: NuevaContra456
               required:
                 - username
                 - email

@@ -1,280 +1,22 @@
 openapi: 3.0.3
 info:
-  title: API Parroquia - Buscar Parroquia o Capilla (Map Search)
-  description: |
-    API para la gestión de la cuenta de la parroquia autenticada y sus capillas.
-
-    Autenticación requerida: JWT (Cookie)
-
-    Estructura de respuesta estándar:
-
-    {
-      "message": "Mensaje descriptivo de la operación",
-      "data": {}, 
-      "error": "",
-      "traceback": "",
-      "meta": {
-        "total_records": 0
-      }
-    }
+  title: API de Búsqueda y Navegación de Parroquias y Capillas
   version: 1.0.0
 
-servers:
-  - url: http://localhost:8000/api
-    description: Servidor de desarrollo
-
 tags:
-  - name: Search Parroquia/Capilla
-    description: Endpoints para la búsqueda y selección en el mapa
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: JWT
-
-  schemas:
-    MapSearchItem:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        type:
-          type: string
-          description: "parish | chapel"
-        address:
-          type: string
-        email:
-          type: string
-          format: email
-          nullable: true
-        coordinates:
-          type: string
-          example: "-6.78177,-79.84091"
-        phone:
-          type: string
-          nullable: true
-        active:
-          type: boolean
-          example: true
-
-    MapSearchListResponse:
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/MapSearchItem'
-        meta:
-          type: object
-          properties:
-            total_records:
-              type: integer
-              example: 0
-
-    ParishProfile:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        type:
-          type: string
-          example: "parish"
-        address:
-          type: string
-        phone:
-          type: string
-          nullable: true
-        parish_priest:
-          type: string
-          nullable: true
-        description:
-          type: string
-          nullable: true
-        acts:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-              name:
-                type: string
-              schedule:
-                type: string
-              active:
-                type: boolean
-
-    ChapelProfile:
-      type: object
-      properties:
-        id:
-          type: integer
-        name:
-          type: string
-        type:
-          type: string
-          example: "chapel"
-        address:
-          type: string
-        phone:
-          type: string
-          nullable: true
-        caretaker:
-          type: string
-          nullable: true
-        description:
-          type: string
-          nullable: true
-        parent_parish:
-          type: object
-          properties:
-            id:
-              type: integer
-            name:
-              type: string
-        acts:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-              name:
-                type: string
-              schedule:
-                type: string
-              active:
-                type: boolean
-
-    BaseResponse:
-      type: object
-      properties:
-        message:
-          type: string
-        data:
-          oneOf:
-            - type: object
-            - type: array
-        error:
-          type: string
-        traceback:
-          type: string
-    ChurchProfile:
-      type: object
-      description: Perfil unificado para parroquia o capilla
-      properties:
-        id:
-          type: integer
-          example: 1
-        nombre:
-          type: string
-          example: "Santa María Catedral"
-        tipo:
-          type: string
-          description: "parroquia | capilla"
-          example: "parroquia"
-        latitud:
-          type: number
-          format: float
-          example: -6.771611
-        longitud:
-          type: number
-          format: float
-          example: -79.837778
-        coordinates:
-          type: string
-          example: "-6.771611,-79.837778"
-        direccion:
-          type: string
-          example: "Plaza de Armas, Chiclayo"
-        email:
-          type: string
-          format: email
-          nullable: true
-        telefono:
-          type: string
-          example: "(074) 123-456"
-          nullable: true
-        active:
-          type: boolean
-          example: true
-        parroco:
-          type: string
-          example: "Padre José García"
-          nullable: true
-        descripcion:
-          type: string
-          example: "Catedral principal de la Diócesis de Chiclayo"
-          nullable: true
-        eventos:
-          type: array
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-              nombre:
-                type: string
-        chapels:
-          type: array
-          description: "Lista de capillas si el registro es una parroquia"
-          items:
-            type: object
-            properties:
-              id:
-                type: integer
-              nombre:
-                type: string
-              tipo:
-                type: string
-                example: "capilla"
-
-    Variant:
-      type: object
-      properties:
-        variant_id:
-          type: integer
-        name:
-          type: string
-        description:
-          type: string
-          nullable: true
-        current_price:
-          type: number
-          format: float
-        max_capacity:
-          type: integer
-
-    EventWithVariants:
-      type: object
-      properties:
-        event_id:
-          type: integer
-        event_name:
-          type: string
-        variants:
-          type: array
-          items:
-            $ref: '#/components/schemas/Variant'
-
-security:
-  - cookieAuth: []
+  - name: Búsqueda Pública (Church)
+    description: Endpoints para la búsqueda, listado y detalle de Parroquias y Capillas.
 
 paths:
-  /api/parish/search:
+  # ====================================================================
+  # 1. BÚSQUEDA INICIAL Y LISTADO PARA MAPA/COMBO BOX (PAGINADO)
+  # ====================================================================
+  /api/public/church/search:
     post:
       tags:
-        - Search Parroquia/Capilla
-      summary: Buscar parroquia o capilla por nombre
-      description: |
-        Busca por nombre tanto en parroquias como en capillas. Usado por la barra de búsqueda
-        en la pantalla principal (mapa). Requiere `page` y `limit`.
+        - Búsqueda Pública (Church)
+      summary: Buscar Parroquias y Capillas por nombre, o listar todas.
+      description: "Usado por la barra de búsqueda y el mapa. Devuelve todas las ubicaciones coincidentes. No requiere JWT."
       requestBody:
         required: true
         content:
@@ -285,9 +27,10 @@ paths:
                 - page
                 - limit
               properties:
-                name_query:
+                query:
                   type: string
-                  description: "Texto para buscar por nombre de parroquia o capilla"
+                  description: "Texto para buscar por nombre de parroquia o capilla. Si está vacío, lista todo."
+                  example: string
                 page:
                   type: integer
                   example: 1
@@ -296,26 +39,61 @@ paths:
                   example: 10
       responses:
         "200":
-          description: Resultados de búsqueda de parroquias/capillas
+          description: Resultados de búsqueda para el mapa y la lista lateral (Combo Box).
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          description: ID de la ubicación.
+                          example: 5
+                        name:
+                          type: string
+                          description: Nombre.
+                          example: string
+                        address:
+                          type: string
+                          description: Dirección.
+                          example: string
+                        type:
+                          type: string
+                          enum: [PARROQUIA, CAPILLA]
+                          description: "Tipo de ubicación."
+                          example: PARROQUIA
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+                  meta:
+                    type: object
                     properties:
-                      data:
-                        $ref: '#/components/schemas/MapSearchListResponse'
-        "400":
-          description: Parámetros inválidos
+                      total_records:
+                        type: integer
+                        example: 35
 
-  /api/church/list:
+  # ====================================================================
+  # 2. SELECCIÓN DE PARROQUIA DEL COMBO BOX (Listado de Tarjetas)
+  # ====================================================================
+  /api/public/church/select-parish:
     post:
       tags:
-        - Search Parroquia/Capilla
-      summary: Obtener listado (combo) de parroquias y capillas (paged)
-      description: |
-        Devuelve un listado de parroquias y capillas (paginado). Entrada obligatoria: `page` y `limit`.
+        - Búsqueda Pública (Church)
+      summary: Obtener el detalle de la Parroquia seleccionada y su lista de Capillas (Para tarjetas).
+      description: "Usado al seleccionar un ítem del combo box. Devuelve la Parroquia y sus Capillas anidadas con la información mínima para las tarjetas de resultados. No requiere JWT."
       requestBody:
         required: true
         content:
@@ -323,201 +101,286 @@ paths:
             schema:
               type: object
               required:
-                - page
-                - limit
+                - parish_id
               properties:
-                page:
+                parish_id:
                   type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
+                  description: ID de la Parroquia seleccionada.
+                  example: 15
+
       responses:
         "200":
-          description: Lista paginada de parroquias y capillas
+          description: Parroquia seleccionada y Capillas anidadas.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
                     properties:
-                      data:
+                      selected_parish:
                         type: object
+                        description: Tarjeta principal de la Parroquia.
                         properties:
-                          items:
-                            type: array
-                            items:
-                              $ref: '#/components/schemas/ChurchProfile'
-                          meta:
-                            type: object
-                            properties:
-                              total_records:
-                                type: integer
-                                example: 0
+                          id:
+                            type: integer
+                          name:
+                            type: string
+                            example: string
+                          address:
+                            type: string
+                            example: string
+                          type:
+                            type: string
+                            example: PARROQUIA
+                      chapels:
+                        type: array
+                        description: Lista de tarjetas de las capillas anexas.
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                            name:
+                              type: string
+                              example: string
+                            address:
+                              type: string
+                              example: string
+                            type:
+                              type: string
+                              example: CAPILLA
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
 
-  /api/church/{id}:
-    parameters:
-      - name: id
-        in: path
-        required: true
-        schema:
-          type: integer
-    get:
-      tags:
-        - Search Parroquia/Capilla
-      summary: Obtener detalle de parroquia o capilla seleccionada
-      description: |
-        Devuelve información detallada de la parroquia o capilla seleccionada (unificado).
-        El campo `tipo` diferenciará si es `parroquia` o `capilla`.
-      responses:
-        "200":
-          description: Detalle obtenido
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        $ref: '#/components/schemas/ChurchProfile'
-        "404":
-          description: No encontrado
-
-  # Eliminadas rutas específicas de capilla y profile-url para usar el endpoint unificado /api/church/{id}
-
-  /api/acts/chapel/search:
-    post:
-      tags:
-        - Search Parroquia/Capilla
-      summary: Listar actos por capilla
-      description: |
-        Devuelve actos asociados a una capilla dada (uso principal para poblar la lista de eventos).
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - chapel_id
-                - page
-              properties:
-                chapel_id:
-                  type: integer
-                page:
-                  type: integer
-                  example: 1
-      responses:
-        "200":
-          description: Lista de actos por capilla (id y nombre)
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          items:
-                            type: array
-                            items:
-                              type: object
-                              properties:
-                                id:
-                                  type: integer
-                                nombre:
-                                  type: string
-
-  /api/church-search/{chapel_id}/variants: # RUTA MODIFICADA A /api/church-search/
+  # ====================================================================
+  # 3. DETALLE DE MODAL (Modal que aparece al hacer clic en la tarjeta)
+  #    RUTA AJUSTADA A /api/public/church/{chapel_id}/info
+  # ====================================================================
+  /api/public/church/{chapel_id}/info:
     parameters:
       - name: chapel_id
         in: path
         required: true
         schema:
           type: integer
-      - name: page
-        in: query
-        required: false
-        schema:
-          type: integer
-          example: 1
-      - name: limit
-        in: query
-        required: false
-        schema:
-          type: integer
-          example: 10
+        description: ID de la Capilla seleccionada (o ID de la Capilla principal si se seleccionó una Parroquia).
     get:
       tags:
-        - Search Parroquia/Capilla
-      summary: Perfil y eventos de la capilla/parroquia seleccionada
-      description: |
-        Devuelve el perfil (nombre, dirección, correo, teléfono, coordenadas, estado) de la capilla o parroquia
-        identificada por `chapel_id` y la lista de eventos asociados. Cada evento incluye nombre, tipo
-        (privado|comunitario) y descripción.
+        - Búsqueda Pública (Church)
+      summary: Obtener el detalle del Modal de Información (Perfil y Contacto).
+      description: "Devuelve todos los datos visibles en el modal (Teléfono, Encargado/Párroco, Descripción). La respuesta se genera desde la Capilla (tabla chapel). No requiere JWT."
       responses:
         "200":
-          description: Perfil (sólo campos solicitados) y eventos (sólo nombre,tipo,descripcion)
+          description: Perfil detallado obtenido.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
                     properties:
-                      data:
-                        type: object
-                        properties:
-                          perfil:
-                            type: object
-                            properties:
-                              nombre:
-                                type: string
-                              direccion:
-                                type: string
-                              email:
-                                type: string
-                                format: email
-                                nullable: true
-                              telefono:
-                                type: string
-                                nullable: true
-                              coordinates:
-                                type: string
-                                example: "-6.771611,-79.837778"
-                          events:
-                            type: object
-                            properties:
-                              items:
-                                type: array
-                                items:
-                                  type: object
-                                  properties:
-                                    id:
-                                      type: integer
-                                    nombre:
-                                      type: string
-                                    tipo:
-                                      type: string
-                                      description: "privado | comunitario"
-                                    descripcion:
-                                      type: string
-                                      nullable: true
-        "404":
-          description: Capilla/Parroquia no encontrada
+                      name:
+                        type: string
+                        example: string
+                      type:
+                        type: string
+                        enum: [Parroquia, Capilla]
+                        example: Parroquia
+                      address:
+                        type: string
+                        example: string
+                      phone:
+                        type: string
+                        example: string
+                      description:
+                        type: string
+                        example: string
+                      parroco:
+                        type: string
+                        nullable: true
+                        description: 'Nombre del Párroco (Solo si type es "Parroquia", mapeado desde la Capilla Principal).'
+                        example: string
+                      encargado:
+                        type: string
+                        nullable: true
+                        description: 'Nombre del Encargado (Solo si type es "Capilla", mapeado desde la Capilla.phone o campo similar).'
+                        example: string
+                      parroquia_padre_name:
+                        type: string
+                        nullable: true
+                        description: 'Nombre de la Parroquia Padre (Solo si type es "Capilla").'
+                        example: string
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
 
-# Notas:
-# - La UI principal (mapa) usará `/api/parish/search` para autocompletar y `/api/church/list` para listas paginadas.
-# - Al seleccionar un elemento, la UI llamará a `/api/church/{id}` para obtener el detalle unificado (parroquia o capilla).
-# - Para poblar la lista de actos se usa `/api/acts/chapel/search` con `chapel_id`, `page` y `limit`.
-#
-# Notas de mapeo a BD (basado en db_setup/schema_public.sql):
-# - Las parroquias están en la tabla `parish`.
-# - Las capillas están en `chapel` y referencian `parish` mediante `parish_id`.
-# - La relación entre capilla y evento se guarda en `chapel_event` (vincula `chapel_id` con `event_id`).
-# - `event` contiene el catálogo de eventos (Matrimonio, Bautismo, etc.).
-# - Mantener consistencia con `BaseResponse` utilizado en otros archivos del proyecto.
+  # ====================================================================
+  # 4. ACTOS LITÚRGICOS (Lista Fija - GET sin META)
+  #    RUTA AJUSTADA A /api/public/church/{chapel_id}/acts
+  # ====================================================================
+  /api/public/church/{chapel_id}/acts:
+    get:
+      tags:
+        - Búsqueda Pública (Church)
+      summary: Listar los Actos Litúrgicos disponibles para la ubicación (Lista completa).
+      description: "Devuelve una lista COMPLETA y no paginada de los tipos de actos litúrgicos disponibles (solo Nombre). No requiere JWT."
+      parameters:
+        - name: chapel_id
+          in: path
+          required: true
+          schema:
+            type: integer
+          description: ID de la Capilla seleccionada.
+      responses:
+        "200":
+          description: Lista de actos disponibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                        name:
+                          type: string
+                          example: string
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+  # ====================================================================
+  # 5. PERFIL PÚBLICO DETALLADO (Botón 'Ver Perfil')
+  #    Función: Pantalla completa con info extendida, fotos y variantes de eventos.
+  # ====================================================================
+  /api/public/church/{chapel_id}/profile:
+    parameters:
+      - name: chapel_id
+        in: path
+        required: true
+        schema:
+          type: integer
+        description: ID de la Capilla seleccionada.
+    get:
+      tags:
+        - Búsqueda Pública (Church)
+      summary: Obtener el perfil público detallado y las variantes de eventos disponibles.
+      description: "Usado por el botón 'Ver perfil'. Devuelve información de contacto, fotos, estado y la lista completa de eventos/variantes disponibles para reserva. No requiere JWT."
+      responses:
+        "200":
+          description: Perfil detallado y eventos disponibles.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    properties:
+                      # --- Encabezado y Fotos ---
+                      parish_name:
+                        type: string
+                        description: Nombre de la Parroquia Padre.
+                        example: string
+                      chapel_name:
+                        type: string
+                        description: Nombre de la Capilla.
+                        example: string
+                      cover_photo:
+                        type: string
+                        description: URL/Path de la imagen de fondo (Portada).
+                        example: string
+                      profile_photo:
+                        type: string
+                        description: URL/Path de la imagen de perfil (Pequeña).
+                        example: string
+                      # --- Información de Contacto (Lado Izquierdo) ---
+                      address:
+                        type: string
+                        description: Dirección.
+                        example: string
+                      email:
+                        type: string
+                        description: Correo.
+                        example: string
+                      phone:
+                        type: string
+                        description: Teléfono.
+                        example: string
+                      coordinates:
+                        type: string
+                        description: Coordenadas.
+                        example: string
+                      active:
+                        type: boolean
+                        description: Estado (Activa/Inactiva).
+                        example: true
+                      # --- Eventos Disponibles (Lado Derecho) ---
+                      events:
+                        type: array
+                        description: Lista de variantes de eventos disponibles para reserva.
+                        items:
+                          type: object
+                          properties:
+                            event_variant_id:
+                              type: integer
+                              description: ID de la variante específica.
+                            event_name:
+                              type: string
+                              description: Nombre del Evento (ej. Matrimonio).
+                              example: string
+                            variant_name:
+                              type: string
+                              description: Nombre de la variante (ej. Matrimonio Privado).
+                              example: string
+                            variant_type:
+                              type: string
+                              enum: [Privado, Comunitario]
+                              description: Tipo de evento.
+                              example: Privado
+                            variant_description:
+                              type: string
+                              description: Descripción de la variante.
+                              example: string
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""

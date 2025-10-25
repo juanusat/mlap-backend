@@ -1,192 +1,93 @@
 openapi: 3.0.3
 info:
-  title: API Parroquia - Gestión de Cuenta y Capillas (Final)
-  description: |
-    API para la gestión de la cuenta de la parroquia autenticada y sus capillas.
-
-    **Autenticación requerida:** JWT (Cookie)
-
-    **Estructura de respuesta estándar:**
-    ```json
-    {
-      "message": "Mensaje descriptivo de la operación",
-      "data": {}, 
-      "error": "",
-      "traceback": ""
-    }
-    ```
+  title: API de Gestión de Parroquia (Cuenta y Capillas)
   version: 1.0.0
-
-servers:
-  - url: http://localhost:8000/api
-    description: Servidor de desarrollo
-
 tags:
-  - name: Gestionar Cuenta Parroquia
-    description: Operaciones sobre la cuenta de la parroquia autenticada
-  - name: Gestionar Capillas
-    description: Operaciones para administrar las capillas asociadas a la parroquia
-
-components:
-  securitySchemes:
-    cookieAuth:
-      type: apiKey
-      in: cookie
-      name: JWT
-
-  schemas:
-    BaseResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          description: "Mensaje descriptivo de la operación"
-        data:
-          oneOf:
-            - type: object
-            - type: array
-            - type: string
-            - type: integer
-          description: "La información principal devuelta por el servicio"
-        error:
-          type: string
-          description: "Mensaje de error, o vacío si todo está OK"
-        traceback:
-          type: string
-          description: "Detalles del error del backend (solo en modo debug)"
-
-    ParishAccountDetail:
-      type: object
-      properties:
-        id:
-          type: integer
-          example: 1
-        name:
-          type: string
-          example: "Parroquia Nuestra Señora de la Consolación"
-        address:
-          type: string
-          example: "Algarrobos 222, Chiclayo 14008"
-        coordinates:
-          type: string
-          example: "-6.781771909288489, -79.8409113620124"
-        phone:
-          type: string
-          example: "999888777"
-        primary_color:
-          type: string
-          example: "#DC2626"
-        secondary_color:
-          type: string
-          example: "#2563EB"
-        profile_photo:
-          type: string
-          example: "iglesia.jpg"
-          nullable: true
-        cover_photo:
-          type: string
-          example: "iglesia_portada.jpg"
-          nullable: true
-        username:
-          type: string
-          example: "conso"
-        email:
-          type: string
-          example: "consolacion@parroquia.com"
-        active:
-          type: boolean
-          example: true
-
-    ChapelDetail:
-      type: object
-      description: Esquema completo de una capilla.
-      properties:
-        id:
-          type: integer
-          example: 2
-        name:
-          type: string
-          example: "Capilla San Martín de Porres"
-        address:
-          type: string
-          example: "Av. Las Flores 125"
-        phone:
-          type: string
-          example: "987654321"
-          nullable: true
-        profile_photo:
-          type: string
-          example: "capilla_sanmartin_perfil.jpg"
-          nullable: true
-        cover_photo:
-          type: string
-          example: "capilla_sanmartin_portada.jpg"
-          nullable: true
-        active:
-          type: boolean
-          example: true
-          description: Estado de activación de la capilla.
-
-    ChapelList:
-      type: object
-      description: Esquema simplificado para listados de capillas.
-      properties:
-        id:
-          type: integer
-          example: 2
-        name:
-          type: string
-          example: "Capilla San Martín de Porres"
-        address:
-          type: string
-          example: "Av. Las Flores 125"
-        active:
-          type: boolean
-          example: true
-          description: Estado de activación de la capilla.
-
-security:
-  - cookieAuth: []
+  - name: Cuenta de Parroquia
+    description: Endpoints para gestionar el perfil y credenciales de la parroquia autenticada.
+  - name: Gestión de Capillas
+    description: Endpoints para el CRUD y listado administrativo de Capillas de la parroquia.
 
 paths:
-  # ==============================================================================
-  # 1. GESTIONAR CUENTA PARROQUIA
-  # ==============================================================================
+  # ====================================================================
+  # I. CUENTA DE PARROQUIA (Perfil y Credenciales del Administrador)
+  #    *Los campos coordinates y email solo existían en Capillas, no se afectan aquí.*
+  # ====================================================================
   /api/parish/account:
     get:
       tags:
-        - Gestionar Cuenta Parroquia
-      summary: 1.1 Obtener información completa de la cuenta
-      description: |
-        Obtiene toda la información de la parroquia autenticada (información y datos de acceso).
-
-        **Permisos:** PARISH_VIEW_ACCOUNT
+        - Cuenta de Parroquia
+      summary: Obtener toda la información de la cuenta de la parroquia (Info y Credenciales).
+      description: "Permiso requerido: R_PARROQUIA_INFO (35) y Leer Perfil Propio (Implícito). Requiere JWT."
       responses:
-        "200":
-          description: Información obtenida exitosamente
+        '200':
+          description: Éxito. Todos los datos de la cuenta obtenidos.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/BaseResponse"
-                  - type: object
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
                     properties:
-                      data:
-                        $ref: "#/components/schemas/ParishAccountDetail"
-        "401":
-          description: No autenticado
-        "403":
-          description: Sin permisos
+                      name:
+                        type: string
+                        description: Nombres de Parroquia.
+                        example: Parroquia Nuestra Señora de la Consolación
+                      address:
+                        type: string
+                        description: Dirección.
+                        example: Algarrobos 222, Chiclayo
+                      coordinates:
+                        type: string
+                        description: Coordenadas.
+                        example: -6.781771909,-79.84091136
+                      phone:
+                        type: string
+                        description: Celular.
+                        example: 999888777
+                      primary_color:
+                        type: string
+                        description: Color primario.
+                        example: '#DC2626'
+                      secondary_color:
+                        type: string
+                        description: Color secundario.
+                        example: '#2563EB'
+                      profile_photo:
+                        type: string
+                        description: Foto perfil.
+                        example: iglesia.jpg
+                      cover_photo:
+                        type: string
+                        description: Foto portada.
+                        example: iglesia_portada.jpg
+                      username:
+                        type: string
+                        description: Usuario del administrador.
+                        example: parroquia_conso_admin
+                      email:
+                        type: string
+                        description: Correo del administrador.
+                        example: correo@parroquia.com
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
 
   /api/parish/account/info:
     patch:
       tags:
-        - Gestionar Cuenta Parroquia
-      summary: 1.2 Actualizar Información General de la Parroquia
-      description: |
-        Actualiza **parcialmente** la información pública de la parroquia (nombre, dirección, coordenadas, teléfono, colores y nombres de archivos de foto).
-        
-        **Permisos:** PARISH_EDIT_ACCOUNT
+        - Cuenta de Parroquia
+      summary: Actualizar PARCIALMENTE la información de la parroquia (Datos visuales y de contacto).
+      description: "Permiso requerido: U_PARROQUIA_INFO (36). Requiere JWT."
       requestBody:
         required: true
         content:
@@ -196,62 +97,57 @@ paths:
               properties:
                 name:
                   type: string
-                  example: "Parroquia Nuestra Señora de la Consolación"
+                  example: Parroquia Nuestra Señora de la Consolación MOD
                 address:
                   type: string
-                  example: "Algarrobos 222, Chiclayo 14008"
+                  example: Nueva Dirección 123
                 coordinates:
                   type: string
-                  example: "-6.781771909288489, -79.8409113620124"
+                  example: -6.78,-79.84
                 phone:
                   type: string
-                  example: "999888777"
-                primary_color: # <-- CAMPO REAGREGADO
+                  example: 999111222
+                primary_color:
                   type: string
-                  example: "#DC2626"
-                secondary_color: # <-- CAMPO REAGREGADO
+                  example: '#000000'
+                secondary_color:
                   type: string
-                  example: "#2563EB"
+                  example: '#FFFFFF'
                 profile_photo:
                   type: string
-                  example: "iglesia_perfil_nuevo.jpg"
-                  description: Nombre del archivo de foto de perfil asignado por el servidor.
+                  example: nueva_iglesia_perfil.jpg
                 cover_photo:
                   type: string
-                  example: "iglesia_portada_nuevo.jpg"
-                  description: Nombre del archivo de foto de portada asignado por el servidor.
+                  example: nueva_iglesia_portada.jpg
       responses:
         '200':
-          description: Información general actualizada exitosamente
+          description: Éxito. Información de la parroquia actualizada.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 1
-        '400':
-          description: Datos inválidos
-        '401':
-          description: No autenticado
-        '403':
-          description: Sin permisos
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
 
   /api/parish/account/credentials:
     patch:
       tags:
-        - Gestionar Cuenta Parroquia
-      summary: 1.3 Actualizar Correo y/o Contraseña
-      description: |
-        Actualiza **parcialmente** los datos de acceso a la cuenta (email y/o contraseña).
-        
-        **Permisos:** PARISH_EDIT_ACCOUNT
+        - Cuenta de Parroquia
+      summary: Actualizar PARCIALMENTE el Usuario, Correo y/o Contraseña del administrador.
+      description: "Permiso requerido: U_PARROQUIA_INFO (36) y Actualizar Perfil Propio (Implícito). Requiere JWT. Se requiere current_password para cualquier cambio."
       requestBody:
         required: true
         content:
@@ -259,91 +155,106 @@ paths:
             schema:
               type: object
               properties:
+                username:
+                  type: string
+                  example: nuevo_conso_admin
+                  description: Nuevo nombre de usuario.
                 email:
                   type: string
-                  format: email
-                  example: "nuevo_correo@parroquia.com"
-                  description: Nuevo correo electrónico (opcional)
-                password:
+                  example: nuevo.correo@parroquia.com
+                  description: Nuevo correo.
+                new_password:
                   type: string
-                  format: password
-                  example: "ContraseniaSegura456"
-                  description: Nueva contraseña (opcional)
+                  nullable: true
+                  description: Nueva contraseña.
+                  example: NuevaContra456
+                confirm_new_password:
+                  type: string
+                  nullable: true
+                  description: Confirmación de nueva contraseña.
+                  example: NuevaContra456
+                current_password:
+                  type: string
+                  description: Contraseña actual (requerida para seguridad).
+                  example: ContraseñaActual123
+              required:
+                - username
+                - email
+                - current_password
       responses:
         '200':
-          description: Credenciales de cuenta actualizadas exitosamente
+          description: Éxito. Credenciales actualizadas.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: '#/components/schemas/BaseResponse'
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 1
-        '400':
-          description: Datos inválidos
-        '401':
-          description: No autenticado
-        '403':
-          description: Sin permisos
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
 
-  # ==============================================================================
-  # 2. GESTIÓN DE CAPILLAS (Chapels)
-  # ==============================================================================
+  # ====================================================================
+  # II. GESTIÓN DE CAPILLAS (CRUD de capillas de la Parroquia)
+  #     *Se eliminan los campos 'coordinates' y 'email' de todas las APIs.*
+  # ====================================================================
   /api/parish/chapels/create:
     post:
       tags:
-        - Gestionar Capillas
-      summary: 2.1 Añadir una Nueva Capilla
-      description: "Registra una nueva capilla asociada a la parroquia autenticada. Requiere: PARISH_CREATE_CHAPEL"
+        - Gestión de Capillas
+      summary: Crear una nueva Capilla para la Parroquia autenticada.
+      description: "Permiso requerido: C_PARROQUIA_CAPILLA (39). Requiere JWT."
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-                - name
-                - address
               properties:
                 name:
                   type: string
-                  example: "Capilla San Martín"
+                  description: Nombre de la Capilla.
+                  example: Capilla San Judas Tadeo
                 address:
                   type: string
-                  example: "Av. Las Flores 123"
+                  description: Dirección.
+                  example: Av. Principal 101
                 phone:
                   type: string
-                  example: "987654321"
-                  description: "Teléfono de la capilla (opcional)"
+                  description: Teléfono/Celular.
+                  example: 999111222
+                profile_photo:
+                  type: string
+                  description: Foto de perfil.
+                  example: capilla_perfil.jpg
+                cover_photo:
+                  type: string
+                  description: Foto de portada.
+                  example: capilla_portada.jpg
+              required:
+                - name
+                - address
+                - phone
       responses:
-        "200":
-          description: Capilla creada exitosamente
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/BaseResponse"
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 2
+        '200':
+          description: Capilla creada exitosamente.
 
   /api/parish/chapels/search:
     post:
       tags:
-        - Gestionar Capillas
-      summary: 2.2 Listar y Buscar Capillas
-      description: "Obtiene la lista paginada y filtrada de capillas de la parroquia autenticada. La data devuelta es simplificada. Requiere: PARISH_VIEW_CHAPEL"
+        - Gestión de Capillas
+      summary: Listar Capillas de la Parroquia con paginación y búsqueda.
+      description: "Muestra ID, Nombre y Dirección. Permiso requerido: R_PARROQUIA_CAPILLA (41). Requiere JWT."
       requestBody:
         required: true
         content:
@@ -354,9 +265,10 @@ paths:
                 - page
                 - limit
               properties:
-                name_query:
+                query:
                   type: string
-                  description: "Filtro por nombre de capilla"
+                  description: Texto para buscar por nombre o dirección.
+                  example: "Capilla 1"
                 page:
                   type: integer
                   example: 1
@@ -364,25 +276,50 @@ paths:
                   type: integer
                   example: 10
       responses:
-        "200":
-          description: Lista de capillas obtenida exitosamente
+        '200':
+          description: Lista paginada de capillas.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/BaseResponse"
-                  - type: object
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        name:
+                          type: string
+                          description: Nombre de la Capilla.
+                          example: Capilla San Judas Tadeo
+                        address:
+                          type: string
+                          description: Dirección de la Capilla.
+                          example: Dirección de la Capilla 1
+                        active:
+                          type: boolean
+                          description: Estado de la Capilla.
+                          example: true
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+                  meta:
+                    type: object
                     properties:
-                      data:
-                        type: object
-                        properties:
-                          items:
-                            type: array
-                            items:
-                              $ref: "#/components/schemas/ChapelList" # <--- ESQUEMA SIMPLIFICADO
-                          total_count:
-                            type: integer
-                            example: 5
+                      total_records:
+                        type: integer
+                        example: 50
 
   /api/parish/chapels/{id}:
     parameters:
@@ -391,29 +328,70 @@ paths:
         required: true
         schema:
           type: integer
-          description: "ID de la Capilla"
+          example: 1
+        description: ID de la Capilla.
     get:
       tags:
-        - Gestionar Capillas
-      summary: 2.3 Ver detalle de Capilla
-      description: "Obtiene la información detallada de una capilla específica. Requiere: PARISH_VIEW_CHAPEL"
+        - Gestión de Capillas
+      summary: Obtener detalle de una Capilla (Ver).
+      description: "Devuelve toda la información. Permiso requerido: R_PARROQUIA_CAPILLA (41). Requiere JWT."
       responses:
-        "200":
-          description: Detalles de la capilla obtenidos
+        '200':
+          description: Detalle de la Capilla obtenido.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/BaseResponse"
-                  - type: object
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
                     properties:
-                      data:
-                        $ref: "#/components/schemas/ChapelDetail" # <--- ESQUEMA DETALLADO
+                      id:
+                        type: integer
+                        example: 1
+                      name:
+                        type: string
+                        description: Nombre de la Capilla.
+                        example: Capilla San Judas Tadeo
+                      address:
+                        type: string
+                        description: Dirección de la Capilla.
+                        example: Dirección de la Capilla 1
+                      phone:
+                        type: string
+                        description: Teléfono/Celular.
+                        example: 999111222
+                      profile_photo:
+                        type: string
+                        description: Foto de perfil.
+                        example: capilla_perfil.jpg
+                      cover_photo:
+                        type: string
+                        description: Foto de portada.
+                        example: capilla_portada.jpg
+                      active:
+                        type: boolean
+                        description: Estado.
+                        example: true
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
+        '404':
+          description: Capilla no encontrada.
+    
     patch:
       tags:
-        - Gestionar Capillas
-      summary: 2.4 Editar/Actualizar Capilla
-      description: "Actualiza la información completa de la capilla (nombre, dirección, teléfono, fotos, estado). Requiere: PARISH_EDIT_CHAPEL"
+        - Gestión de Capillas
+      summary: Actualizar PARCIALMENTE los datos de una Capilla (Editar).
+      description: "Permiso requerido: U_PARROQUIA_CAPILLA (42). Requiere JWT."
       requestBody:
         required: true
         content:
@@ -423,58 +401,95 @@ paths:
               properties:
                 name:
                   type: string
-                  example: "Capilla San Martín de Porres"
+                  example: Capilla San Judas Tadeo MOD
                 address:
                   type: string
-                  example: "Av. Las Flores 125 (Editado)"
+                  example: Nueva Dirección MOD
                 phone:
                   type: string
-                  example: "987654321"
+                  example: 999111222
                 profile_photo:
                   type: string
-                  example: "capilla_sanmartin_perfil.jpg"
-                  description: Nombre del archivo de foto de perfil asignado por el servidor.
+                  example: nueva_foto_perfil.jpg
                 cover_photo:
                   type: string
-                  example: "capilla_sanmartin_portada.jpg"
-                  description: Nombre del archivo de foto de portada asignado por el servidor.
+                  example: nueva_foto_portada.jpg
+      responses:
+        '200':
+          description: Capilla actualizada exitosamente.
+        '404':
+          description: Capilla no encontrada.
+
+  /api/parish/chapels/{id}/status:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: integer
+          example: 1
+        description: ID de la Capilla.
+    patch:
+      tags:
+        - Gestión de Capillas
+      summary: Cambiar el estado (activar/desactivar) de una Capilla.
+      description: "Utilizado por el switch de Estado. Permiso requerido: U_ESTADO_CAPILLA (40). Requiere JWT."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - active
+              properties:
                 active:
                   type: boolean
-                  example: true
+                  description: Nuevo estado de la Capilla.
+                  example: false
       responses:
-        "200":
-          description: Capilla actualizada exitosamente
-          content:
-            application/json:
-              schema:
-                allOf:
-                  - $ref: "#/components/schemas/BaseResponse"
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 2
+        '200':
+          description: Estado de la Capilla actualizado.
+        '404':
+          description: Capilla no encontrada.
+
+  # ====================================================================
+  # III. ELIMINACIÓN DE CAPILLA (RUTA Y FORMATO SOLICITADO)
+  #      Ruta: /api/diocese/chapels/{id}/delete
+  # ====================================================================
+  /api/diocese/chapels/{id}/delete:
     delete:
       tags:
-        - Gestionar Capillas
-      summary: 2.5 Eliminar Capilla (Desactivación Lógica)
-      description: "Elimina una capilla por su ID. (Se asume una eliminación lógica/cambio de estado). Requiere: PARISH_DELETE_CHAPEL"
+        - Gestión de Capillas
+      summary: Eliminar físicamente una Capilla por ID.
+      description: "Permiso requerido: D_PARROQUIA_CAPILLA (43). Requiere JWT. (Usando la ruta de Diócesis)."
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+            example: 1
+          description: ID de la capilla.
       responses:
-        "200":
-          description: Capilla eliminada/desactivada exitosamente
+        '200':
+          description: Éxito. Capilla eliminada.
           content:
             application/json:
               schema:
-                allOf:
-                  - $ref: "#/components/schemas/BaseResponse"
-                  - type: object
-                    properties:
-                      data:
-                        type: object
-                        properties:
-                          id:
-                            type: integer
-                            example: 2
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: string
+                  data:
+                    type: object
+                    example: {}
+                  error:
+                    type: string
+                    nullable: true
+                    example: ""
+                  traceback:
+                    type: string
+                    nullable: true
+                    example: ""
