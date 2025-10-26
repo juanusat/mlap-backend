@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const path = require('path');
 const apiRouter = require('./routes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 
@@ -11,15 +12,15 @@ const allowedOrigin = `${process.env.FRONTEND_URL}:${process.env.FRONTEND_PORT}`
 app.use(
   cors({
     origin: allowedOrigin,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
     allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
     credentials: true,
   })
 );
 
 app.use(express.json());
-// Parse cookies so auth middleware can read req.cookies.token
 app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 app.use('/api', apiRouter);
 
