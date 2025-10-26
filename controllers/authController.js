@@ -150,12 +150,8 @@ const getSession = async (req, res, next) => {
 
         const fullName = `${userInfo.first_names} ${userInfo.paternal_surname}${userInfo.maternal_surname ? ' ' + userInfo.maternal_surname : ''}`.trim();
         
-        let profilePhoto = userInfo.profile_photo;
-        if (!profilePhoto) {
-            const firstNameInitial = userInfo.first_names.charAt(0).toUpperCase();
-            const lastNameInitial = userInfo.paternal_surname.charAt(0).toUpperCase();
-            profilePhoto = `//placehold.co/80/1b9185/ffffff/?text=${firstNameInitial}${lastNameInitial}&fontsize=30`;
-        }
+        // Si no hay foto, enviar null para que el frontend genere el avatar con iniciales
+        const profilePhoto = userInfo.profile_photo || null;
         
         let parishInfo = null;
         let availableRoles = null;
