@@ -10,6 +10,18 @@ const findChapelsByParishId = async (parishId) => {
   return rows;
 };
 
+const findRolesByParishId = async (parishId) => {
+  const query = `
+    SELECT id, name, description, active
+    FROM public.role
+    WHERE parish_id = $1 AND active = TRUE
+    ORDER BY name ASC;
+  `;
+  const { rows } = await db.query(query, [parishId]);
+  return rows;
+};
+
 module.exports = {
   findChapelsByParishId,
+  findRolesByParishId,
 };

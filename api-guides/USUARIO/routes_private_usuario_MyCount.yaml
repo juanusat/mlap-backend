@@ -70,7 +70,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/json:
+          multipart/form-data:
             schema:
               type: object
               properties:
@@ -89,11 +89,20 @@ paths:
                   example: 12345678
                 profile_photo:
                   type: string
+                  format: binary
+                  description: Archivo binario de la foto de perfil. Enviar como parte del multipart/form-data.
+                profile_photo_name:
+                  type: string
+                  description: Nombre original del archivo (incluye extensión) para que el backend conozca la extensión.
                   example: nueva_foto.png
               required:
                 - first_names
                 - paternal_surname
                 - document
+            encoding:
+              profile_photo:
+                contentType: image/png
+              # Nota: el cliente puede enviar otros tipos de imagen (image/jpeg, image/png).
       responses:
         '200':
           description: Éxito. Información personal actualizada.

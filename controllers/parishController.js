@@ -39,7 +39,23 @@ const getChapelsForCurrentParish = async (req, res, next) => {
     }
 };
 
+const getRolesForParish = async (req, res, next) => {
+    try {
+        const { parishId } = req.params;
+        const roles = await parishModel.findRolesByParishId(parishId);
+        
+        res.status(200).json({
+            message: 'Roles obtenidos exitosamente',
+            data: roles,
+            error: null
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
     getMyParishes,
     getChapelsForCurrentParish,
+    getRolesForParish,
 };
