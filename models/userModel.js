@@ -73,7 +73,10 @@ const findUserAssociations = async (userId) => {
     JOIN public.parish p ON a.parish_id = p.id
     WHERE a.user_id = $1 AND a.active = TRUE AND p.active = TRUE;
   `;
+  console.log('SQL findUserAssociations:', query.trim());
+  console.log('SQL findUserAssociations params:', [userId]);
   const { rows } = await db.query(query, [userId]);
+  console.log('SQL findUserAssociations result:', rows);
   return rows;
 };
 
@@ -96,7 +99,11 @@ const findUserRolesInParish = async (userId, parishId) => {
       FROM public.user_role ur
       JOIN public.role r ON ur.role_id = r.id
       JOIN public.association a ON ur.association_id = a.id
-      WHERE a.user_id = $1 AND a.parish_id = $2 AND r.active = TRUE;
+      WHERE a.user_id = $1 
+        AND a.parish_id = $2 
+        AND a.active = TRUE
+        AND r.active = TRUE
+        AND ur.revocation_date IS NULL;
   `;
     const { rows } = await db.query(query, [userId, parishId]);
     return rows;

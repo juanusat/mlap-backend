@@ -38,17 +38,19 @@ const login = async (email, password) => {
     throw new Error('Invalid credentials');
   }
 
+  console.log('Login - user.id:', user.id);
   const associations = await userModel.findUserAssociations(user.id);
+  console.log('Login - associations:', associations);
   const isDioceseUser = await userModel.isDioceseUser(user.id);
 
   const tokenPayload = { userId: user.id };
   const token = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
 
-  // Mapear associations al formato requerido por el YAML
   const parish_associations = associations.map(assoc => ({
     id: assoc.parish_id,
     name: assoc.parish_name
   }));
+  console.log('Login - parish_associations:', parish_associations);
 
   return {
     token,

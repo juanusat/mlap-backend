@@ -106,10 +106,12 @@ INSERT INTO public.association (id, user_id, parish_id, active) VALUES
 (2, 3, 1, TRUE);
 
 INSERT INTO public.role (id, parish_id, name, description, active) VALUES
-(1, 1, 'Secretario(a)', 'Apoyo administrativo y de gestión en la parroquia.', TRUE);
+(1, 1, 'Secretario(a)', 'Apoyo administrativo y de gestión en la parroquia.', TRUE),
+(2, 1, 'Notario(a)', 'Apoyo administrativo y de gestión en la parroquia.', TRUE);
 
 INSERT INTO public.user_role (id, association_id, role_id) VALUES
-(1, 2, 1); 
+(1, 2, 1),
+(2, 2, 2); 
 
 -------------------------------------------------------------------
 -- Eventos BASE -- 

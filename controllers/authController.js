@@ -40,7 +40,7 @@ const login = async (req, res, next) => {
     
     res.cookie('session_token', result.token, cookieOptions);
 
-    res.status(200).json({
+    const responseData = {
       message: 'Operación exitosa',
       data: {
         user_info: {
@@ -50,7 +50,10 @@ const login = async (req, res, next) => {
         is_diocese_user: result.is_diocese_user,
         parish_associations: result.parish_associations
       }
-    });
+    };
+    console.log('Login response:', JSON.stringify(responseData, null, 2));
+
+    res.status(200).json(responseData);
   } catch (error) {
     next(error);
   }
