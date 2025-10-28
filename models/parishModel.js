@@ -62,7 +62,7 @@ class ParishModel {
       FROM public.parish p
       INNER JOIN public.user u ON p.admin_user_id = u.id
       INNER JOIN public.person pe ON u.person_id = pe.id
-      ORDER BY p.id DESC
+      ORDER BY p.id 
       LIMIT $1 OFFSET $2
     `;
     const countQuery = `SELECT COUNT(*) FROM public.parish`;
@@ -96,7 +96,7 @@ class ParishModel {
       INNER JOIN public.user u ON p.admin_user_id = u.id
       INNER JOIN public.person pe ON u.person_id = pe.id
       WHERE p.name ILIKE $1 OR pe.email ILIKE $1
-      ORDER BY p.id DESC
+      ORDER BY p.id 
       LIMIT $2 OFFSET $3
     `;
     const countQuery = `
