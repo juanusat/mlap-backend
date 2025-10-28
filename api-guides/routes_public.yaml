@@ -134,7 +134,7 @@ paths:
       tags:
         - Auth
       summary: 'Paso 3: Seleccionar Rol'
-      description: Establece el rol activo en la sesión del usuario para la parroquia actual. La sesión queda completamente autenticada para la gestión.
+      description: Establece el rol activo en la sesión del usuario para la parroquia actual. La sesión queda completamente autenticada.
       security:
         - cookieAuth: []
       requestBody:
@@ -143,6 +143,59 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SelectRoleRequest'
+      responses:
+        '200':
+          description: Rol seleccionado. La sesión está completamente autenticada.
+          headers:
+            Set-Cookie:
+              $ref: '#/components/headers/SetCookieHeader'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenContextNotSet'
+
+  /api/auth/session/roles:
+    get:
+      tags:
+        - Auth
+      summary: Obtener roles disponibles en la parroquia del contexto de sesión
+      description: Devuelve la lista de roles que el usuario puede seleccionar en la parroquia actualmente establecida en la sesión.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Lista de roles disponibles.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RolesSuccessResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/ForbiddenContextNotSet'
+
+  /api/auth/session/role:
+    put:
+      tags:
+        - Auth
+      summary: Seleccionar rol activo en la sesión
+      description: Establece el rol activo para la sesión actual en la parroquia seleccionada. Recibe un body con { roleId }.
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [roleId]
+              properties:
+                roleId:
+                  type: integer
       responses:
         '200':
           description: Rol seleccionado. La sesión está completamente autenticada.

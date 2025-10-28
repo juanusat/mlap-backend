@@ -9,6 +9,8 @@ router.post('/select-context', authMiddleware, authController.selectContext);
 router.get('/roles', authMiddleware, authController.getRolesForCurrentParish);
 router.post('/select-role', authMiddleware, authController.selectRole);
 router.get('/session', authMiddleware, authController.getSession);
+router.get('/session/roles', authMiddleware, authController.getRolesForCurrentParish);
+router.put('/session/role', authMiddleware, authController.selectRole);
 router.post('/logout', authMiddleware, authController.logout);
 
 module.exports = router;
