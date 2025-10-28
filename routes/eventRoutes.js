@@ -4,6 +4,7 @@ const eventController = require('../controllers/eventController');
 const authMiddleware = require('../middleware/authMiddleware');
 const dioceseMiddleware = require('../middleware/dioceseMiddleware');
 
+router.get('/events/select', authMiddleware, dioceseMiddleware, eventController.listForSelect);
 router.post('/events/create', authMiddleware, dioceseMiddleware, eventController.create);
 router.post('/events/list', authMiddleware, dioceseMiddleware, eventController.list);
 router.post('/events/search', authMiddleware, dioceseMiddleware, eventController.search);

@@ -11,6 +11,10 @@ class EventService {
     return await EventModel.create({ name, description });
   }
 
+  async listEventsForSelect() {
+    return await EventModel.findAllForSelect();
+  }
+
   async listEvents(page = 1, limit = 10) {
     return await EventModel.findAll(page, limit);
   }

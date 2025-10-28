@@ -15,6 +15,17 @@ class EventModel {
     return result.rows[0];
   }
 
+  static async findAllForSelect() {
+    const query = `
+      SELECT id, name
+      FROM public.event
+      WHERE active = true
+      ORDER BY id
+    `;
+    const result = await db.query(query);
+    return result.rows;
+  }
+
   static async findAll(page = 1, limit = 10) {
     const offset = (page - 1) * limit;
     const query = `
@@ -45,7 +56,7 @@ class EventModel {
       SELECT id, name, description, active, created_at, updated_at
       FROM public.event
       WHERE name ILIKE $1 OR description ILIKE $1
-      ORDER BY id DESC
+      ORDER BY id 
       LIMIT $2 OFFSET $3
     `;
     const countQuery = `
