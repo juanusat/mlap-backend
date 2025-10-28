@@ -8,6 +8,7 @@ const parishRoutes = require('./parishRoutes');
 const parishWorkerRoutes = require('./parishWorkerRoutes');
 const roleRoutes = require('./roleRoutes');
 const documentTypeRoutes = require('./documentTypeRoutes');
+const dioceseParishRoutes = require('./dioceseParishRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/chapels', chapelRoutes);
@@ -16,6 +17,7 @@ router.use('/parish', parishRoutes);
 router.use('/', parishWorkerRoutes);
 router.use('/', roleRoutes);
 router.use('/diocese', documentTypeRoutes);
+router.use('/diocese', dioceseParishRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
