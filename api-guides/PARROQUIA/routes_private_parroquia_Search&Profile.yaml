@@ -328,6 +328,14 @@ paths:
                         type: string
                         description: URL/Path de la imagen de perfil (Pequeña).
                         example: string
+                      primary_color:
+                        type: string
+                        description: Color primario de la Parroquia (formato hexadecimal).
+                        example: "#4A90E2"
+                      secondary_color:
+                        type: string
+                        description: Color secundario de la Parroquia (formato hexadecimal).
+                        example: "#2C5F8D"
                       # --- Información de Contacto (Lado Izquierdo) ---
                       address:
                         type: string

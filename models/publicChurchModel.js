@@ -150,7 +150,9 @@ class PublicChurchModel {
         c.cover_photo,
         c.active,
         c.chapel_base,
-        p.name as parish_name
+        p.name as parish_name,
+        p.primary_color,
+        p.secondary_color
       FROM public.chapel c
       INNER JOIN public.parish p ON c.parish_id = p.id
       WHERE c.id = $1 AND c.active = true
@@ -189,6 +191,8 @@ class PublicChurchModel {
       chapel_name: chapel.chapel_name,
       cover_photo: chapel.cover_photo || '',
       profile_photo: chapel.profile_photo || '',
+      primary_color: chapel.primary_color,
+      secondary_color: chapel.secondary_color,
       address: chapel.address,
       email: chapel.email,
       phone: chapel.phone,
