@@ -23,20 +23,11 @@ paths:
           application/json:
             schema:
               type: object
-              required:
-                - page
-                - limit
               properties:
                 query:
                   type: string
                   description: "Texto para buscar por nombre de parroquia o capilla. Si está vacío, lista todo."
                   example: string
-                page:
-                  type: integer
-                  example: 1
-                limit:
-                  type: integer
-                  example: 10
       responses:
         "200":
           description: Resultados de búsqueda para el mapa y la lista lateral (Combo Box).
@@ -78,22 +69,22 @@ paths:
                     type: string
                     nullable: true
                     example: ""
-                  meta:
-                    type: object
-                    properties:
-                      total_records:
-                        type: integer
-                        example: 35
 
   # ====================================================================
-  # 2. SELECCIÓN DE PARROQUIA DEL COMBO BOX (Listado de Tarjetas)
+  # 2. SELECCIÓN DE UBICACIÓN (PARROQUIA O CAPILLA) DEL COMBO BOX (Listado de Tarjetas)
   # ====================================================================
-  /api/public/church/select-parish:
+  /api/public/church/select-location:
     post:
       tags:
         - Búsqueda Pública (Church)
-      summary: Obtener el detalle de la Parroquia seleccionada y su lista de Capillas (Para tarjetas).
-      description: "Usado al seleccionar un ítem del combo box. Devuelve la Parroquia y sus Capillas anidadas con la información mínima para las tarjetas de resultados. No requiere JWT."
+      summary: Obtener tarjetas de ubicación(es) según tipo seleccionado.
+      description: |
+        Maneja dos casos según el tipo recibido:
+        - **Si type=PARROQUIA**: Busca la capilla base (chapel_base=true) con el parish_id y devuelve su info + todas las capillas asociadas (chapel_base=false) del mismo parish_id.
+        - **Si type=CAPILLA**: Busca la capilla con el chapel_id y devuelve solo su información.
+        
+        Cada tarjeta contiene 4 campos: id, name, address, type.
+        No requiere JWT.
       requestBody:
         required: true
         content:
@@ -101,16 +92,22 @@ paths:
             schema:
               type: object
               required:
-                - parish_id
+                - location_id
+                - type
               properties:
-                parish_id:
+                location_id:
                   type: integer
-                  description: ID de la Parroquia seleccionada.
+                  description: "Si type=PARROQUIA → parish_id. Si type=CAPILLA → chapel_id."
                   example: 15
+                type:
+                  type: string
+                  enum: [PARROQUIA, CAPILLA]
+                  description: "Tipo de ubicación a consultar."
+                  example: PARROQUIA
 
       responses:
         "200":
-          description: Parroquia seleccionada y Capillas anidadas.
+          description: Tarjetas de ubicación(es) según el tipo solicitado.
           content:
             application/json:
               schema:
@@ -122,37 +119,53 @@ paths:
                   data:
                     type: object
                     properties:
-                      selected_parish:
+                      type:
+                        type: string
+                        enum: [PARROQUIA, CAPILLA]
+                        description: "Tipo de consulta realizada."
+                        example: PARROQUIA
+                      selected_location:
                         type: object
-                        description: Tarjeta principal de la Parroquia.
+                        description: "Tarjeta principal. Si type=PARROQUIA es la chapel_base, si type=CAPILLA es la capilla consultada."
                         properties:
                           id:
                             type: integer
+                            description: "ID de la Chapel."
+                            example: 15
                           name:
                             type: string
-                            example: string
+                            description: "Nombre."
+                            example: "Santa María Catedral"
                           address:
                             type: string
-                            example: string
+                            description: "Dirección."
+                            example: "Plaza de Armas, Chiclayo"
                           type:
                             type: string
+                            enum: [PARROQUIA, CAPILLA]
+                            description: "PARROQUIA si chapel_base=true, CAPILLA si chapel_base=false."
                             example: PARROQUIA
                       chapels:
                         type: array
-                        description: Lista de tarjetas de las capillas anexas.
+                        description: "Lista de capillas asociadas. Solo se llena si type=PARROQUIA (incluye todas las chapel con chapel_base=false del mismo parish_id). Si type=CAPILLA, este array estará vacío."
                         items:
                           type: object
                           properties:
                             id:
                               type: integer
+                              description: "ID de la Chapel."
+                              example: 101
                             name:
                               type: string
-                              example: string
+                              description: "Nombre de la Capilla."
+                              example: "Capilla San Francisco"
                             address:
                               type: string
-                              example: string
+                              description: "Dirección."
+                              example: "Calle San José 145, Chiclayo"
                             type:
                               type: string
+                              description: "Siempre CAPILLA."
                               example: CAPILLA
                   error:
                     type: string
@@ -165,24 +178,36 @@ paths:
 
   # ====================================================================
   # 3. DETALLE DE MODAL (Modal que aparece al hacer clic en la tarjeta)
-  #    RUTA AJUSTADA A /api/public/church/{chapel_id}/info
+  #    RUTA AJUSTADA A /api/public/church/info
   # ====================================================================
-  /api/public/church/{chapel_id}/info:
-    parameters:
-      - name: chapel_id
-        in: path
-        required: true
-        schema:
-          type: integer
-        description: ID de la Capilla seleccionada (o ID de la Capilla principal si se seleccionó una Parroquia).
-    get:
+  /api/public/church/info:
+    post:
       tags:
         - Búsqueda Pública (Church)
-      summary: Obtener el detalle del Modal de Información (Perfil y Contacto).
-      description: "Devuelve todos los datos visibles en el modal (Teléfono, Encargado/Párroco, Descripción). La respuesta se genera desde la Capilla (tabla chapel). No requiere JWT."
+      summary: Obtener el detalle completo de una ubicación (Parroquia o Capilla).
+      description: "Devuelve todos los datos visibles en el modal (Teléfono, Encargado/Párroco, Descripción). Si es Parroquia, devuelve también la lista de IDs de capillas asociadas. No requiere JWT."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - location_id
+                - type
+              properties:
+                location_id:
+                  type: integer
+                  description: "ID de la ubicación. Si type=PARROQUIA, es el parish_id. Si type=CAPILLA, es el chapel_id."
+                  example: 15
+                type:
+                  type: string
+                  enum: [PARROQUIA, CAPILLA]
+                  description: Tipo de ubicación.
+                  example: PARROQUIA
       responses:
         "200":
-          description: Perfil detallado obtenido.
+          description: Información detallada de la ubicación obtenida.
           content:
             application/json:
               schema:
@@ -196,35 +221,57 @@ paths:
                     properties:
                       name:
                         type: string
+                        description: "Nombre de la Chapel."
                         example: string
                       type:
                         type: string
-                        enum: [Parroquia, Capilla]
-                        example: Parroquia
+                        enum: [PARROQUIA, CAPILLA]
+                        description: "PARROQUIA si chapel_base=true, CAPILLA si chapel_base=false."
+                        example: PARROQUIA
                       address:
                         type: string
+                        description: "Dirección de la Chapel."
                         example: string
                       phone:
                         type: string
+                        description: "Teléfono de la Chapel."
                         example: string
-                      description:
+                      email:
                         type: string
+                        description: "Email de la Chapel."
                         example: string
-                      parroco:
-                        type: string
-                        nullable: true
-                        description: 'Nombre del Párroco (Solo si type es "Parroquia", mapeado desde la Capilla Principal).'
-                        example: string
-                      encargado:
+                      parish_name:
                         type: string
                         nullable: true
-                        description: 'Nombre del Encargado (Solo si type es "Capilla", mapeado desde la Capilla.phone o campo similar).'
+                        description: 'Nombre de la Parroquia Padre (Solo si type es "CAPILLA").'
                         example: string
-                      parroquia_padre_name:
-                        type: string
+                      chapels:
+                        type: array
                         nullable: true
-                        description: 'Nombre de la Parroquia Padre (Solo si type es "Capilla").'
-                        example: string
+                        description: 'Lista de capillas asociadas con su información completa (Solo si type es "PARROQUIA"). Incluye todas las chapel con mismo parish_id y chapel_base=false.'
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: integer
+                              description: "ID de la Capilla."
+                              example: 4
+                            name:
+                              type: string
+                              description: "Nombre de la Capilla."
+                              example: "Capilla San Francisco"
+                            address:
+                              type: string
+                              description: "Dirección de la Capilla."
+                              example: "Calle San José 145, Chiclayo"
+                            phone:
+                              type: string
+                              description: "Teléfono de la Capilla."
+                              example: "(074) 123-457"
+                            email:
+                              type: string
+                              description: "Email de la Capilla."
+                              example: "capilla.sanfrancisco@gmail.com"
                   error:
                     type: string
                     nullable: true
