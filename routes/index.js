@@ -11,6 +11,7 @@ const documentTypeRoutes = require('./documentTypeRoutes');
 const dioceseParishRoutes = require('./dioceseParishRoutes');
 const eventRoutes = require('./eventRoutes');
 const baseRequirementRoutes = require('./baseRequirementRoutes');
+const publicChurchRoutes = require('./publicChurchRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/chapels', chapelRoutes);
@@ -22,6 +23,7 @@ router.use('/diocese', documentTypeRoutes);
 router.use('/diocese', dioceseParishRoutes);
 router.use('/diocese', eventRoutes);
 router.use('/diocese', baseRequirementRoutes);
+router.use('/public/church', publicChurchRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
