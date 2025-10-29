@@ -94,11 +94,11 @@ INSERT INTO public.parish (id, name, admin_user_id, active) VALUES
 
 INSERT INTO public.chapel (id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, chapel_base, active) VALUES 
 (1, 1, 'La Consolación', '-6.770125, -79.845820', 'Av. Garcilaso de la Vega 1500, Lima', 
-'conso.la@parroquia.org', '+51 1 4567890', 'chapel_profile.jpg', 'chapel_cover_0001.jpg', TRUE, TRUE),
+'conso.la@parroquia.org', '+51 1 4567890', 'chapel_cover_0001.jpg', 'chapel_cover_0001.jpg', TRUE, TRUE),
 (2, 1, 'Nuestra Señora del Carmen', '-6.775430, -79.852140', 'Calle Junín 320, Barranco', 
-'carmen.lc@parroquia.org', '+51 1 9876543', 'chapel_profile.jpg', 'chapel_cover_0002.jpg', FALSE, TRUE),
+'carmen.lc@parroquia.org', '+51 1 9876543', 'chapel_cover_0002.jpg', 'chapel_cover_0002.jpg', FALSE, TRUE),
 (3, 1, 'Santa Rosa de Lima', '-6.780650, -79.858760', 'Jr. Callao 800, Cercado de Lima', 
-'santarosa.lc@parroquia.org', '+51 1 3210987', 'chapel_profile.jpg', 'chapel_cover_0003.jpg', FALSE, TRUE);
+'santarosa.lc@parroquia.org', '+51 1 3210987', 'chapel_cover_0003.jpg', 'chapel_cover_0003.jpg', FALSE, TRUE);
 
 
 INSERT INTO public.association (id, user_id, parish_id, active) VALUES
@@ -259,27 +259,27 @@ INSERT INTO public.parish (id, name, admin_user_id, active) VALUES
 INSERT INTO public.chapel (id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, chapel_base, active) VALUES 
 -- Parroquia 2: San José Obrero
 (4, 2, 'San José Obrero', '-6.765320, -79.848560', 'Av. Alfonso Ugarte 850, Lima', 
-'sjobrero@parroquia.org', '+51 1 4568901', 'chapel_profile.jpg', 'chapel_cover_0004.jpg', TRUE, TRUE),
+'sjobrero@parroquia.org', '+51 1 4568901', 'chapel_cover_0004.jpg', 'chapel_cover_0004.jpg', TRUE, TRUE),
 (5, 2, 'Capilla del Buen Pastor', '-6.770890, -79.841720', 'Calle Los Pinos 245, Lima', 
-'buenpastor.sjo@parroquia.org', '+51 1 4568902', 'chapel_profile.jpg', 'chapel_cover_0005.jpg', FALSE, TRUE),
+'buenpastor.sjo@parroquia.org', '+51 1 4568902', 'chapel_cover_0005.jpg', 'chapel_cover_0005.jpg', FALSE, TRUE),
 
 -- Parroquia 3: Nuestra Señora de Fátima
 (6, 3, 'Nuestra Señora de Fátima', '-6.776540, -79.855130', 'Jr. Huancavelica 620, Lima', 
-'nsfatima@parroquia.org', '+51 1 4568903', 'chapel_profile.jpg', 'chapel_cover_0006.jpg', TRUE, TRUE),
+'nsfatima@parroquia.org', '+51 1 4568903', 'chapel_cover_0006.jpg', 'chapel_cover_0006.jpg', TRUE, TRUE),
 (7, 3, 'Capilla de la Inmaculada', '-6.782450, -79.862340', 'Av. Tacna 1250, Lima', 
-'inmaculada.nsf@parroquia.org', '+51 1 4568904', 'chapel_profile.jpg', 'chapel_cover_0007.jpg', FALSE, TRUE),
+'inmaculada.nsf@parroquia.org', '+51 1 4568904', 'chapel_cover_0007.jpg', 'chapel_cover_0007.jpg', FALSE, TRUE),
 
 -- Parroquia 4: San Pedro Apóstol
 (8, 4, 'San Pedro Apóstol', '-6.788120, -79.838650', 'Av. Brasil 1850, Lima', 
-'spedro@parroquia.org', '+51 1 4568905', 'chapel_profile.jpg', 'chapel_cover_0008.jpg', TRUE, TRUE),
+'spedro@parroquia.org', '+51 1 4568905', 'chapel_cover_0008.jpg', 'chapel_cover_0008.jpg', TRUE, TRUE),
 (9, 4, 'Capilla San Pablo', '-6.793780, -79.845280', 'Calle San Martín 520, Lima', 
-'sanpablo.sp@parroquia.org', '+51 1 4568906', 'chapel_profile.jpg', 'chapel_cover_0009.jpg', FALSE, TRUE),
+'sanpablo.sp@parroquia.org', '+51 1 4568906', 'chapel_cover_0009.jpg', 'chapel_cover_0009.jpg', FALSE, TRUE),
 
 -- Parroquia 5: Sagrado Corazón de Jesús
 (10, 5, 'Sagrado Corazón de Jesús', '-6.760150, -79.868450', 'Jr. Lampa 345, Lima', 
-'scorazon@parroquia.org', '+51 1 4568907', 'chapel_profile.jpg', 'chapel_cover_0010.jpg', TRUE, TRUE),
+'scorazon@parroquia.org', '+51 1 4568907', 'chapel_cover_0010.jpg', 'chapel_cover_0010.jpg', TRUE, TRUE),
 (11, 5, 'Capilla Santa Teresa', '-6.766820, -79.870120', 'Av. Abancay 980, Lima', 
-'santateresa.sc@parroquia.org', '+51 1 4568908', 'chapel_profile.jpg', 'chapel_cover_0011.jpg', FALSE, TRUE);
+'santateresa.sc@parroquia.org', '+51 1 4568908', 'chapel_cover_0011.jpg', 'chapel_cover_0011.jpg', FALSE, TRUE);
 
 -- Activar eventos en las capillas (chapel_event)
 -- Las capillas activarán varios eventos base definidos por la diócesis
