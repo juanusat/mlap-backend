@@ -152,7 +152,8 @@ class ReservationModel {
         pe.maternal_surname
       FROM public.reservation r
       INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
-      INNER JOIN public.chapel c ON ev.chapel_id = c.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
       INNER JOIN public.parish p ON c.parish_id = p.id
       INNER JOIN public.user u ON r.user_id = u.id
       INNER JOIN public.person pe ON u.person_id = pe.id
