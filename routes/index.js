@@ -14,6 +14,7 @@ const baseRequirementRoutes = require('./baseRequirementRoutes');
 const publicChurchRoutes = require('./publicChurchRoutes');
 const reservationRoutes = require('./reservationRoutes');
 const eventVariantRoutes = require('./eventVariantRoutes');
+const chapelEventRequirementRoutes = require('./chapelEventRequirementRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/chapels', chapelRoutes);
@@ -28,6 +29,7 @@ router.use('/diocese', baseRequirementRoutes);
 router.use('/public/church', publicChurchRoutes);
 router.use('/client/reservation', reservationRoutes);
 router.use('/acts', eventVariantRoutes);
+router.use('/acts', chapelEventRequirementRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });

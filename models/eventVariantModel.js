@@ -13,8 +13,11 @@ class EventVariantModel {
         ev.max_capacity,
         ev.duration_minutes,
         ev.active,
-        json_build_object('id', c.id, 'name', c.name) as chapel,
-        json_build_object('id', e.id, 'name', e.name) as event_base,
+        ev.chapel_event_id,
+        c.id as chapel_id,
+        c.name as chapel_name,
+        e.id as event_id,
+        e.name as event_name,
         CASE 
           WHEN ev.max_capacity = 1 THEN 'PRIVATE'
           ELSE 'COMUNITY'
@@ -60,8 +63,11 @@ class EventVariantModel {
         ev.max_capacity,
         ev.duration_minutes,
         ev.active,
-        json_build_object('id', c.id, 'name', c.name) as chapel,
-        json_build_object('id', e.id, 'name', e.name) as event_base,
+        ev.chapel_event_id,
+        c.id as chapel_id,
+        c.name as chapel_name,
+        e.id as event_id,
+        e.name as event_name,
         CASE 
           WHEN ev.max_capacity = 1 THEN 'PRIVATE'
           ELSE 'COMUNITY'
