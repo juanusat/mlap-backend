@@ -89,8 +89,8 @@ INSERT INTO public.user (id, person_id, username, password_hash, is_diocese, act
 (3, 3, 'pamelas@gmail.com', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE),
 (4, 4, 'antonioe@gmail.com', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE);
 
-INSERT INTO public.parish (id, name, admin_user_id, active) VALUES
-(1, 'La Consolación', 2, TRUE); 
+INSERT INTO public.parish (id, name, primary_color, secondary_color, admin_user_id, active) VALUES
+(1, 'La Consolación', '#4A90E2', '#2C5F8D', 2, TRUE); 
 
 INSERT INTO public.chapel (id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, chapel_base, active) VALUES 
 (1, 1, 'La Consolación', '-6.770125, -79.845820', 'Av. Garcilaso de la Vega 1500, Lima', 
@@ -249,11 +249,11 @@ INSERT INTO public.user (id, person_id, username, password_hash, is_diocese, act
 (10, 10, 'smorales@parr5.net', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE);
 
 -- Nuevas parroquias
-INSERT INTO public.parish (id, name, admin_user_id, active) VALUES
-(2, 'San José Obrero', 7, TRUE),
-(3, 'Nuestra Señora de Fátima', 8, TRUE),
-(4, 'San Pedro Apóstol', 9, TRUE),
-(5, 'Sagrado Corazón de Jesús', 10, TRUE);
+INSERT INTO public.parish (id, name, primary_color, secondary_color, admin_user_id, active) VALUES
+(2, 'San José Obrero', '#8B4513', '#D2691E', 7, TRUE),
+(3, 'Nuestra Señora de Fátima', '#9B59B6', '#6C3483', 8, TRUE),
+(4, 'San Pedro Apóstol', '#E74C3C', '#922B21', 9, TRUE),
+(5, 'Sagrado Corazón de Jesús', '#C0392B', '#7B241C', 10, TRUE);
 
 -- Capillas de las nuevas parroquias (cada parroquia tiene capilla base + 1 adicional)
 INSERT INTO public.chapel (id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, chapel_base, active) VALUES 
