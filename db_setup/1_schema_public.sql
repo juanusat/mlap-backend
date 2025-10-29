@@ -100,7 +100,7 @@ CREATE TABLE IF NOT EXISTS public.chapel (
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+    chapel_base BOOLEAN DEFAULT FALSE NOT NULL,
     CONSTRAINT chapel_pkey PRIMARY KEY (id),
     CONSTRAINT fk_chapel_parish FOREIGN KEY (parish_id) REFERENCES parish(id) ON DELETE CASCADE,
     CONSTRAINT uk_chapel_parish_name UNIQUE(parish_id, name)
