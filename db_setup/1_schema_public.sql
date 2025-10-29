@@ -253,6 +253,7 @@ CREATE TABLE IF NOT EXISTS public.event_variant (
     description VARCHAR(255),
     current_price DECIMAL(10,2) DEFAULT 0.00 NOT NULL,
     max_capacity INTEGER DEFAULT 1 NOT NULL CHECK (max_capacity > 0),
+    duration_minutes INTEGER DEFAULT 60 NOT NULL CHECK (duration_minutes > 0),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -262,12 +263,16 @@ CREATE TABLE IF NOT EXISTS public.event_variant (
     CONSTRAINT uk_event_variant_name UNIQUE(chapel_event_id, name)
 );
 
+COMMENT ON COLUMN public.event_variant.duration_minutes IS 'Duración estimada del evento en minutos';
+
 -- Tabla Reservation: Vincula personas con variantes de eventos
 CREATE TABLE IF NOT EXISTS public.reservation (
     id INTEGER NOT NULL,
+    user_id INTEGER NOT NULL,
     event_variant_id INTEGER NOT NULL,
     person_id INTEGER NOT NULL,
-    event_date TIMESTAMP NOT NULL,
+    event_date DATE NOT NULL,
+    event_time TIME NOT NULL,
     reschedule_date TIMESTAMP,
     registration_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
     status VARCHAR(20) DEFAULT 'RESERVED' NOT NULL CHECK (status IN ('RESERVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED', 'FULFILLED', 'CANCELLED')),
@@ -276,10 +281,14 @@ CREATE TABLE IF NOT EXISTS public.reservation (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     
     CONSTRAINT reservation_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_reservation_user FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
     CONSTRAINT fk_reservation_event_variant FOREIGN KEY (event_variant_id) REFERENCES event_variant(id) ON DELETE CASCADE,
-    CONSTRAINT fk_reservation_person FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE,
-    CONSTRAINT chk_future_event_date CHECK (event_date > registration_date)
+    CONSTRAINT fk_reservation_person FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE
 );
+
+COMMENT ON COLUMN public.reservation.user_id IS 'Usuario que realizó la reserva';
+COMMENT ON COLUMN public.reservation.event_date IS 'Fecha del evento (solo fecha, sin hora)';
+COMMENT ON COLUMN public.reservation.event_time IS 'Hora del evento';
 
 -- ====================================================================
 -- TABLAS DE REQUISITOS

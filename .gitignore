@@ -3,3 +3,5 @@ priv-*/
 .vscode/settings.json
 /node_modules
 bd_esp.sql
+.aider*
+uploads/
