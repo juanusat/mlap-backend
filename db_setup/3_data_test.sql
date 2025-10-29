@@ -467,3 +467,127 @@ INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement
 (39, 4, 62, NULL, 'Comprobante de Ofrenda de Agradecimiento', 'Recibo de ofrenda sugerida por la bendición.', TRUE),
 (40, 4, 63, NULL, 'Documento de Residencia', 'Acreditación de residencia dentro de la jurisdicción parroquial.', TRUE);
 
+
+-------------------------------------------------------------------
+-- HORARIOS GENERALES DE LAS CAPILLAS
+-------------------------------------------------------------------
+
+-- Horarios para Capilla 1: La Consolación (capilla base)
+-- Lunes a Viernes: 8:00 - 12:00 y 16:00 - 20:00
+-- Sábados: 8:00 - 13:00 y 16:00 - 21:00
+-- Domingos: 7:00 - 13:00 y 17:00 - 20:00
+
+INSERT INTO public.general_schedule (id, chapel_id, day_of_week, start_time, end_time) VALUES
+-- Lunes (1)
+(1, 1, 1, '08:00:00', '12:00:00'),
+(2, 1, 1, '16:00:00', '20:00:00'),
+-- Martes (2)
+(3, 1, 2, '08:00:00', '12:00:00'),
+(4, 1, 2, '16:00:00', '20:00:00'),
+-- Miércoles (3)
+(5, 1, 3, '08:00:00', '12:00:00'),
+(6, 1, 3, '16:00:00', '20:00:00'),
+-- Jueves (4)
+(7, 1, 4, '08:00:00', '12:00:00'),
+(8, 1, 4, '16:00:00', '20:00:00'),
+-- Viernes (5)
+(9, 1, 5, '08:00:00', '12:00:00'),
+(10, 1, 5, '16:00:00', '20:00:00'),
+-- Sábado (6)
+(11, 1, 6, '08:00:00', '13:00:00'),
+(12, 1, 6, '16:00:00', '21:00:00'),
+-- Domingo (0)
+(13, 1, 0, '07:00:00', '13:00:00'),
+(14, 1, 0, '17:00:00', '20:00:00');
+
+-- Horarios para Capilla 2: Nuestra Señora del Carmen
+-- Lunes a Viernes: 9:00 - 12:00 y 15:00 - 19:00
+-- Sábados: 9:00 - 14:00 y 16:00 - 20:00
+-- Domingos: 8:00 - 13:00 y 16:00 - 19:00
+
+INSERT INTO public.general_schedule (id, chapel_id, day_of_week, start_time, end_time) VALUES
+-- Lunes (1)
+(15, 2, 1, '09:00:00', '12:00:00'),
+(16, 2, 1, '15:00:00', '19:00:00'),
+-- Martes (2)
+(17, 2, 2, '09:00:00', '12:00:00'),
+(18, 2, 2, '15:00:00', '19:00:00'),
+-- Miércoles (3)
+(19, 2, 3, '09:00:00', '12:00:00'),
+(20, 2, 3, '15:00:00', '19:00:00'),
+-- Jueves (4)
+(21, 2, 4, '09:00:00', '12:00:00'),
+(22, 2, 4, '15:00:00', '19:00:00'),
+-- Viernes (5)
+(23, 2, 5, '09:00:00', '12:00:00'),
+(24, 2, 5, '15:00:00', '19:00:00'),
+-- Sábado (6)
+(25, 2, 6, '09:00:00', '14:00:00'),
+(26, 2, 6, '16:00:00', '20:00:00'),
+-- Domingo (0)
+(27, 2, 0, '08:00:00', '13:00:00'),
+(28, 2, 0, '16:00:00', '19:00:00');
+
+-- Horarios para Capilla 3: Santa Rosa de Lima
+-- Lunes a Viernes: 7:00 - 11:00 y 16:00 - 19:00
+-- Sábados: 7:00 - 12:00 y 15:00 - 20:00
+-- Domingos: 6:00 - 12:00 y 17:00 - 20:00
+
+INSERT INTO public.general_schedule (id, chapel_id, day_of_week, start_time, end_time) VALUES
+-- Lunes (1)
+(29, 3, 1, '07:00:00', '11:00:00'),
+(30, 3, 1, '16:00:00', '19:00:00'),
+-- Martes (2)
+(31, 3, 2, '07:00:00', '11:00:00'),
+(32, 3, 2, '16:00:00', '19:00:00'),
+-- Miércoles (3)
+(33, 3, 3, '07:00:00', '11:00:00'),
+(34, 3, 3, '16:00:00', '19:00:00'),
+-- Jueves (4)
+(35, 3, 4, '07:00:00', '11:00:00'),
+(36, 3, 4, '16:00:00', '19:00:00'),
+-- Viernes (5)
+(37, 3, 5, '07:00:00', '11:00:00'),
+(38, 3, 5, '16:00:00', '19:00:00'),
+-- Sábado (6)
+(39, 3, 6, '07:00:00', '12:00:00'),
+(40, 3, 6, '15:00:00', '20:00:00'),
+-- Domingo (0)
+(41, 3, 0, '06:00:00', '12:00:00'),
+(42, 3, 0, '17:00:00', '20:00:00');
+
+
+-------------------------------------------------------------------
+-- EXCEPCIONES DE HORARIO (SPECIFIC_SCHEDULE)
+-------------------------------------------------------------------
+
+-- Excepciones para fechas especiales y días festivos
+
+-- Capilla 1: La Consolación - Cerrada el 25 de diciembre de 2025 (Navidad)
+INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
+(1, 1, '2025-12-25', NULL, NULL, 'CLOSED', 'Día de Navidad - Capilla cerrada');
+
+-- Capilla 1: La Consolación - Horario especial el 1 de enero de 2026 (Año Nuevo)
+INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
+(2, 1, '2026-01-01', '10:00:00', '14:00:00', 'OPEN', 'Año Nuevo - Horario especial de mañana solamente');
+
+-- Capilla 1: La Consolación - Horario extendido el 24 de diciembre de 2025 (Nochebuena)
+INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
+(3, 1, '2025-12-24', '08:00:00', '23:00:00', 'OPEN', 'Nochebuena - Horario extendido para misa de medianoche');
+
+-- Capilla 2: Nuestra Señora del Carmen - Cerrada el 1 de noviembre de 2025 (Día de Todos los Santos)
+INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
+(4, 2, '2025-11-01', NULL, NULL, 'CLOSED', 'Día de Todos los Santos - Evento especial en otra sede');
+
+-- Capilla 2: Nuestra Señora del Carmen - Horario especial el 16 de julio de 2026 (Día del Carmen)
+INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
+(5, 2, '2026-07-16', '06:00:00', '22:00:00', 'OPEN', 'Día de Nuestra Señora del Carmen - Celebración patronal con horario extendido');
+
+-- Capilla 3: Santa Rosa de Lima - Horario especial el 30 de agosto de 2026 (Santa Rosa de Lima)
+INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
+(6, 3, '2026-08-30', '05:00:00', '21:00:00', 'OPEN', 'Santa Rosa de Lima - Celebración patronal con horario extendido');
+
+-- Capilla 3: Santa Rosa de Lima - Cerrada el 15 de noviembre de 2025 (Mantenimiento)
+INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
+(7, 3, '2025-11-15', NULL, NULL, 'CLOSED', 'Mantenimiento de instalaciones eléctricas');
+
