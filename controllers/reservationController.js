@@ -1,10 +1,6 @@
 const reservationService = require('../services/reservationService');
 
 class ReservationController {
-  /**
-   * Obtener información para el formulario de reserva
-   * GET /api/client/reservation/form/:event_id
-   */
   async getFormInfo(req, res, next) {
     try {
       const { event_id } = req.params;
@@ -21,10 +17,6 @@ class ReservationController {
     }
   }
 
-  /**
-   * Verificar disponibilidad de horario
-   * POST /api/client/reservation/check-availability
-   */
   async checkAvailability(req, res, next) {
     try {
       const { event_variant_id, event_date, event_time } = req.body;
@@ -50,13 +42,8 @@ class ReservationController {
     }
   }
 
-  /**
-   * Crear nueva reserva
-   * POST /api/client/reservation/create
-   */
   async createReservation(req, res, next) {
     try {
-      // El userId viene del token JWT decodificado por el authMiddleware
       const userId = req.user?.userId;
       
       if (!userId) {
@@ -81,10 +68,6 @@ class ReservationController {
     }
   }
 
-  /**
-   * Obtener horarios disponibles en un rango de fechas
-   * POST /api/client/reservation/available-slots
-   */
   async getAvailableSlots(req, res, next) {
     try {
       const { event_variant_id, start_date, end_date } = req.body;
@@ -98,6 +81,104 @@ class ReservationController {
       res.status(200).json({
         message: 'Horarios disponibles obtenidos exitosamente',
         data,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async listPendingReservations(req, res, next) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: {},
+          error: 'No se encontró información del usuario',
+          traceback: ''
+        });
+      }
+
+      const { page = 1, limit = 10 } = req.body;
+
+      const result = await reservationService.getPendingReservations(
+        userId,
+        Number(page),
+        Number(limit)
+      );
+
+      res.status(200).json({
+        message: 'Reservas pendientes obtenidas exitosamente',
+        data: result.data,
+        meta: result.meta,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async searchPendingReservations(req, res, next) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: {},
+          error: 'No se encontró información del usuario',
+          traceback: ''
+        });
+      }
+
+      const { search_event_name, page = 1, limit = 10 } = req.body;
+
+      const result = await reservationService.searchPendingReservations(
+        userId,
+        search_event_name,
+        Number(page),
+        Number(limit)
+      );
+
+      res.status(200).json({
+        message: 'Búsqueda de reservas pendientes completada exitosamente',
+        data: result.data,
+        meta: result.meta,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async cancelReservation(req, res, next) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: {},
+          error: 'No se encontró información del usuario',
+          traceback: ''
+        });
+      }
+
+      const { id } = req.params;
+
+      const result = await reservationService.cancelReservation(userId, Number(id));
+
+      res.status(200).json({
+        message: 'La reserva ha sido cancelada exitosamente',
+        data: {
+          reservation_id: result.id,
+          new_status: result.status
+        },
         error: '',
         traceback: ''
       });

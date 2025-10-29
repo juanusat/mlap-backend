@@ -256,6 +256,148 @@ class ReservationModel {
     const result = await db.query(query, [eventVariantId, startDate, endDate]);
     return result.rows;
   }
+
+  /**
+   * Obtener reservas pendientes del usuario (paginado)
+   * @param {number} userId - ID del usuario
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros por página
+   * @returns {Object} Reservas y metadatos de paginación
+   */
+  static async getPendingReservations(userId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      WHERE r.user_id = $1 
+        AND r.status IN ('RESERVED', 'IN_PROGRESS')
+    `;
+    const countResult = await db.query(countQuery, [userId]);
+    const totalRecords = parseInt(countResult.rows[0].total);
+
+    const query = `
+      SELECT 
+        r.id,
+        ev.name as event_name,
+        r.event_date,
+        COALESCE(r.paid_amount, 0) as paid_amount,
+        r.status,
+        c.name as chapel_name,
+        p.name as parish_name
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public.parish p ON c.parish_id = p.id
+      WHERE r.user_id = $1 
+        AND r.status IN ('RESERVED', 'IN_PROGRESS')
+      ORDER BY r.event_date ASC, r.created_at DESC
+      LIMIT $2 OFFSET $3
+    `;
+    const result = await db.query(query, [userId, limit, offset]);
+
+    return {
+      data: result.rows,
+      meta: {
+        total_records: totalRecords,
+        total_pages: Math.ceil(totalRecords / limit),
+        current_page: page,
+        per_page: limit
+      }
+    };
+  }
+
+  /**
+   * Buscar reservas pendientes del usuario por nombre de evento (paginado)
+   * @param {number} userId - ID del usuario
+   * @param {string} searchTerm - Término de búsqueda
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros por página
+   * @returns {Object} Reservas y metadatos de paginación
+   */
+  static async searchPendingReservations(userId, searchTerm, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+    const searchPattern = `%${searchTerm}%`;
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      WHERE r.user_id = $1 
+        AND r.status IN ('RESERVED', 'IN_PROGRESS')
+        AND LOWER(ev.name) LIKE LOWER($2)
+    `;
+    const countResult = await db.query(countQuery, [userId, searchPattern]);
+    const totalRecords = parseInt(countResult.rows[0].total);
+
+    const query = `
+      SELECT 
+        r.id,
+        ev.name as event_name,
+        r.event_date,
+        COALESCE(r.paid_amount, 0) as paid_amount,
+        r.status,
+        c.name as chapel_name,
+        p.name as parish_name
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public.parish p ON c.parish_id = p.id
+      WHERE r.user_id = $1 
+        AND r.status IN ('RESERVED', 'IN_PROGRESS')
+        AND LOWER(ev.name) LIKE LOWER($2)
+      ORDER BY r.event_date ASC, r.created_at DESC
+      LIMIT $3 OFFSET $4
+    `;
+    const result = await db.query(query, [userId, searchPattern, limit, offset]);
+
+    return {
+      data: result.rows,
+      meta: {
+        total_records: totalRecords,
+        total_pages: Math.ceil(totalRecords / limit),
+        current_page: page,
+        per_page: limit
+      }
+    };
+  }
+
+  /**
+   * Cancelar una reserva
+   * @param {number} reservationId - ID de la reserva
+   * @param {number} userId - ID del usuario (para verificar pertenencia)
+   * @returns {Object} Información de la reserva cancelada
+   */
+  static async cancelReservation(reservationId, userId) {
+    // Verificar que la reserva pertenece al usuario y está en estado cancelable
+    const checkQuery = `
+      SELECT id, status
+      FROM public.reservation
+      WHERE id = $1 AND user_id = $2
+    `;
+    const checkResult = await db.query(checkQuery, [reservationId, userId]);
+    
+    if (!checkResult.rows.length) {
+      throw new Error('Reserva no encontrada o no pertenece al usuario');
+    }
+
+    const reservation = checkResult.rows[0];
+    if (!['RESERVED', 'IN_PROGRESS'].includes(reservation.status)) {
+      throw new Error('La reserva no puede ser cancelada en su estado actual');
+    }
+
+    // Actualizar el estado a CANCELLED
+    const updateQuery = `
+      UPDATE public.reservation
+      SET status = 'CANCELLED', updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING id, status
+    `;
+    const result = await db.query(updateQuery, [reservationId]);
+    return result.rows[0];
+  }
 }
 
 module.exports = ReservationModel;
