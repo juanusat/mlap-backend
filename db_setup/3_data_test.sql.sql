@@ -219,3 +219,251 @@ INSERT INTO public.base_requirement (id, event_id, name, description, active) VA
 (70, 10, 'Acta de Permiso de Exposición', 'Documento que aprueba la exposición solemne del Santísimo.', TRUE),
 (71, 10, 'Lista Formal de Intenciones', 'Documento que contiene las intenciones de oración a presentar durante el rito.', FALSE);
 
+
+-- ====================================================================
+-- DATOS ADICIONALES DE PRUEBA
+-- ====================================================================
+
+-- Nuevas personas (feligreses)
+INSERT INTO public.person (id, first_names, paternal_surname, maternal_surname, email, document, document_type_id) VALUES
+(5, 'María', 'Gonzales', 'Ramos', 'mariag@gmail.com', '70254896', 1),
+(6, 'Carlos', 'Mendoza', 'Lopez', 'carlosm@gmail.com', '72156374', 1);
+
+-- Nuevos usuarios feligreses
+INSERT INTO public.user (id, person_id, username, password_hash, is_diocese, active) VALUES
+(5, 5, 'mariag@gmail.com', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE),
+(6, 6, 'carlosm@gmail.com', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE);
+
+-- Personas administradoras de las nuevas parroquias
+INSERT INTO public.person (id, first_names, paternal_surname, maternal_surname, email, document, document_type_id) VALUES
+(7, 'Pedro', 'Ramirez', 'Castro', 'pramirez@parr2.net', '71429856', 1),
+(8, 'Ana', 'Torres', 'Flores', 'atorres@parr3.net', '72558963', 1),
+(9, 'Roberto', 'Silva', 'Vargas', 'rsilva@parr4.net', '70896542', 1),
+(10, 'Sofia', 'Morales', 'Diaz', 'smorales@parr5.net', '73254789', 1);
+
+-- Usuarios administradores de parroquias
+INSERT INTO public.user (id, person_id, username, password_hash, is_diocese, active) VALUES
+(7, 7, 'pramirez@parr2.net', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE),
+(8, 8, 'atorres@parr3.net', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE),
+(9, 9, 'rsilva@parr4.net', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE),
+(10, 10, 'smorales@parr5.net', '3f3ef786b34d6dd716e1812c8b74a7a0e1f05aa5f3230588f6f5bcd00c6c8392', FALSE, TRUE);
+
+-- Nuevas parroquias
+INSERT INTO public.parish (id, name, admin_user_id, active) VALUES
+(2, 'San José Obrero', 7, TRUE),
+(3, 'Nuestra Señora de Fátima', 8, TRUE),
+(4, 'San Pedro Apóstol', 9, TRUE),
+(5, 'Sagrado Corazón de Jesús', 10, TRUE);
+
+-- Capillas de las nuevas parroquias (cada parroquia tiene capilla base + 1 adicional)
+INSERT INTO public.chapel (id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, chapel_base, active) VALUES 
+-- Parroquia 2: San José Obrero
+(4, 2, 'San José Obrero', '-12.0561, -77.0352', 'Av. Alfonso Ugarte 850, Lima', 
+'sjobrero@parroquia.org', '+51 1 4568901', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE, TRUE),
+(5, 2, 'Capilla del Buen Pastor', '-12.0489, -77.0417', 'Calle Los Pinos 245, Lima', 
+'buenpastor.sjo@parroquia.org', '+51 1 4568902', 'chapel_profile.jpg', 'chapel_cover.jpg', FALSE, TRUE),
+
+-- Parroquia 3: Nuestra Señora de Fátima
+(6, 3, 'Nuestra Señora de Fátima', '-12.0736, -77.0512', 'Jr. Huancavelica 620, Lima', 
+'nsfatima@parroquia.org', '+51 1 4568903', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE, TRUE),
+(7, 3, 'Capilla de la Inmaculada', '-12.0825, -77.0483', 'Av. Tacna 1250, Lima', 
+'inmaculada.nsf@parroquia.org', '+51 1 4568904', 'chapel_profile.jpg', 'chapel_cover.jpg', FALSE, TRUE),
+
+-- Parroquia 4: San Pedro Apóstol
+(8, 4, 'San Pedro Apóstol', '-12.0632, -77.0296', 'Av. Brasil 1850, Lima', 
+'spedro@parroquia.org', '+51 1 4568905', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE, TRUE),
+(9, 4, 'Capilla San Pablo', '-12.0715, -77.0358', 'Calle San Martín 520, Lima', 
+'sanpablo.sp@parroquia.org', '+51 1 4568906', 'chapel_profile.jpg', 'chapel_cover.jpg', FALSE, TRUE),
+
+-- Parroquia 5: Sagrado Corazón de Jesús
+(10, 5, 'Sagrado Corazón de Jesús', '-12.0859, -77.0612', 'Jr. Lampa 345, Lima', 
+'scorazon@parroquia.org', '+51 1 4568907', 'chapel_profile.jpg', 'chapel_cover.jpg', TRUE, TRUE),
+(11, 5, 'Capilla Santa Teresa', '-12.0942, -77.0574', 'Av. Abancay 980, Lima', 
+'santateresa.sc@parroquia.org', '+51 1 4568908', 'chapel_profile.jpg', 'chapel_cover.jpg', FALSE, TRUE);
+
+-- Activar eventos en las capillas (chapel_event)
+-- Las capillas activarán varios eventos base definidos por la diócesis
+INSERT INTO public.chapel_event (id, chapel_id, event_id, active) VALUES
+-- Capilla 4: San José Obrero (capilla base)
+(1, 4, 1, TRUE), -- Bautismo
+(2, 4, 2, TRUE), -- Primera Comunión
+(3, 4, 4, TRUE), -- Matrimonio
+(4, 4, 5, TRUE), -- Misa Dominical
+
+-- Capilla 5: Capilla del Buen Pastor
+(5, 5, 1, TRUE), -- Bautismo
+(6, 5, 5, TRUE), -- Misa Dominical
+
+-- Capilla 6: Nuestra Señora de Fátima (capilla base)
+(7, 6, 1, TRUE), -- Bautismo
+(8, 6, 3, TRUE), -- Confirmación
+(9, 6, 4, TRUE), -- Matrimonio
+(10, 6, 6, TRUE), -- Funeral/Exequias
+
+-- Capilla 7: Capilla de la Inmaculada
+(11, 7, 2, TRUE), -- Primera Comunión
+(12, 7, 5, TRUE), -- Misa Dominical
+
+-- Capilla 8: San Pedro Apóstol (capilla base)
+(13, 8, 1, TRUE), -- Bautismo
+(14, 8, 4, TRUE), -- Matrimonio
+(15, 8, 8, TRUE), -- Bendición de Casa
+
+-- Capilla 9: Capilla San Pablo
+(16, 9, 1, TRUE), -- Bautismo
+(17, 9, 7, TRUE), -- Catequesis
+
+-- Capilla 10: Sagrado Corazón de Jesús (capilla base)
+(18, 10, 1, TRUE), -- Bautismo
+(19, 10, 2, TRUE), -- Primera Comunión
+(20, 10, 4, TRUE), -- Matrimonio
+(21, 10, 10, TRUE), -- Hora Santa/Adoración
+
+-- Capilla 11: Capilla Santa Teresa
+(22, 11, 3, TRUE), -- Confirmación
+(23, 11, 5, TRUE); -- Misa Dominical
+
+-- Variantes de eventos (individual o comunitario)
+-- Permite definir diferentes modalidades de cada evento
+INSERT INTO public.event_variant (id, chapel_event_id, name, description, current_price, max_capacity, active) VALUES
+-- Capilla 4: San José Obrero
+(1, 1, 'Bautismo Individual', 'Ceremonia de bautismo para un solo niño.', 50.00, 1, TRUE),
+(2, 1, 'Bautismo Comunitario', 'Ceremonia de bautismo para varios niños.', 30.00, 10, TRUE),
+(3, 2, 'Primera Comunión Individual', 'Primera comunión en ceremonia privada.', 80.00, 1, TRUE),
+(4, 2, 'Primera Comunión Grupal', 'Primera comunión en ceremonia colectiva.', 50.00, 15, TRUE),
+(5, 3, 'Matrimonio Privado', 'Ceremonia matrimonial privada.', 300.00, 1, TRUE),
+(6, 4, 'Misa Dominical 9:00 AM', 'Eucaristía dominical matutina.', 0.00, 150, TRUE),
+
+-- Capilla 5: Capilla del Buen Pastor
+(7, 5, 'Bautismo Comunitario', 'Ceremonia de bautismo colectiva.', 25.00, 8, TRUE),
+(8, 6, 'Misa Dominical 11:00 AM', 'Eucaristía dominical.', 0.00, 100, TRUE),
+
+-- Capilla 6: Nuestra Señora de Fátima
+(9, 7, 'Bautismo Individual', 'Ceremonia de bautismo personalizada.', 55.00, 1, TRUE),
+(10, 8, 'Confirmación Grupal', 'Sacramento de confirmación en grupo.', 45.00, 20, TRUE),
+(11, 9, 'Matrimonio Estándar', 'Ceremonia matrimonial estándar.', 280.00, 1, TRUE),
+(12, 10, 'Exequias Completas', 'Servicio funeral completo con misa.', 150.00, 1, TRUE),
+
+-- Capilla 7: Capilla de la Inmaculada
+(13, 11, 'Primera Comunión Comunitaria', 'Ceremonia grupal de primera comunión.', 45.00, 12, TRUE),
+(14, 12, 'Misa Dominical 10:00 AM', 'Eucaristía dominical.', 0.00, 80, TRUE),
+
+-- Capilla 8: San Pedro Apóstol
+(15, 13, 'Bautismo Individual', 'Bautismo personalizado.', 60.00, 1, TRUE),
+(16, 14, 'Matrimonio Premium', 'Ceremonia matrimonial con decoración especial.', 350.00, 1, TRUE),
+(17, 15, 'Bendición de Casa Estándar', 'Servicio de bendición doméstica.', 40.00, 1, TRUE),
+
+-- Capilla 9: Capilla San Pablo
+(18, 16, 'Bautismo Comunitario', 'Bautismo en grupo.', 28.00, 6, TRUE),
+(19, 17, 'Catequesis Infantil', 'Proceso formativo para niños.', 30.00, 25, TRUE),
+
+-- Capilla 10: Sagrado Corazón de Jesús
+(20, 18, 'Bautismo Individual', 'Bautismo personalizado.', 52.00, 1, TRUE),
+(21, 19, 'Primera Comunión Individual', 'Primera comunión privada.', 75.00, 1, TRUE),
+(22, 20, 'Matrimonio Clásico', 'Ceremonia matrimonial tradicional.', 290.00, 1, TRUE),
+(23, 21, 'Hora Santa Mensual', 'Adoración eucarística mensual.', 0.00, 50, TRUE),
+
+-- Capilla 11: Capilla Santa Teresa
+(24, 22, 'Confirmación Individual', 'Sacramento de confirmación personalizado.', 60.00, 1, TRUE),
+(25, 23, 'Misa Dominical 8:00 AM', 'Eucaristía dominical temprana.', 0.00, 70, TRUE);
+
+-- Requisitos adicionales definidos por las capillas (chapel_event_requirement)
+-- Estos se suman a los base_requirement definidos por la diócesis
+INSERT INTO public.chapel_event_requirement (id, chapel_event_id, name, description, active) VALUES
+-- Capilla 4: San José Obrero - Bautismo
+(1, 1, 'Foto Digital del Bebé', 'Fotografía reciente del niño en formato digital.', TRUE),
+(2, 1, 'Declaración de Compromiso Parental', 'Documento firmado por ambos padres.', TRUE),
+
+-- Capilla 6: Nuestra Señora de Fátima - Bautismo
+(3, 7, 'Certificado Médico del Niño', 'Constancia de buena salud del bebé.', TRUE),
+(4, 7, 'Carta de Motivación de Padrinos', 'Documento explicando por qué desean ser padrinos.', TRUE),
+
+-- Capilla 6: Nuestra Señora de Fátima - Matrimonio
+(5, 9, 'Plan de Vida Conyugal', 'Documento donde los novios expresan sus proyectos.', TRUE),
+(6, 9, 'Certificado de Compatibilidad', 'Documento de consejería prematrimonial.', TRUE),
+
+-- Capilla 8: San Pedro Apóstol - Matrimonio
+(7, 14, 'Lista de Invitados', 'Detalle de personas asistentes para control de aforo.', TRUE),
+(8, 14, 'Contrato de Decoración', 'Documento firmado con empresa decoradora aprobada.', TRUE),
+
+-- Capilla 10: Sagrado Corazón de Jesús - Primera Comunión
+(9, 19, 'Portafolio de Catequesis', 'Carpeta con trabajos realizados durante la preparación.', TRUE),
+(10, 19, 'Video de Testimonio', 'Grabación breve del niño expresando su fe.', FALSE);
+
+-- Reservas realizadas por los feligreses
+-- María Gonzales hace varias reservas
+INSERT INTO public.reservation (id, event_variant_id, person_id, event_date, registration_date, status, paid_amount) VALUES
+-- María reserva un bautismo individual en San José Obrero
+(1, 1, 5, '2025-11-15 10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00),
+-- María reserva una primera comunión en Sagrado Corazón
+(2, 21, 5, '2025-12-08 11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00),
+
+-- Carlos Mendoza hace sus reservas
+-- Carlos reserva un matrimonio en Nuestra Señora de Fátima
+(3, 11, 6, '2025-12-20 16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00),
+-- Carlos reserva una bendición de casa en San Pedro Apóstol
+(4, 17, 6, '2025-11-05 15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00);
+
+-- Requisitos de la reserva 1: Bautismo Individual de María
+-- Se copian TODOS los base_requirement del evento Bautismo (event_id=1) + los chapel_event_requirement
+INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES
+-- Requisitos base del evento Bautismo
+(1, 1, 1, NULL, 'Registro Civil del Niño', 'Copia fiel del registro civil de nacimiento.', TRUE),
+(2, 1, 2, NULL, 'Cédulas de Padrinos', 'Copia de documento de identidad de los padrinos.', TRUE),
+(3, 1, 3, NULL, 'Certificado de Matrimonio Eclesiástico', 'Para padres casados por la Iglesia.', FALSE),
+(4, 1, 4, NULL, 'Certificado de Charla Prebautismal', 'Comprobante de asistencia de los padres y padrinos.', TRUE),
+(5, 1, 5, NULL, 'Licencia Parroquial', 'Documento de permiso si los padres no residen en la jurisdicción.', FALSE),
+(6, 1, 6, NULL, 'Ficha de Datos de Contacto', 'Formulario con información de contacto de padres y padrinos.', TRUE),
+(7, 1, 7, NULL, 'Copia Libro de Bautismo de Padrinos', 'Copia del acta de bautismo de los padrinos.', TRUE),
+(8, 1, 8, NULL, 'Permiso de Obispado', 'Documento requerido en casos especiales y excepciones.', FALSE),
+(9, 1, 9, NULL, 'Comprobante de Ofrenda', 'Recibo o constancia de pago de la ofrenda establecida.', TRUE),
+(10, 1, 10, NULL, 'Ficha de Solicitud de Bautismo', 'Formulario de solicitud de sacramento diligenciado.', TRUE),
+-- Requisitos adicionales de la capilla
+(11, 1, NULL, 1, 'Foto Digital del Bebé', 'Fotografía reciente del niño en formato digital.', TRUE),
+(12, 1, NULL, 2, 'Declaración de Compromiso Parental', 'Documento firmado por ambos padres.', FALSE);
+
+-- Requisitos de la reserva 2: Primera Comunión de María
+-- Se copian los base_requirement del evento Primera Comunión (event_id=2) + los chapel_event_requirement
+INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES
+-- Requisitos base del evento Primera Comunión
+(13, 2, 11, NULL, 'Certificado de Bautismo', 'Copia del certificado de bautismo.', TRUE),
+(14, 2, 12, NULL, 'Constancia de Catequesis', 'Certificado de haber completado el ciclo de catequesis.', TRUE),
+(15, 2, 13, NULL, 'Ficha de Inscripción', 'Formulario de registro del niño/a.', TRUE),
+(16, 2, 14, NULL, 'Foto Tipo Carnet', 'Una foto reciente del niño/a.', TRUE),
+(17, 2, 15, NULL, 'Acta de Entrevista con el Párroco', 'Documento que confirma la idoneidad y fecha de la entrevista.', FALSE),
+(18, 2, 16, NULL, 'Documento de Compromiso de Padres', 'Documento firmado por los padres.', TRUE),
+(19, 2, 17, NULL, 'Copia de Documento del Representante', 'Copia del DNI/Cédula del acudiente.', TRUE),
+(20, 2, 18, NULL, 'Paz y Salvo Parroquial', 'Certificado de que no hay deudas o pendientes (si viene de otra parroquia).', FALSE),
+(21, 2, 19, NULL, 'Formulario de Datos de Contacto Tutor', 'Teléfono y email de contacto principal.', TRUE),
+(22, 2, 20, NULL, 'Recibo de Inscripción', 'Comprobante de pago de la inscripción.', TRUE),
+-- Requisitos adicionales de la capilla
+(23, 2, NULL, 9, 'Portafolio de Catequesis', 'Carpeta con trabajos realizados durante la preparación.', TRUE),
+(24, 2, NULL, 10, 'Video de Testimonio', 'Grabación breve del niño expresando su fe.', FALSE);
+
+-- Requisitos de la reserva 3: Matrimonio de Carlos
+-- Se copian los base_requirement del evento Matrimonio (event_id=4) + los chapel_event_requirement
+INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES
+-- Requisitos base del evento Matrimonio
+(25, 3, 31, NULL, 'Partida de Bautismo Actualizada', 'De ambos contrayentes, reciente (máx. 3 meses).', TRUE),
+(26, 3, 32, NULL, 'Partida de Confirmación', 'De ambos contrayentes.', TRUE),
+(27, 3, 33, NULL, 'Documentos de Identidad', 'Copia de DNI/Cédula de ambos contrayentes.', TRUE),
+(28, 3, 34, NULL, 'Certificado de Curso Prematrimonial', 'Constancia de asistencia al curso.', TRUE),
+(29, 3, 35, NULL, 'Ficha de Testigos', 'Datos y copia de cédula de dos testigos (mayores de edad).', TRUE),
+(30, 3, 36, NULL, 'Certificado de Soltería', 'Declaración jurada o documento legal que lo confirme.', FALSE),
+(31, 3, 37, NULL, 'Comprobante de Avisos Parroquiales', 'Comprobante de publicación de avisos (si aplica).', FALSE),
+(32, 3, 38, NULL, 'Licencia Matrimonial', 'Si uno de los novios es de otra jurisdicción.', FALSE),
+(33, 3, 39, NULL, 'Recibo de Estipendio', 'Comprobante del pago del estipendio matrimonial.', TRUE),
+(34, 3, 40, NULL, 'Compromiso Acta Civil', 'Documento que compromete a presentar acta de matrimonio civil.', TRUE),
+-- Requisitos adicionales de la capilla
+(35, 3, NULL, 5, 'Plan de Vida Conyugal', 'Documento donde los novios expresan sus proyectos.', TRUE),
+(36, 3, NULL, 6, 'Certificado de Compatibilidad', 'Documento de consejería prematrimonial.', FALSE);
+
+-- Requisitos de la reserva 4: Bendición de Casa de Carlos
+-- Se copian los base_requirement del evento Bendición de Casa (event_id=8)
+INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES
+-- Requisitos base del evento Bendición de Casa
+(37, 4, 60, NULL, 'Acta de Solicitud de Bendición', 'Documento que incluye la dirección y detalles de la propiedad.', TRUE),
+(38, 4, 61, NULL, 'Formulario de Datos de Contacto Propietario', 'Nombre, teléfono y email de contacto.', TRUE),
+(39, 4, 62, NULL, 'Comprobante de Ofrenda de Agradecimiento', 'Recibo de ofrenda sugerida por la bendición.', TRUE),
+(40, 4, 63, NULL, 'Documento de Residencia', 'Acreditación de residencia dentro de la jurisdicción parroquial.', TRUE);
+
