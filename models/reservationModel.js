@@ -19,9 +19,10 @@ class ReservationModel {
         p.primary_color,
         p.secondary_color
       FROM public.event_variant ev
-      INNER JOIN public.chapel c ON ev.chapel_id = c.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
       INNER JOIN public.parish p ON c.parish_id = p.id
-      WHERE ev.id = $1 AND ev.active = true AND c.active = true
+      WHERE ev.id = $1 AND ev.active = true AND ce.active = true AND c.active = true
     `;
     const result = await db.query(query, [eventVariantId]);
     return result.rows[0];
@@ -37,14 +38,14 @@ class ReservationModel {
   static async checkAvailability(eventVariantId, eventDate, eventTime) {
     const query = `
       WITH event_info AS (
-        SELECT ev.id, ev.chapel_id, ev.duration_minutes
+        SELECT ev.id, ce.chapel_id, ev.duration_minutes
         FROM public.event_variant ev
+        INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
         WHERE ev.id = $1 AND ev.active = true
       ),
       day_info AS (
         SELECT EXTRACT(DOW FROM $2::date) as day_of_week
       ),
-      -- Verificar horario general de la capilla
       general_availability AS (
         SELECT gs.id
         FROM public.general_schedule gs
@@ -53,14 +54,12 @@ class ReservationModel {
         WHERE $3::time >= gs.start_time 
           AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= gs.end_time
       ),
-      -- Verificar excepciones de horario
       specific_exception AS (
         SELECT ss.exception_type, ss.start_time, ss.end_time
         FROM public.specific_schedule ss
         INNER JOIN event_info ei ON ss.chapel_id = ei.chapel_id
         WHERE ss.date = $2::date
       ),
-      -- Verificar reservas existentes
       existing_reservation AS (
         SELECT r.id
         FROM public.reservation r
@@ -173,13 +172,12 @@ class ReservationModel {
   static async getAvailableSlots(eventVariantId, startDate, endDate) {
     const query = `
       WITH RECURSIVE 
-      -- Información del evento
       event_info AS (
-        SELECT ev.id, ev.chapel_id, ev.duration_minutes
+        SELECT ev.id, ce.chapel_id, ev.duration_minutes
         FROM public.event_variant ev
+        INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
         WHERE ev.id = $1 AND ev.active = true
       ),
-      -- Generar todas las fechas en el rango
       date_range AS (
         SELECT $2::date as date
         UNION ALL
@@ -187,7 +185,6 @@ class ReservationModel {
         FROM date_range
         WHERE date < $3::date
       ),
-      -- Generar slots de tiempo desde las 6:00 hasta las 21:00 cada hora
       time_slots AS (
         SELECT generate_series(
           '06:00'::time,
@@ -195,7 +192,6 @@ class ReservationModel {
           '1 hour'::interval
         )::time as time_slot
       ),
-      -- Combinar fechas y horarios
       all_slots AS (
         SELECT 
           dr.date,
@@ -204,7 +200,6 @@ class ReservationModel {
         FROM date_range dr
         CROSS JOIN time_slots ts
       ),
-      -- Filtrar por horario general
       general_slots AS (
         SELECT als.date, als.time_slot
         FROM all_slots als
@@ -215,7 +210,6 @@ class ReservationModel {
         WHERE als.time_slot >= gs.start_time 
           AND (als.time_slot + (ei.duration_minutes || ' minutes')::interval)::time <= gs.end_time
       ),
-      -- Aplicar excepciones de horario
       slots_with_exceptions AS (
         SELECT 
           gs.date,
@@ -228,7 +222,6 @@ class ReservationModel {
           ON ss.chapel_id = (SELECT chapel_id FROM event_info)
           AND ss.date = gs.date
       ),
-      -- Filtrar slots según excepciones
       valid_slots AS (
         SELECT swe.date, swe.time_slot
         FROM slots_with_exceptions swe
@@ -239,7 +232,6 @@ class ReservationModel {
             AND swe.time_slot >= swe.exception_start 
             AND (swe.time_slot + (ei.duration_minutes || ' minutes')::interval)::time <= swe.exception_end)
       ),
-      -- Excluir slots con reservas existentes
       available_slots AS (
         SELECT vs.date, vs.time_slot
         FROM valid_slots vs
