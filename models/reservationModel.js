@@ -398,6 +398,164 @@ class ReservationModel {
     const result = await db.query(updateQuery, [reservationId]);
     return result.rows[0];
   }
+
+  /**
+   * Obtener historial de reservas del usuario (completadas, finalizadas, canceladas, rechazadas)
+   * @param {number} userId - ID del usuario
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros por página
+   * @returns {Object} Lista paginada de reservas del historial
+   */
+  static async getHistoryReservations(userId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      WHERE r.user_id = $1
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+    `;
+    const countResult = await db.query(countQuery, [userId]);
+    const totalRecords = parseInt(countResult.rows[0].total);
+
+    const query = `
+      SELECT 
+        r.id,
+        ev.name as event_name,
+        r.event_date,
+        r.paid_amount,
+        r.status
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      WHERE r.user_id = $1
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+      ORDER BY r.event_date DESC, r.created_at DESC
+      LIMIT $2 OFFSET $3
+    `;
+    const result = await db.query(query, [userId, limit, offset]);
+
+    return {
+      data: result.rows,
+      meta: {
+        total_records: totalRecords,
+        total_pages: Math.ceil(totalRecords / limit),
+        current_page: page,
+        per_page: limit
+      }
+    };
+  }
+
+  /**
+   * Buscar en el historial de reservas por nombre de evento
+   * @param {number} userId - ID del usuario
+   * @param {string} searchTerm - Término de búsqueda
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros por página
+   * @returns {Object} Lista paginada de reservas del historial filtradas
+   */
+  static async searchHistoryReservations(userId, searchTerm, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+    const searchPattern = `%${searchTerm}%`;
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      WHERE r.user_id = $1
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+        AND LOWER(ev.name) LIKE LOWER($2)
+    `;
+    const countResult = await db.query(countQuery, [userId, searchPattern]);
+    const totalRecords = parseInt(countResult.rows[0].total);
+
+    const query = `
+      SELECT 
+        r.id,
+        ev.name as event_name,
+        r.event_date,
+        r.paid_amount,
+        r.status
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      WHERE r.user_id = $1
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+        AND LOWER(ev.name) LIKE LOWER($2)
+      ORDER BY r.event_date DESC, r.created_at DESC
+      LIMIT $3 OFFSET $4
+    `;
+    const result = await db.query(query, [userId, searchPattern, limit, offset]);
+
+    return {
+      data: result.rows,
+      meta: {
+        total_records: totalRecords,
+        total_pages: Math.ceil(totalRecords / limit),
+        current_page: page,
+        per_page: limit
+      }
+    };
+  }
+
+  /**
+   * Obtener detalles completos de una reserva incluyendo requisitos
+   * @param {number} reservationId - ID de la reserva
+   * @param {number} userId - ID del usuario (para verificar pertenencia)
+   * @returns {Object} Detalles completos de la reserva
+   */
+  static async getReservationDetails(reservationId, userId) {
+    const query = `
+      SELECT 
+        r.id,
+        ev.name as event_variant_name,
+        r.event_date,
+        r.status,
+        r.paid_amount,
+        CASE 
+          WHEN r.paid_amount >= ev.current_price THEN 'PAGADO'
+          WHEN r.paid_amount > 0 THEN 'PENDIENTE'
+          ELSE 'PENDIENTE'
+        END as payment_status,
+        c.name as chapel_name,
+        p.name as parish_name
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public.parish p ON c.parish_id = p.id
+      WHERE r.id = $1 AND r.user_id = $2
+    `;
+    const result = await db.query(query, [reservationId, userId]);
+    
+    if (!result.rows.length) {
+      throw new Error('Reserva no encontrada o no pertenece al usuario');
+    }
+
+    const reservation = result.rows[0];
+
+    const requirementsQuery = `
+      SELECT 
+        rr.name,
+        rr.completed
+      FROM public.reservation_requirement rr
+      WHERE rr.reservation_id = $1
+      ORDER BY rr.name
+    `;
+    const requirementsResult = await db.query(requirementsQuery, [reservationId]);
+
+    return {
+      id: reservation.id,
+      event_variant_name: reservation.event_variant_name,
+      event_date: reservation.event_date,
+      status: reservation.status,
+      paid_amount: reservation.paid_amount,
+      payment_status: reservation.payment_status,
+      chapel: {
+        name: reservation.chapel_name,
+        parish_name: reservation.parish_name
+      },
+      requirements: requirementsResult.rows
+    };
+  }
 }
 
 module.exports = ReservationModel;

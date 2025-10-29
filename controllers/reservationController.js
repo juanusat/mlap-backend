@@ -186,6 +186,101 @@ class ReservationController {
       next(error);
     }
   }
+
+  async listHistoryReservations(req, res, next) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: {},
+          error: 'No se encontró información del usuario',
+          traceback: ''
+        });
+      }
+
+      const { page = 1, limit = 10 } = req.body;
+
+      const result = await reservationService.getHistoryReservations(
+        userId,
+        Number(page),
+        Number(limit)
+      );
+
+      res.status(200).json({
+        message: 'Historial de reservas obtenido exitosamente',
+        data: result.data,
+        meta: result.meta,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async searchHistoryReservations(req, res, next) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: {},
+          error: 'No se encontró información del usuario',
+          traceback: ''
+        });
+      }
+
+      const { search_event_name, page = 1, limit = 10 } = req.body;
+
+      const result = await reservationService.searchHistoryReservations(
+        userId,
+        search_event_name,
+        Number(page),
+        Number(limit)
+      );
+
+      res.status(200).json({
+        message: 'Búsqueda en historial completada exitosamente',
+        data: result.data,
+        meta: result.meta,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getReservationDetails(req, res, next) {
+    try {
+      const userId = req.user?.userId;
+      
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: {},
+          error: 'No se encontró información del usuario',
+          traceback: ''
+        });
+      }
+
+      const { id } = req.params;
+
+      const result = await reservationService.getReservationDetails(userId, Number(id));
+
+      res.status(200).json({
+        message: 'Detalles de la reserva obtenidos exitosamente',
+        data: result,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ReservationController();

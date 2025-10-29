@@ -168,6 +168,34 @@ class ReservationService {
 
     return await ReservationModel.cancelReservation(reservationId, userId);
   }
+
+  async getHistoryReservations(userId, page, limit) {
+    if (!userId) {
+      throw new Error('El ID del usuario es requerido');
+    }
+
+    return await ReservationModel.getHistoryReservations(userId, page, limit);
+  }
+
+  async searchHistoryReservations(userId, searchTerm, page, limit) {
+    if (!userId) {
+      throw new Error('El ID del usuario es requerido');
+    }
+
+    if (!searchTerm || searchTerm.trim() === '') {
+      throw new Error('El término de búsqueda es requerido');
+    }
+
+    return await ReservationModel.searchHistoryReservations(userId, searchTerm, page, limit);
+  }
+
+  async getReservationDetails(userId, reservationId) {
+    if (!userId || !reservationId) {
+      throw new Error('El ID del usuario y el ID de la reserva son requeridos');
+    }
+
+    return await ReservationModel.getReservationDetails(reservationId, userId);
+  }
 }
 
 module.exports = new ReservationService();

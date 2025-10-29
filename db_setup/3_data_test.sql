@@ -699,3 +699,71 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
 (12, 6, '2026-05-13', '05:00:00', '22:00:00', 'OPEN', 'Celebración de Nuestra Señora de Fátima');
 
+
+-- ====================================================================
+-- RESERVAS DE USUARIO 5: María Gonzales
+-- ====================================================================
+
+-- Reservas pendientes (RESERVED, IN_PROGRESS) - Fechas futuras
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
+(100, 5, 1, 5, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00),
+(101, 5, 3, 5, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00),
+(102, 5, 7, 5, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00),
+(103, 5, 15, 5, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00),
+(104, 5, 21, 5, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00);
+
+-- Reservas históricas (COMPLETED, FULFILLED, CANCELLED, REJECTED) - Fechas pasadas
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
+(105, 5, 2, 5, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00),
+(106, 5, 9, 5, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00),
+(107, 5, 17, 5, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00),
+(108, 5, 13, 5, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00),
+(109, 5, 18, 5, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00),
+(110, 5, 19, 5, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00),
+(111, 5, 23, 5, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00),
+(112, 5, 20, 5, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00);
+
+-- Requisitos para reserva 100: Bautismo Individual (event_id=1, chapel_event_id=1)
+INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES
+(1000, 100, 1, NULL, 'Registro Civil del Niño', 'Copia fiel del registro civil de nacimiento.', TRUE),
+(1001, 100, 2, NULL, 'Cédulas de Padrinos', 'Copia de documento de identidad de los padrinos.', TRUE),
+(1002, 100, 3, NULL, 'Certificado de Matrimonio Eclesiástico', 'Para padres casados por la Iglesia.', FALSE),
+(1003, 100, 4, NULL, 'Certificado de Charla Prebautismal', 'Comprobante de asistencia de los padres y padrinos.', TRUE),
+(1004, 100, 5, NULL, 'Licencia Parroquial', 'Documento de permiso si los padres no residen en la jurisdicción.', FALSE),
+(1005, 100, 6, NULL, 'Ficha de Datos de Contacto', 'Formulario con información de contacto de padres y padrinos.', TRUE),
+(1006, 100, 7, NULL, 'Copia Libro de Bautismo de Padrinos', 'Copia del acta de bautismo de los padrinos.', TRUE),
+(1007, 100, 8, NULL, 'Permiso de Obispado', 'Documento requerido en casos especiales y excepciones.', FALSE),
+(1008, 100, 9, NULL, 'Comprobante de Ofrenda', 'Recibo o constancia de pago de la ofrenda establecida.', TRUE),
+(1009, 100, 10, NULL, 'Ficha de Solicitud de Bautismo', 'Formulario de solicitud de sacramento diligenciado.', TRUE),
+(1010, 100, NULL, 1, 'Foto Digital del Bebé', 'Fotografía reciente del niño en formato digital.', TRUE),
+(1011, 100, NULL, 2, 'Declaración de Compromiso Parental', 'Documento firmado por ambos padres.', FALSE);
+
+-- Requisitos para reserva 103: Bautismo Individual San Pedro (event_id=1)
+INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES
+(1012, 103, 1, NULL, 'Registro Civil del Niño', 'Copia fiel del registro civil de nacimiento.', TRUE),
+(1013, 103, 2, NULL, 'Cédulas de Padrinos', 'Copia de documento de identidad de los padrinos.', FALSE),
+(1014, 103, 3, NULL, 'Certificado de Matrimonio Eclesiástico', 'Para padres casados por la Iglesia.', TRUE),
+(1015, 103, 4, NULL, 'Certificado de Charla Prebautismal', 'Comprobante de asistencia de los padres y padrinos.', FALSE),
+(1016, 103, 5, NULL, 'Licencia Parroquial', 'Documento de permiso si los padres no residen en la jurisdicción.', FALSE),
+(1017, 103, 6, NULL, 'Ficha de Datos de Contacto', 'Formulario con información de contacto de padres y padrinos.', TRUE),
+(1018, 103, 7, NULL, 'Copia Libro de Bautismo de Padrinos', 'Copia del acta de bautismo de los padrinos.', FALSE),
+(1019, 103, 8, NULL, 'Permiso de Obispado', 'Documento requerido en casos especiales y excepciones.', FALSE),
+(1020, 103, 9, NULL, 'Comprobante de Ofrenda', 'Recibo o constancia de pago de la ofrenda establecida.', TRUE),
+(1021, 103, 10, NULL, 'Ficha de Solicitud de Bautismo', 'Formulario de solicitud de sacramento diligenciado.', TRUE);
+
+-- Requisitos para reserva 104: Primera Comunión Individual (event_id=2)
+INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES
+(1022, 104, 11, NULL, 'Certificado de Bautismo', 'Copia del certificado de bautismo.', TRUE),
+(1023, 104, 12, NULL, 'Constancia de Catequesis', 'Certificado de haber completado el ciclo de catequesis.', TRUE),
+(1024, 104, 13, NULL, 'Ficha de Inscripción', 'Formulario de registro del niño/a.', TRUE),
+(1025, 104, 14, NULL, 'Foto Tipo Carnet', 'Una foto reciente del niño/a.', FALSE),
+(1026, 104, 15, NULL, 'Acta de Entrevista con el Párroco', 'Documento que confirma la idoneidad y fecha de la entrevista.', TRUE),
+(1027, 104, 16, NULL, 'Documento de Compromiso de Padres', 'Documento firmado por los padres.', TRUE),
+(1028, 104, 17, NULL, 'Copia de Documento del Representante', 'Copia del DNI/Cédula del acudiente.', TRUE),
+(1029, 104, 18, NULL, 'Paz y Salvo Parroquial', 'Certificado de que no hay deudas o pendientes (si viene de otra parroquia).', FALSE),
+(1030, 104, 19, NULL, 'Formulario de Datos de Contacto Tutor', 'Teléfono y email de contacto principal.', TRUE),
+(1031, 104, 20, NULL, 'Recibo de Inscripción', 'Comprobante de pago de la inscripción.', TRUE),
+(1032, 104, NULL, 9, 'Portafolio de Catequesis', 'Carpeta con trabajos realizados durante la preparación.', TRUE),
+(1033, 104, NULL, 10, 'Video de Testimonio', 'Grabación breve del niño expresando su fe.', FALSE);
+
+

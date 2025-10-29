@@ -13,4 +13,8 @@ router.post('/pending/list', authMiddleware, reservationController.listPendingRe
 router.post('/pending/search', authMiddleware, reservationController.searchPendingReservations);
 router.post('/:id/cancel', authMiddleware, reservationController.cancelReservation);
 
+router.post('/history/list', authMiddleware, reservationController.listHistoryReservations);
+router.post('/history/search', authMiddleware, reservationController.searchHistoryReservations);
+router.get('/:id', authMiddleware, reservationController.getReservationDetails);
+
 module.exports = router;
