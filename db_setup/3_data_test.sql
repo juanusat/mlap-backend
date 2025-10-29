@@ -325,47 +325,47 @@ INSERT INTO public.chapel_event (id, chapel_id, event_id, active) VALUES
 
 -- Variantes de eventos (individual o comunitario)
 -- Permite definir diferentes modalidades de cada evento
-INSERT INTO public.event_variant (id, chapel_event_id, name, description, current_price, max_capacity, active) VALUES
+INSERT INTO public.event_variant (id, chapel_event_id, name, description, current_price, max_capacity, duration_minutes, active) VALUES
 -- Capilla 4: San José Obrero
-(1, 1, 'Bautismo Individual', 'Ceremonia de bautismo para un solo niño.', 50.00, 1, TRUE),
-(2, 1, 'Bautismo Comunitario', 'Ceremonia de bautismo para varios niños.', 30.00, 10, TRUE),
-(3, 2, 'Primera Comunión Individual', 'Primera comunión en ceremonia privada.', 80.00, 1, TRUE),
-(4, 2, 'Primera Comunión Grupal', 'Primera comunión en ceremonia colectiva.', 50.00, 15, TRUE),
-(5, 3, 'Matrimonio Privado', 'Ceremonia matrimonial privada.', 300.00, 1, TRUE),
-(6, 4, 'Misa Dominical 9:00 AM', 'Eucaristía dominical matutina.', 0.00, 150, TRUE),
+(1, 1, 'Bautismo Individual', 'Ceremonia de bautismo para un solo niño.', 50.00, 1, 60, TRUE),
+(2, 1, 'Bautismo Comunitario', 'Ceremonia de bautismo para varios niños.', 30.00, 10, 90, TRUE),
+(3, 2, 'Primera Comunión Individual', 'Primera comunión en ceremonia privada.', 80.00, 1, 60, TRUE),
+(4, 2, 'Primera Comunión Grupal', 'Primera comunión en ceremonia colectiva.', 50.00, 15, 120, TRUE),
+(5, 3, 'Matrimonio Privado', 'Ceremonia matrimonial privada.', 300.00, 1, 120, TRUE),
+(6, 4, 'Misa Dominical 9:00 AM', 'Eucaristía dominical matutina.', 0.00, 150, 60, TRUE),
 
 -- Capilla 5: Capilla del Buen Pastor
-(7, 5, 'Bautismo Comunitario', 'Ceremonia de bautismo colectiva.', 25.00, 8, TRUE),
-(8, 6, 'Misa Dominical 11:00 AM', 'Eucaristía dominical.', 0.00, 100, TRUE),
+(7, 5, 'Bautismo Comunitario', 'Ceremonia de bautismo colectiva.', 25.00, 8, 90, TRUE),
+(8, 6, 'Misa Dominical 11:00 AM', 'Eucaristía dominical.', 0.00, 100, 60, TRUE),
 
 -- Capilla 6: Nuestra Señora de Fátima
-(9, 7, 'Bautismo Individual', 'Ceremonia de bautismo personalizada.', 55.00, 1, TRUE),
-(10, 8, 'Confirmación Grupal', 'Sacramento de confirmación en grupo.', 45.00, 20, TRUE),
-(11, 9, 'Matrimonio Estándar', 'Ceremonia matrimonial estándar.', 280.00, 1, TRUE),
-(12, 10, 'Exequias Completas', 'Servicio funeral completo con misa.', 150.00, 1, TRUE),
+(9, 7, 'Bautismo Individual', 'Ceremonia de bautismo personalizada.', 55.00, 1, 60, TRUE),
+(10, 8, 'Confirmación Grupal', 'Sacramento de confirmación en grupo.', 45.00, 20, 90, TRUE),
+(11, 9, 'Matrimonio Estándar', 'Ceremonia matrimonial estándar.', 280.00, 1, 120, TRUE),
+(12, 10, 'Exequias Completas', 'Servicio funeral completo con misa.', 150.00, 1, 90, TRUE),
 
 -- Capilla 7: Capilla de la Inmaculada
-(13, 11, 'Primera Comunión Comunitaria', 'Ceremonia grupal de primera comunión.', 45.00, 12, TRUE),
-(14, 12, 'Misa Dominical 10:00 AM', 'Eucaristía dominical.', 0.00, 80, TRUE),
+(13, 11, 'Primera Comunión Comunitaria', 'Ceremonia grupal de primera comunión.', 45.00, 12, 120, TRUE),
+(14, 12, 'Misa Dominical 10:00 AM', 'Eucaristía dominical.', 0.00, 80, 60, TRUE),
 
 -- Capilla 8: San Pedro Apóstol
-(15, 13, 'Bautismo Individual', 'Bautismo personalizado.', 60.00, 1, TRUE),
-(16, 14, 'Matrimonio Premium', 'Ceremonia matrimonial con decoración especial.', 350.00, 1, TRUE),
-(17, 15, 'Bendición de Casa Estándar', 'Servicio de bendición doméstica.', 40.00, 1, TRUE),
+(15, 13, 'Bautismo Individual', 'Bautismo personalizado.', 60.00, 1, 60, TRUE),
+(16, 14, 'Matrimonio Premium', 'Ceremonia matrimonial con decoración especial.', 350.00, 1, 150, TRUE),
+(17, 15, 'Bendición de Casa Estándar', 'Servicio de bendición doméstica.', 40.00, 1, 45, TRUE),
 
 -- Capilla 9: Capilla San Pablo
-(18, 16, 'Bautismo Comunitario', 'Bautismo en grupo.', 28.00, 6, TRUE),
-(19, 17, 'Catequesis Infantil', 'Proceso formativo para niños.', 30.00, 25, TRUE),
+(18, 16, 'Bautismo Comunitario', 'Bautismo en grupo.', 28.00, 6, 90, TRUE),
+(19, 17, 'Catequesis Infantil', 'Proceso formativo para niños.', 30.00, 25, 120, TRUE),
 
 -- Capilla 10: Sagrado Corazón de Jesús
-(20, 18, 'Bautismo Individual', 'Bautismo personalizado.', 52.00, 1, TRUE),
-(21, 19, 'Primera Comunión Individual', 'Primera comunión privada.', 75.00, 1, TRUE),
-(22, 20, 'Matrimonio Clásico', 'Ceremonia matrimonial tradicional.', 290.00, 1, TRUE),
-(23, 21, 'Hora Santa Mensual', 'Adoración eucarística mensual.', 0.00, 50, TRUE),
+(20, 18, 'Bautismo Individual', 'Bautismo personalizado.', 52.00, 1, 60, TRUE),
+(21, 19, 'Primera Comunión Individual', 'Primera comunión privada.', 75.00, 1, 60, TRUE),
+(22, 20, 'Matrimonio Clásico', 'Ceremonia matrimonial tradicional.', 290.00, 1, 120, TRUE),
+(23, 21, 'Hora Santa Mensual', 'Adoración eucarística mensual.', 0.00, 50, 60, TRUE),
 
 -- Capilla 11: Capilla Santa Teresa
-(24, 22, 'Confirmación Individual', 'Sacramento de confirmación personalizado.', 60.00, 1, TRUE),
-(25, 23, 'Misa Dominical 8:00 AM', 'Eucaristía dominical temprana.', 0.00, 70, TRUE);
+(24, 22, 'Confirmación Individual', 'Sacramento de confirmación personalizado.', 60.00, 1, 75, TRUE),
+(25, 23, 'Misa Dominical 8:00 AM', 'Eucaristía dominical temprana.', 0.00, 70, 60, TRUE);
 
 -- Requisitos adicionales definidos por las capillas (chapel_event_requirement)
 -- Estos se suman a los base_requirement definidos por la diócesis
@@ -392,17 +392,17 @@ INSERT INTO public.chapel_event_requirement (id, chapel_event_id, name, descript
 
 -- Reservas realizadas por los feligreses
 -- María Gonzales hace varias reservas
-INSERT INTO public.reservation (id, event_variant_id, person_id, event_date, registration_date, status, paid_amount) VALUES
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
 -- María reserva un bautismo individual en San José Obrero
-(1, 1, 5, '2025-11-15 10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00),
+(1, 5, 1, 5, '2025-11-15', '10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00),
 -- María reserva una primera comunión en Sagrado Corazón
-(2, 21, 5, '2025-12-08 11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00),
+(2, 5, 21, 5, '2025-12-08', '11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00),
 
 -- Carlos Mendoza hace sus reservas
 -- Carlos reserva un matrimonio en Nuestra Señora de Fátima
-(3, 11, 6, '2025-12-20 16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00),
+(3, 6, 11, 6, '2025-12-20', '16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00),
 -- Carlos reserva una bendición de casa en San Pedro Apóstol
-(4, 17, 6, '2025-11-05 15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00);
+(4, 6, 17, 6, '2025-11-05', '15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00);
 
 -- Requisitos de la reserva 1: Bautismo Individual de María
 -- Se copian TODOS los base_requirement del evento Bautismo (event_id=1) + los chapel_event_requirement
