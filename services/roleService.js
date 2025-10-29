@@ -70,17 +70,44 @@ const searchRoles = async (parishId, page, limit, search) => {
 };
 
 const createRole = async (parishId, name, description) => {
-  const result = await pool.query(
-    `INSERT INTO role (parish_id, name, description, active)
-     VALUES ($1, $2, $3, true)
-     RETURNING id, name`,
-    [parishId, name, description]
-  );
+  const client = await pool.getClient();
   
-  return {
-    role_id: result.rows[0].id,
-    name: result.rows[0].name
-  };
+  try {
+    await client.query('BEGIN');
+    
+    const roleResult = await client.query(
+      `INSERT INTO role (id, parish_id, name, description, active)
+       VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role), $1, $2, $3, true)
+       RETURNING id, name`,
+      [parishId, name, description]
+    );
+    
+    const roleId = roleResult.rows[0].id;
+    
+    const permissionsResult = await client.query(
+      `SELECT id FROM permission ORDER BY id`
+    );
+    
+    for (const perm of permissionsResult.rows) {
+      await client.query(
+        `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
+         VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, false, NULL)`,
+        [roleId, perm.id]
+      );
+    }
+    
+    await client.query('COMMIT');
+    
+    return {
+      role_id: roleId,
+      name: roleResult.rows[0].name
+    };
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw error;
+  } finally {
+    client.release();
+  }
 };
 
 const getRoleById = async (roleId) => {
@@ -138,10 +165,7 @@ const getRolePermissions = async (roleId) => {
       p.code,
       p.name,
       p.category,
-      CASE 
-        WHEN rp.id IS NOT NULL AND rp.granted = true AND rp.revocation_date IS NULL THEN true
-        ELSE false
-      END as granted
+      COALESCE(rp.granted, false) as granted
      FROM permission p
      LEFT JOIN role_permission rp ON p.id = rp.permission_id AND rp.role_id = $1
      ORDER BY p.category, p.name`,
@@ -157,20 +181,50 @@ const updateRolePermissions = async (roleId, permissions) => {
   try {
     await client.query('BEGIN');
     
-    await client.query(
-      `UPDATE role_permission 
-       SET revocation_date = CURRENT_TIMESTAMP
-       WHERE role_id = $1 AND revocation_date IS NULL`,
-      [roleId]
-    );
-    
     for (const permission of permissions) {
-      if (permission.granted) {
-        await client.query(
-          `INSERT INTO role_permission (role_id, permission_id, granted, assignment_date)
-           VALUES ($1, $2, true, CURRENT_DATE)`,
-          [roleId, permission.permission_id]
-        );
+      const existingPerm = await client.query(
+        `SELECT id, granted FROM role_permission 
+         WHERE role_id = $1 AND permission_id = $2`,
+        [roleId, permission.permission_id]
+      );
+      
+      if (existingPerm.rows.length > 0) {
+        const currentGranted = existingPerm.rows[0].granted;
+        
+        if (permission.granted && !currentGranted) {
+          await client.query(
+            `UPDATE role_permission 
+             SET granted = true, 
+                 assignment_date = CURRENT_DATE,
+                 revocation_date = NULL,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE role_id = $1 AND permission_id = $2`,
+            [roleId, permission.permission_id]
+          );
+        } else if (!permission.granted && currentGranted) {
+          await client.query(
+            `UPDATE role_permission 
+             SET granted = false,
+                 revocation_date = CURRENT_DATE,
+                 updated_at = CURRENT_TIMESTAMP
+             WHERE role_id = $1 AND permission_id = $2`,
+            [roleId, permission.permission_id]
+          );
+        }
+      } else {
+        if (permission.granted) {
+          await client.query(
+            `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
+             VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, true, CURRENT_DATE)`,
+            [roleId, permission.permission_id]
+          );
+        } else {
+          await client.query(
+            `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
+             VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, false, NULL)`,
+            [roleId, permission.permission_id]
+          );
+        }
       }
     }
     
