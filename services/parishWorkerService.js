@@ -7,7 +7,7 @@ const listWorkers = async (parishId, page, limit) => {
     `SELECT COUNT(*) 
      FROM association a
      INNER JOIN "user" u ON a.user_id = u.id
-     WHERE a.parish_id = $1 AND a.active = true AND a.end_date IS NULL`,
+     WHERE a.parish_id = $1 AND a.end_date IS NULL`,
     [parishId]
   );
   
@@ -25,7 +25,7 @@ const listWorkers = async (parishId, page, limit) => {
      FROM association a
      INNER JOIN "user" u ON a.user_id = u.id
      INNER JOIN person p ON u.person_id = p.id
-     WHERE a.parish_id = $1 AND a.active = true AND a.end_date IS NULL
+     WHERE a.parish_id = $1 AND a.end_date IS NULL
      ORDER BY p.first_names ASC
      LIMIT $2 OFFSET $3`,
     [parishId, limit, offset]
@@ -48,7 +48,7 @@ const searchWorkers = async (parishId, page, limit, search) => {
      FROM association a
      INNER JOIN "user" u ON a.user_id = u.id
      INNER JOIN person p ON u.person_id = p.id
-     WHERE a.parish_id = $1 AND a.active = true AND a.end_date IS NULL
+     WHERE a.parish_id = $1 AND a.end_date IS NULL
      AND (p.first_names ILIKE $2 OR p.paternal_surname ILIKE $2 OR p.email ILIKE $2)`,
     [parishId, searchPattern]
   );
@@ -67,7 +67,7 @@ const searchWorkers = async (parishId, page, limit, search) => {
      FROM association a
      INNER JOIN "user" u ON a.user_id = u.id
      INNER JOIN person p ON u.person_id = p.id
-     WHERE a.parish_id = $1 AND a.active = true AND a.end_date IS NULL
+     WHERE a.parish_id = $1 AND a.end_date IS NULL
      AND (p.first_names ILIKE $2 OR p.paternal_surname ILIKE $2 OR p.email ILIKE $2)
      ORDER BY p.first_names ASC
      LIMIT $3 OFFSET $4`,
@@ -109,7 +109,7 @@ const inviteWorker = async (parishId, email) => {
   
   const existingAssociation = await pool.query(
     `SELECT id FROM association 
-     WHERE user_id = $1 AND parish_id = $2 AND active = true AND end_date IS NULL`,
+     WHERE user_id = $1 AND parish_id = $2 AND end_date IS NULL`,
     [person.user_id, parishId]
   );
   
