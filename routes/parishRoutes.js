@@ -10,4 +10,10 @@ router.get('/chapels', authMiddleware, parishController.getChapelsForCurrentPari
 
 router.get('/:parishId/roles', requireAuth, parishController.getRolesForParish);
 
+router.get('/account', authMiddleware, parishController.getParishAccount);
+
+router.patch('/account/info', authMiddleware, parishController.updateParishAccountInfo);
+
+router.patch('/account/credentials', authMiddleware, parishController.updateParishCredentials);
+
 module.exports = router;
