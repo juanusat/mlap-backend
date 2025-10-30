@@ -106,37 +106,37 @@ class ReservationModel {
    * @returns {Object} Reserva creada
    */
   static async create(userId, eventVariantId, eventDate, eventTime, beneficiaryFullName = null) {
-    // Primero obtenemos el person_id del usuario
-    const userQuery = `SELECT person_id FROM public.user WHERE id = $1`;
-    const userResult = await db.query(userQuery, [userId]);
-    
-    if (!userResult.rows.length) {
-      throw new Error('Usuario no encontrado');
-    }
-    
-    const personId = userResult.rows[0].person_id;
-    
     // Si no se proporciona beneficiaryFullName, obtenerlo del usuario
     let finalBeneficiaryName = beneficiaryFullName;
     if (!finalBeneficiaryName || finalBeneficiaryName.trim() === '') {
-      const personQuery2 = `SELECT first_names, paternal_surname, maternal_surname FROM public.person WHERE id = $1`;
-      const personRes = await db.query(personQuery2, [personId]);
-      const personRow = personRes.rows[0] || {};
+      const userQuery = `
+        SELECT p.first_names, p.paternal_surname, p.maternal_surname 
+        FROM public.user u
+        INNER JOIN public.person p ON u.person_id = p.id
+        WHERE u.id = $1
+      `;
+      const userResult = await db.query(userQuery, [userId]);
+      
+      if (!userResult.rows.length) {
+        throw new Error('Usuario no encontrado');
+      }
+      
+      const personRow = userResult.rows[0];
       finalBeneficiaryName = `${personRow.first_names || ''} ${personRow.paternal_surname || ''}${personRow.maternal_surname ? ' ' + personRow.maternal_surname : ''}`.trim();
     }
 
     const query = `
       INSERT INTO public.reservation (
-        id, user_id, person_id, event_variant_id, event_date, event_time, 
+        id, user_id, event_variant_id, event_date, event_time, 
         status, registration_date, created_at, updated_at, beneficiary_full_name
       )
       VALUES (
         (SELECT COALESCE(MAX(id), 0) + 1 FROM public.reservation),
-        $1, $2, $3, $4, $5, 'RESERVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $6
+        $1, $2, $3, $4, 'RESERVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $5
       )
-      RETURNING id, user_id, person_id, event_variant_id, event_date, event_time, status, created_at, beneficiary_full_name
+      RETURNING id, user_id, event_variant_id, event_date, event_time, status, created_at, beneficiary_full_name
     `;
-    const values = [userId, personId, eventVariantId, eventDate, eventTime, finalBeneficiaryName];
+    const values = [userId, eventVariantId, eventDate, eventTime, finalBeneficiaryName];
     const result = await db.query(query, values);
     return result.rows[0];
   }
