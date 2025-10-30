@@ -65,7 +65,7 @@ class ReservationService {
   }
 
   async createReservation(userId, reservationData) {
-    const { event_variant_id, event_date, event_time } = reservationData;
+    const { event_variant_id, event_date, event_time, beneficiary_full_name } = reservationData;
 
     if (!event_variant_id || !event_date || !event_time) {
       throw new Error('Todos los campos son requeridos: event_variant_id, event_date, event_time');
@@ -81,7 +81,8 @@ class ReservationService {
       userId,
       event_variant_id,
       event_date,
-      event_time
+      event_time,
+      beneficiary_full_name
     );
 
     const reservationInfo = await ReservationModel.findById(reservation.id);

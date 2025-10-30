@@ -115,6 +115,11 @@ components:
           format: time
           description: Hora del evento seleccionada por el usuario (HH:MM)
           example: "08:00"
+        beneficiary_full_name:
+          type: string
+          description: Nombre completo del beneficiario (opcional, si no se envía se usa el del usuario logueado)
+          example: "María Gonzales Ramos"
+          maxLength: 120
 
     EventListRequest:
       type: object

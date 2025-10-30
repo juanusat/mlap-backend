@@ -102,9 +102,10 @@ class ReservationModel {
    * @param {number} eventVariantId - ID de la variante del evento
    * @param {string} eventDate - Fecha del evento (YYYY-MM-DD)
    * @param {string} eventTime - Hora del evento (HH:MM)
+   * @param {string} beneficiaryFullName - Nombre completo del beneficiario (opcional, si no se proporciona se usa el del usuario)
    * @returns {Object} Reserva creada
    */
-  static async create(userId, eventVariantId, eventDate, eventTime) {
+  static async create(userId, eventVariantId, eventDate, eventTime, beneficiaryFullName = null) {
     // Primero obtenemos el person_id del usuario
     const userQuery = `SELECT person_id FROM public.user WHERE id = $1`;
     const userResult = await db.query(userQuery, [userId]);
@@ -115,10 +116,14 @@ class ReservationModel {
     
     const personId = userResult.rows[0].person_id;
     
-    const personQuery2 = `SELECT first_names, paternal_surname, maternal_surname FROM public.person WHERE id = $1`;
-    const personRes = await db.query(personQuery2, [personId]);
-    const personRow = personRes.rows[0] || {};
-    const beneficiaryFullName = `${personRow.first_names || ''} ${personRow.paternal_surname || ''}${personRow.maternal_surname ? ' ' + personRow.maternal_surname : ''}`.trim();
+    // Si no se proporciona beneficiaryFullName, obtenerlo del usuario
+    let finalBeneficiaryName = beneficiaryFullName;
+    if (!finalBeneficiaryName || finalBeneficiaryName.trim() === '') {
+      const personQuery2 = `SELECT first_names, paternal_surname, maternal_surname FROM public.person WHERE id = $1`;
+      const personRes = await db.query(personQuery2, [personId]);
+      const personRow = personRes.rows[0] || {};
+      finalBeneficiaryName = `${personRow.first_names || ''} ${personRow.paternal_surname || ''}${personRow.maternal_surname ? ' ' + personRow.maternal_surname : ''}`.trim();
+    }
 
     const query = `
       INSERT INTO public.reservation (
@@ -131,7 +136,7 @@ class ReservationModel {
       )
       RETURNING id, user_id, person_id, event_variant_id, event_date, event_time, status, created_at, beneficiary_full_name
     `;
-    const values = [userId, personId, eventVariantId, eventDate, eventTime, beneficiaryFullName];
+    const values = [userId, personId, eventVariantId, eventDate, eventTime, finalBeneficiaryName];
     const result = await db.query(query, values);
     return result.rows[0];
   }
