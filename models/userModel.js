@@ -156,6 +156,29 @@ const isParishAdmin = async (userId, parishId) => {
   return rows.length > 0;
 };
 
+const findRolePermissions = async (roleId) => {
+  const query = `
+    SELECT p.code
+    FROM public.role_permission rp
+    JOIN public.permission p ON rp.permission_id = p.id
+    WHERE rp.role_id = $1 AND rp.revocation_date IS NULL
+    ORDER BY p.code;
+  `;
+  const { rows } = await db.query(query, [roleId]);
+  return rows.map(row => row.code);
+};
+
+const findParishionerPermissions = async () => {
+  const query = `
+    SELECT p.code
+    FROM public.permission p
+    WHERE p.category = 'PARISHIONER'
+    ORDER BY p.code;
+  `;
+  const { rows } = await db.query(query);
+  return rows.map(row => row.code);
+};
+
 module.exports = {
   create,
   findByEmail,
@@ -165,5 +188,7 @@ module.exports = {
   findUserSessionInfo,
   findParishById,
   findRoleById,
-  isParishAdmin
+  isParishAdmin,
+  findRolePermissions,
+  findParishionerPermissions
 };

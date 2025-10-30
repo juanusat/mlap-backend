@@ -9,9 +9,9 @@ info:
     1.  **`/api/auth/login`**: El usuario inicia sesión. La respuesta incluye su información básica, una lista de parroquias a las que está asociado y un booleano (`is_diocese_user`) que indica si tiene acceso a nivel de diócesis.
     2.  **`/api/auth/select-context`**: Basado en la respuesta anterior, el usuario (desde la UI) elige su contexto de sesión:
         - **Modo Trabajador de Parroquia**: Envía `context_type: 'PARISH'` y el `parishId` correspondiente.
-        - **Modo Feligrés**: Envía `context_type: 'PARISH'` y `parishId: null`.
+        - **Modo Feligrés**: Envía `context_type: 'PARISHIONER'` y `parishId: null`.
         - **Modo Diócesis**: Envía `context_type: 'DIOCESE'`.
-    3.  **`/api/auth/select-role`**: (Opcional, si aplica) Si entró como trabajador de parroquia, selecciona el rol con el que operará. La sesión queda completamente autenticada para realizar gestiones.
+    3.  **`/api/auth/select-role`**: (Opcional, si aplica) Si entró como trabajador de parroquia, selecciona el rol con el que operará. La sesión queda completamente autenticada con los permisos correspondientes almacenados en el JWT.
 
 # Definición de los tags para agrupar los endpoints
 tags:
@@ -85,9 +85,10 @@ paths:
       summary: 'Paso 2: Establecer Contexto de Sesión'
       description: |
         Establece el contexto de trabajo para la sesión actual.
-        - Para operar en una parroquia, usa `context_type: 'PARISH'` y el `parishId`.
-        - Para operar como feligrés general, usa `context_type: 'PARISH'` y `parishId: null`.
+        - Para operar en una parroquia como trabajador, usa `context_type: 'PARISH'` y el `parishId`.
+        - Para operar como feligrés, usa `context_type: 'PARISHIONER'` y `parishId: null`.
         - Para operar como usuario diocesano, usa `context_type: 'DIOCESE'`.
+        El JWT incluirá un arreglo de permisos con los códigos correspondientes al contexto seleccionado.
       security:
         - cookieAuth: []
       requestBody:
@@ -98,7 +99,7 @@ paths:
               $ref: '#/components/schemas/SelectContextRequest'
       responses:
         '200':
-          description: Contexto de sesión establecido. El token de sesión es actualizado.
+          description: Contexto de sesión establecido. El token de sesión es actualizado con los permisos correspondientes.
           headers:
             Set-Cookie:
               $ref: '#/components/headers/SetCookieHeader'
@@ -134,7 +135,7 @@ paths:
       tags:
         - Auth
       summary: 'Paso 3: Seleccionar Rol'
-      description: Establece el rol activo en la sesión del usuario para la parroquia actual. La sesión queda completamente autenticada.
+      description: Establece el rol activo en la sesión del usuario para la parroquia actual. La sesión queda completamente autenticada con los permisos del rol almacenados en el JWT.
       security:
         - cookieAuth: []
       requestBody:
@@ -145,7 +146,7 @@ paths:
               $ref: '#/components/schemas/SelectRoleRequest'
       responses:
         '200':
-          description: Rol seleccionado. La sesión está completamente autenticada.
+          description: Rol seleccionado. La sesión está completamente autenticada con los permisos correspondientes en el JWT.
           headers:
             Set-Cookie:
               $ref: '#/components/headers/SetCookieHeader'
@@ -183,7 +184,7 @@ paths:
       tags:
         - Auth
       summary: Seleccionar rol activo en la sesión
-      description: Establece el rol activo para la sesión actual en la parroquia seleccionada. Recibe un body con { roleId }.
+      description: Establece el rol activo para la sesión actual en la parroquia seleccionada. Actualiza los permisos en el JWT. Recibe un body con { roleId }.
       security:
         - cookieAuth: []
       requestBody:
@@ -198,7 +199,7 @@ paths:
                   type: integer
       responses:
         '200':
-          description: Rol seleccionado. La sesión está completamente autenticada.
+          description: Rol seleccionado. La sesión está completamente autenticada con los permisos actualizados en el JWT.
           headers:
             Set-Cookie:
               $ref: '#/components/headers/SetCookieHeader'
@@ -243,6 +244,7 @@ paths:
         - Foto de perfil (ruta completa)
         - Indicador si es usuario diocesano
         - Indicador si es el administrador/párroco de la parroquia actual
+        - Arreglo de permisos (códigos) disponibles en el contexto actual
       security:
         - cookieAuth: []
       responses:
@@ -387,11 +389,11 @@ components:
         context_type:
           type: string
           description: "Define el tipo de contexto a establecer en la sesión."
-          enum: [PARISH, DIOCESE]
+          enum: [PARISH, PARISHIONER, DIOCESE]
           example: 'PARISH'
         parishId:
           type: integer
-          description: 'ID de la parroquia a activar. Requerido si context_type es PARISH. Enviar `null` para modo feligrés.'
+          description: 'ID de la parroquia a activar. Requerido si context_type es PARISH. Debe ser null para PARISHIONER.'
           nullable: true
           example: 1
     SelectRoleRequest:
@@ -491,7 +493,7 @@ components:
         parish:
           type: object
           nullable: true
-          description: 'Información de la parroquia actual. Null cuando el usuario está en modo feligrés (parishId: null)'
+          description: 'Información de la parroquia actual. Null cuando el usuario está en modo feligrés (context_type: PARISHIONER)'
           properties:
             id:
               type: integer
@@ -513,6 +515,12 @@ components:
             - type: object
               nullable: true
               description: 'Rol actualmente seleccionado en la sesión. Null en modo feligrés o si no se ha seleccionado rol'
+        permissions:
+          type: array
+          description: 'Lista de códigos de permisos disponibles en el contexto actual de la sesión'
+          items:
+            type: string
+          example: ['C_ACTOS_LITURGICOS_ACTOS', 'U_ESTADO_ACTOS_LITURGICOS', 'R_ACTOS_LITURGICOS_ACTOS', 'R_SEGURIDAD_ROL', 'U_SEGURIDAD_ROL_PERMS']
     SessionInfoSuccessResponse:
       allOf:
         - $ref: '#/components/schemas/BaseResponse'
