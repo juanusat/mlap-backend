@@ -1,77 +1,66 @@
 -- permission: Permisos base del sistema
-INSERT INTO public.permission (id, code, name, description, category) VALUES
+INSERT INTO public.permission (id, category, code, name, description) VALUES
 -- Actos Litúrgicos: Gestionar actos litúrgicos
-(1, 'C_ACTOS_LITURGICOS_ACTOS', 'Crear acto litúrgico', 'Permite crear nuevos actos litúrgicos.', 'ACTOS LITÚRGICOS'),
-(2, 'U_ESTADO_ACTOS_LITURGICOS', 'Actualizar estado acto litúrgico', 'Permite cambiar el estado de los actos litúrgicos.', 'ACTOS LITÚRGICOS'),
-(3, 'R_ACTOS_LITURGICOS_ACTOS', 'Leer acto litúrgico', 'Permite visualizar los detalles de los actos litúrgicos.', 'ACTOS LITÚRGICOS'),
-(4, 'U_ACTOS_LITURGICOS_ACTOS', 'Actualizar acto litúrgico', 'Permite modificar la información de los actos litúrgicos.', 'ACTOS LITÚRGICOS'),
-(5, 'D_ACTOS_LITURGICOS_ACTOS', 'Eliminar acto litúrgico', 'Permite eliminar actos litúrgicos.', 'ACTOS LITÚRGICOS'),
+(1, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_ACTOS_C', 'Crear acto litúrgico', 'Permite crear nuevos actos litúrgicos.'),
+(2, 'ACTOS LITÚRGICOS', 'ESTADO_ACTOS_LITURGICOS_U', 'Actualizar estado acto litúrgico', 'Permite cambiar el estado de los actos litúrgicos.'),
+(3, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_ACTOS_R', 'Leer acto litúrgico', 'Permite visualizar los detalles de los actos litúrgicos.'),
+(4, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_ACTOS_U', 'Actualizar acto litúrgico', 'Permite modificar la información de los actos litúrgGICOS.'),
+(5, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_ACTOS_D', 'Eliminar acto litúrgico', 'Permite eliminar actos litúrgicos.'),
 
 -- Actos Litúrgicos: Gestionar requisitos
-(6, 'C_ACTOS_LITURGICOS_REQ', 'Crear requisitos', 'Permite definir nuevos requisitos para actos litúrgicos.', 'ACTOS LITÚRGICOS'),
-(7, 'U_ESTADO_REQ_ACTOS_LIT', 'Actualizar estado requisitos', 'Permite cambiar el estado de los requisitos.', 'ACTOS LITÚRGICOS'),
-(8, 'R_ACTOS_LITURGICOS_REQ', 'Leer requisitos', 'Permite visualizar los requisitos definidos.', 'ACTOS LITÚRGICOS'),
-(9, 'U_ACTOS_LITURGICOS_REQ', 'Actualizar requisitos', 'Permite modificar los requisitos existentes.', 'ACTOS LITÚRGICOS'),
-(10, 'D_ACTOS_LITURGICOS_REQ', 'Eliminar requisitos', 'Permite eliminar requisitos.', 'ACTOS LITÚRGICOS'),
+(6, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_REQ_C', 'Crear requisitos', 'Permite definir nuevos requisitos para actos litúrgicos.'),
+(7, 'ACTOS LITÚRGICOS', 'ESTADO_REQ_ACTOS_LIT_U', 'Actualizar estado requisitos', 'Permite cambiar el estado de los requisitos.'),
+(8, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_REQ_R', 'Leer requisitos', 'Permite visualizar los requisitos definidos.'),
+(9, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_REQ_U', 'Actualizar requisitos', 'Permite modificar los requisitos existentes.'),
+(10, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_REQ_D', 'Eliminar requisitos', 'Permite eliminar requisitos.'),
 
 -- Actos Litúrgicos: Gestionar horarios
-(11, 'C_ACTOS_LITURGICOS_HORA', 'Crear horario', 'Permite definir nuevos horarios de actos litúrgicos.', 'ACTOS LITÚRGICOS'),
-(12, 'U_ACTOS_LITURGICOS_HORA', 'Actualizar horario', 'Permite modificar horarios existentes.', 'ACTOS LITÚRGICOS'),
-(13, 'C_EXCEP_DISP', 'Crear Excepción - Disponibilidad', 'Permite crear excepciones de disponibilidad en el horario.', 'ACTOS LITÚRGICOS'),
-(14, 'U_EXCEP_DISP', 'Actualizar Excepción - Disponibilidad', 'Permite modificar excepciones de disponibilidad existentes.', 'ACTOS LITÚRGICOS'),
-(15, 'D_EXCEP_DISP', 'Eliminar Excepción - Disponibilidad', 'Permite eliminar excepciones de disponibilidad.', 'ACTOS LITÚRGICOS'),
-(16, 'C_EXCEP_NO_DISP', 'Crear Excepción NO - Disponibilidad', 'Permite crear excepciones de NO disponibilidad en el horario.', 'ACTOS LITÚRGICOS'),
-(17, 'U_EXCEP_NO_DISP', 'Actualizar Excepción NO - Disponibilidad', 'Permite modificar excepciones de NO disponibilidad existentes.', 'ACTOS LITÚRGICOS'),
-(18, 'D_EXCEP_NO_DISP', 'Eliminar Excepción NO - Disponibilidad', 'Permite eliminar excepciones de NO disponibilidad.', 'ACTOS LITÚRGICOS'),
+(11, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_C', 'Crear horario', 'Permite definir nuevos horarios de actos litúrgicos.'),
+(12, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_U', 'Actualizar horario', 'Permite modificar horarios existentes.'),
+(13, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_C', 'Crear Excepción - Disponibilidad', 'Permite crear excepciones de disponibilidad en el horario.'),
+(14, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_U', 'Actualizar Excepción - Disponibilidad', 'Permite modificar excepciones de disponibilidad existentes.'),
+(15, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_D', 'Eliminar Excepción - Disponibilidad', 'Permite eliminar excepciones de disponibilidad.'),
+(16, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_C', 'Crear Excepción NO - Disponibilidad', 'Permite crear excepciones de NO disponibilidad en el horario.'),
+(17, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_U', 'Actualizar Excepción NO - Disponibilidad', 'Permite modificar excepciones de NO disponibilidad existentes.'),
+(18, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_D', 'Eliminar Excepción NO - Disponibilidad', 'Permite eliminar excepciones de NO disponibilidad.'),
 
--- Actos Litúrgicos: Gestionar Reservas
-(19, 'R_ACTOS_LITURGICOS_RESER', 'Leer reservas', 'Permite visualizar las reservas gestionadas.', 'ACTOS LITÚRGICOS'),
-(20, 'U_ACTOS_LITURGICOS_RESER', 'Actualizar reservas', 'Permite modificar o cambiar el estado de las reservas gestionadas.', 'ACTOS LITÚRGICOS'),
-
--- Reservas: Reservas pendientes
-(21, 'D_RESERVAS_PEND', 'Eliminar reserva (Pendientes)', 'Permite eliminar o rechazar reservas que están pendientes de aprobación.', 'RESERVAS'),
-
--- Reservas: Historial de reservas
-(22, 'R_RESERVAS_HIST', 'Leer reserva (Historial)', 'Permite visualizar el historial completo de una reserva.', 'RESERVAS'),
-
--- Reservas: Reservar evento
-(23, 'C_RESERVAS_EVENTO', 'Crear reserva', 'Permite generar una nueva solicitud de reserva de evento.', 'RESERVAS'),
+-- Actos Litúrgicos: Gestionar Reservas (Vista TDP)
+(19, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_R', 'Leer reservas', 'Permite visualizar las reservas gestionadas.'),
+(20, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_U', 'Actualizar reservas', 'Permite modificar o cambiar el estado de las reservas gestionadas.'),
 
 -- Seguridad: Gestionar cuentas
-(24, 'C_SEGURIDAD_ASOC_USER', 'Crear asociación usuario', 'Permite asociar un nuevo usuario al sistema.', 'SEGURIDAD'),
-(25, 'U_ESTADO_ASOC_USER', 'Actualizar estado asociación usuario', 'Permite cambiar el estado de la asociación de un usuario.', 'SEGURIDAD'),
-(26, 'R_SEGURIDAD_ASOC_USER', 'Leer asociación usuario', 'Permite visualizar la lista y detalles de las asociaciones de usuarios.', 'SEGURIDAD'),
-(27, 'C_ROL_ASOC_USER', 'Crear rol - asociación usuario', 'Permite asignar un rol a un usuario al momento de la asociación.', 'SEGURIDAD'),
-(28, 'D_SEGURIDAD_ASOC_USER', 'Eliminar asociación usuario', 'Permite desvincular o eliminar la asociación de un usuario.', 'SEGURIDAD'),
+(21, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_C', 'Crear asociación usuario', 'Permite asociar un nuevo usuario al sistema.'),
+(22, 'SEGURIDAD', 'ESTADO_ASOC_USER_U', 'Actualizar estado asociación usuario', 'Permite cambiar el estado de la asociación de un usuario.'),
+(23, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_R', 'Leer asociación usuario', 'Permite visualizar la lista y detalles de las asociaciones de usuarios.'),
+(24, 'SEGURIDAD', 'ROL_ASOC_USER_C', 'Crear rol - asociación usuario', 'Permite asignar un rol a un usuario al momento de la asociación.'),
+(25, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_D', 'Eliminar asociación usuario', 'Permite desvincular o eliminar la asociación de un usuario.'),
 
 -- Seguridad: Gestionar roles
-(29, 'C_SEGURIDAD_ROL', 'Crear rol', 'Permite crear nuevos roles de usuario.', 'SEGURIDAD'),
-(30, 'U_ESTADO_ROL', 'Actualizar estado rol', 'Permite cambiar el estado de un rol (habilitar/deshabilitar).', 'SEGURIDAD'),
-(31, 'R_SEGURIDAD_ROL', 'Leer rol', 'Permite visualizar la lista de roles existentes.', 'SEGURIDAD'),
-(32, 'U_SEGURIDAD_ROL_PERMS', 'Actualizar rol - permisos', 'Permite modificar los permisos asignados a un rol.', 'SEGURIDAD'),
-(33, 'U_SEGURIDAD_ROL_DATA', 'Actualizar rol', 'Permite modificar la información básica de un rol (nombre, descripción).', 'SEGURIDAD'),
-(34, 'D_SEGURIDAD_ROL', 'Eliminar rol', 'Permite eliminar roles.', 'SEGURIDAD'),
+(26, 'SEGURIDAD', 'SEGURIDAD_ROL_C', 'Crear rol', 'Permite crear nuevos roles de usuario.'),
+(27, 'SEGURIDAD', 'ESTADO_ROL_U', 'Actualizar estado rol', 'Permite cambiar el estado de un rol (habilitar/deshabilitar).'),
+(28, 'SEGURIDAD', 'SEGURIDAD_ROL_R', 'Leer rol', 'Permite visualizar la lista de roles existentes.'),
+(29, 'SEGURIDAD', 'SEGURIDAD_ROL_PERMS_U', 'Actualizar rol - permisos', 'Permite modificar los permisos asignados a un rol.'),
+(30, 'SEGURIDAD', 'SEGURIDAD_ROL_DATA_U', 'Actualizar rol', 'Permite modificar la información básica de un rol (nombre, descripción).'),
+(31, 'SEGURIDAD', 'SEGURIDAD_ROL_D', 'Eliminar rol', 'Permite eliminar roles.'),
 
 -- Parroquia: Gestionar cuenta
-(35, 'R_PARROQUIA_INFO', 'Leer información de la parroquia', 'Permite visualizar los datos generales de la parroquia.', 'PARROQUIA'),
-(36, 'U_PARROQUIA_INFO', 'Actualizar información de la parroquia', 'Permite modificar los datos generales de la parroquia.', 'PARROQUIA'),
-(37, 'R_PARROQUIA_DATOS_CUENTA', 'Leer Datos de la cuenta', 'Permite visualizar la información de la cuenta bancaria/financiera de la parroquia.', 'PARROQUIA'),
-(38, 'U_PARROQUIA_DATOS_CUENTA', 'Actualizar Datos de la cuenta', 'Permite modificar la información de la cuenta bancaria/financiera de la parroquia.', 'PARROQUIA'),
+(32, 'PARROQUIA', 'PARROQUIA_INFO_R', 'Leer información de la parroquia', 'Permite visualizar los datos generales de la parroquia.'),
+(33, 'PARROQUIA', 'PARROQUIA_INFO_U', 'Actualizar información de la parroquia', 'Permite modificar los datos generales de la parroquia.'),
+(34, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_R', 'Leer Datos de la cuenta', 'Permite visualizar la información de la cuenta bancaria/financiera de la parroquia.'),
+(35, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_U', 'Actualizar Datos de la cuenta', 'Permite modificar la información de la cuenta bancaria/financiera de la parroquia.'),
 
 -- Parroquia: Gestionar capilla
-(39, 'C_PARROQUIA_CAPILLA', 'Crear capilla', 'Permite registrar una nueva capilla.', 'PARROQUIA'),
-(40, 'U_ESTADO_CAPILLA', 'Actualizar estado capilla', 'Permite cambiar el estado de una capilla (habilitar/deshabilitar).', 'PARROQUIA'),
-(41, 'R_PARROQUIA_CAPILLA', 'Leer capilla', 'Permite visualizar el listado y detalles de las capillas.', 'PARROQUIA'),
-(42, 'U_PARROQUIA_CAPILLA', 'Actualizar capilla', 'Permite modificar la información de una capilla.', 'PARROQUIA'),
-(43, 'D_PARROQUIA_CAPILLA', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.', 'PARROQUIA');
+(36, 'PARROQUIA', 'PARROQUIA_CAPILLA_C', 'Crear capilla', 'Permite registrar una nueva capilla.'),
+(37, 'PARROQUIA', 'ESTADO_CAPILLA_U', 'Actualizar estado capilla', 'Permite cambiar el estado de una capilla (habilitar/deshabilitar).'),
+(38, 'PARROQUIA', 'PARROQUIA_CAPILLA_R', 'Leer capilla', 'Permite visualizar el listado y detalles de las capillas.'),
+(39, 'PARROQUIA', 'PARROQUIA_CAPILLA_U', 'Actualizar capilla', 'Permite modificar la información de una capilla.'),
+(40, 'PARROQUIA', 'PARROQUIA_CAPILLA_D', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.');
 
 -- document_type: Tipos de documento de identidad
 INSERT INTO public.document_type (id, code, name, active, description, created_at, updated_at) VALUES
 (1, 'DNI', 'Documento Nacional de Identidad', TRUE, 'Documento principal de identificación para ciudadanos.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (2, 'PASAPORTE', 'Pasaporte', TRUE, 'Documento de identificación utilizado para viajes internacionales.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
 (3, 'CE', 'Carné de Extranjería', TRUE, 'Documento de identificación para residentes extranjeros en el país.', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
-
-
 
 -- ====================================================================
 -- INSERCIÓN DE PERSONAS Y USUARIOS
@@ -392,17 +381,17 @@ INSERT INTO public.chapel_event_requirement (id, chapel_event_id, name, descript
 
 -- Reservas realizadas por los feligreses
 -- María Gonzales hace varias reservas
-INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
 -- María reserva un bautismo individual en San José Obrero
-(1, 5, 1, 5, '2025-11-15', '10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00),
+(1, 5, 1, 5, '2025-11-15', '10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
 -- María reserva una primera comunión en Sagrado Corazón
-(2, 5, 21, 5, '2025-12-08', '11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00),
+(2, 5, 21, 5, '2025-12-08', '11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00, 'María Gonzales Ramos'),
 
 -- Carlos Mendoza hace sus reservas
 -- Carlos reserva un matrimonio en Nuestra Señora de Fátima
-(3, 6, 11, 6, '2025-12-20', '16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00),
+(3, 6, 11, 6, '2025-12-20', '16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00, 'Carlos Mendoza Lopez'),
 -- Carlos reserva una bendición de casa en San Pedro Apóstol
-(4, 6, 17, 6, '2025-11-05', '15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00);
+(4, 6, 17, 6, '2025-11-05', '15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00, 'Carlos Mendoza Lopez');
 
 -- Requisitos de la reserva 1: Bautismo Individual de María
 -- Se copian TODOS los base_requirement del evento Bautismo (event_id=1) + los chapel_event_requirement
@@ -704,24 +693,22 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 -- RESERVAS DE USUARIO 5: María Gonzales
 -- ====================================================================
 
--- Reservas pendientes (RESERVED, IN_PROGRESS) - Fechas futuras
-INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
-(100, 5, 1, 5, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00),
-(101, 5, 3, 5, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00),
-(102, 5, 7, 5, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00),
-(103, 5, 15, 5, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00),
-(104, 5, 21, 5, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00);
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
+(100, 5, 1, 5, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
+(101, 5, 3, 5, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00, 'María Gonzales Ramos'),
+(102, 5, 7, 5, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00, 'María Gonzales Ramos'),
+(103, 5, 15, 5, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00, 'María Gonzales Ramos'),
+(104, 5, 21, 5, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00, 'María Gonzales Ramos');
 
--- Reservas históricas (COMPLETED, FULFILLED, CANCELLED, REJECTED) - Fechas pasadas
-INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
-(105, 5, 2, 5, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00),
-(106, 5, 9, 5, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00),
-(107, 5, 17, 5, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00),
-(108, 5, 13, 5, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00),
-(109, 5, 18, 5, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00),
-(110, 5, 19, 5, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00),
-(111, 5, 23, 5, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00),
-(112, 5, 20, 5, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00);
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
+(105, 5, 2, 5, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00, 'María Gonzales Ramos'),
+(106, 5, 9, 5, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00, 'María Gonzales Ramos'),
+(107, 5, 17, 5, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00, 'María Gonzales Ramos'),
+(108, 5, 13, 5, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00, 'María Gonzales Ramos'),
+(109, 5, 18, 5, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00, 'María Gonzales Ramos'),
+(110, 5, 19, 5, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00, 'María Gonzales Ramos'),
+(111, 5, 23, 5, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
+(112, 5, 20, 5, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00, 'María Gonzales Ramos');
 
 -- Requisitos para reserva 100: Bautismo Individual (event_id=1, chapel_event_id=1)
 INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES

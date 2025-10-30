@@ -28,6 +28,10 @@ components:
           type: integer
           description: ID de la reserva.
           example: 1
+        beneficiary_full_name:
+          type: string
+          description: Nombre completo del beneficiario de la reserva.
+          example: Carlos Mendoza Lopez
         event_name:
           type: string
           description: Nombre de la variante de evento (Acto Litúrgico).
@@ -98,6 +102,10 @@ components:
         id:
           type: integer
           example: 1
+        beneficiary_full_name:
+          type: string
+          description: Nombre completo del beneficiario de la reserva.
+          example: Carlos Mendoza Lopez
         event_variant_name:
           type: string
           example: Unción de los Enfermos
@@ -210,6 +218,7 @@ paths:
                 message: "Historial de reservas obtenido exitosamente"
                 data:
                   - id: 1
+                    beneficiary_full_name: Carlos Mendoza Lopez
                     event_name: Unción de los Enfermos
                     event_date: 2024-12-19
                     paid_amount: 283.00
@@ -242,6 +251,7 @@ paths:
                 message: "Búsqueda en historial completada exitosamente"
                 data:
                   - id: 1
+                    beneficiary_full_name: Carlos Mendoza Lopez
                     event_name: Unción de los Enfermos
                     event_date: 2024-12-19
                     paid_amount: 283.00
@@ -275,6 +285,7 @@ paths:
                 message: "Detalles de la reserva obtenidos exitosamente"
                 data:
                   id: 1
+                  beneficiary_full_name: Carlos Mendoza Lopez
                   event_variant_name: Unción de los Enfermos
                   event_date: 2024-12-19
                   status: CANCELLED

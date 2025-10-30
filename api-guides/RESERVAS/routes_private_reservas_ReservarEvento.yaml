@@ -323,6 +323,7 @@ paths:
                 data:
                   reservation_id: 1234
                   status: "RESERVED"
+                  beneficiary_full_name: "María Gonzales Ramos"
                   confirmation_message: "Su reserva ha sido confirmada para Matrimonio individual el día 30/09/2025 a las 08:00 a.m."
                 error: ""
                 traceback: ""

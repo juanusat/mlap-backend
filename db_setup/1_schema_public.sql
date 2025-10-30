@@ -279,16 +279,11 @@ CREATE TABLE IF NOT EXISTS public.reservation (
     paid_amount DECIMAL(10,2) DEFAULT 0.00,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
+    beneficiary_full_name VARCHAR(120) NOT NULL,
     CONSTRAINT reservation_pkey PRIMARY KEY (id),
     CONSTRAINT fk_reservation_user FOREIGN KEY (user_id) REFERENCES "user"(id) ON DELETE CASCADE,
-    CONSTRAINT fk_reservation_event_variant FOREIGN KEY (event_variant_id) REFERENCES event_variant(id) ON DELETE CASCADE,
-    CONSTRAINT fk_reservation_person FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE
+    CONSTRAINT fk_reservation_event_variant FOREIGN KEY (event_variant_id) REFERENCES event_variant(id) ON DELETE CASCADE
 );
-
-COMMENT ON COLUMN public.reservation.user_id IS 'Usuario que realizó la reserva';
-COMMENT ON COLUMN public.reservation.event_date IS 'Fecha del evento (solo fecha, sin hora)';
-COMMENT ON COLUMN public.reservation.event_time IS 'Hora del evento';
 
 -- ====================================================================
 -- TABLAS DE REQUISITOS
