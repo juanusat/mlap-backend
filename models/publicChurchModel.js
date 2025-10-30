@@ -10,6 +10,7 @@ class PublicChurchModel {
         c.name,
         c.address,
         c.coordinates,
+        c.parish_id as parroquia_padre_id,
         CASE 
           WHEN c.chapel_base = true THEN 'PARROQUIA'
           ELSE 'CAPILLA'
@@ -48,18 +49,32 @@ class PublicChurchModel {
     };
   }
 
-  static async getParishWithChapels(parishId) {
+  static async getParishWithChapels(chapelBaseId) {
+    // Primero obtenemos la capilla base (parroquia) por su ID
     const parishQuery = `
       SELECT 
         c.id,
         c.name,
         c.address,
         c.coordinates,
+        c.parish_id,
         'PARROQUIA' as type
       FROM public.chapel c
-      WHERE c.parish_id = $1 AND c.chapel_base = true AND c.active = true
+      WHERE c.id = $1 AND c.chapel_base = true AND c.active = true
     `;
     
+    const parishResult = await db.query(parishQuery, [chapelBaseId]);
+    
+    if (parishResult.rows.length === 0) {
+      return {
+        selected_parish: null,
+        chapels: []
+      };
+    }
+    
+    const parish = parishResult.rows[0];
+    
+    // Ahora buscamos todas las capillas que pertenecen a esta parroquia
     const chapelsQuery = `
       SELECT 
         c.id,
@@ -72,13 +87,10 @@ class PublicChurchModel {
       ORDER BY c.id
     `;
     
-    const [parishResult, chapelsResult] = await Promise.all([
-      db.query(parishQuery, [parishId]),
-      db.query(chapelsQuery, [parishId])
-    ]);
+    const chapelsResult = await db.query(chapelsQuery, [parish.parish_id]);
     
     return {
-      selected_parish: parishResult.rows[0] || null,
+      selected_parish: parish,
       chapels: chapelsResult.rows
     };
   }
