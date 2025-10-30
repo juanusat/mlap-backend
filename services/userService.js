@@ -1,5 +1,4 @@
 const pool = require('../db');
-const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const path = require('path');
 const fs = require('fs').promises;
@@ -121,7 +120,7 @@ const updateCredentials = async (userId, data) => {
     userValues.push(username);
   }
   if (new_password) {
-    const hashedPassword = await bcrypt.hash(new_password, 10);
+    const hashedPassword = crypto.createHash('sha256').update(new_password).digest('hex');
     userUpdates.push(`password_hash = $${userParamCount++}`);
     userValues.push(hashedPassword);
   }

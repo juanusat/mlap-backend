@@ -144,6 +144,21 @@ class ChapelModel {
       throw new Error('No se puede eliminar la capilla base de la parroquia');
     }
 
+    const reservationCheckQuery = `
+      SELECT COUNT(*) as count
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      WHERE ce.chapel_id = $1 
+        AND r.status IN ('RESERVED', 'IN_PROGRESS')
+    `;
+    const reservationResult = await db.query(reservationCheckQuery, [id]);
+    const reservationCount = parseInt(reservationResult.rows[0].count);
+
+    if (reservationCount > 0) {
+      throw new Error('No se puede eliminar la capilla porque tiene reservas activas (reservadas o en progreso)');
+    }
+
     const query = `DELETE FROM public.chapel WHERE id = $1 AND parish_id = $2 RETURNING id`;
     const result = await db.query(query, [id, parishId]);
     return result.rows[0];
