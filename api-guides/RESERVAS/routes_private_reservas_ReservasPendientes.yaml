@@ -28,6 +28,10 @@ components:
           type: integer
           description: ID de la reserva.
           example: 1
+        beneficiary_full_name:
+          type: string
+          description: Nombre completo del beneficiario de la reserva.
+          example: María Gonzales Ramos
         event_name:
           type: string
           description: Nombre de la variante de evento (Acto Litúrgico).
@@ -159,10 +163,13 @@ paths:
                 message: "Reservas pendientes obtenidas exitosamente"
                 data:
                   - id: 1
+                    beneficiary_full_name: María Gonzales Ramos
                     event_name: Confirmación
                     event_date: '2025-01-13'
                     paid_amount: 346.00
                     status: RESERVED
+                    chapel_name: Capilla San José
+                    parish_name: Parroquia Central
                 error: ""
                 traceback: ""
                 meta:
@@ -191,10 +198,13 @@ paths:
                 message: "Búsqueda de reservas pendientes completada exitosamente"
                 data:
                   - id: 1
+                    beneficiary_full_name: María Gonzales Ramos
                     event_name: Confirmación
                     event_date: '2025-01-13'
                     paid_amount: 346.00
                     status: RESERVED
+                    chapel_name: Capilla San José
+                    parish_name: Parroquia Central
                 error: ""
                 traceback: ""
                 meta:

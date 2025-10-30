@@ -381,17 +381,17 @@ INSERT INTO public.chapel_event_requirement (id, chapel_event_id, name, descript
 
 -- Reservas realizadas por los feligreses
 -- María Gonzales hace varias reservas
-INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
 -- María reserva un bautismo individual en San José Obrero
-(1, 5, 1, 5, '2025-11-15', '10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00),
+(1, 5, 1, 5, '2025-11-15', '10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
 -- María reserva una primera comunión en Sagrado Corazón
-(2, 5, 21, 5, '2025-12-08', '11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00),
+(2, 5, 21, 5, '2025-12-08', '11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00, 'María Gonzales Ramos'),
 
 -- Carlos Mendoza hace sus reservas
 -- Carlos reserva un matrimonio en Nuestra Señora de Fátima
-(3, 6, 11, 6, '2025-12-20', '16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00),
+(3, 6, 11, 6, '2025-12-20', '16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00, 'Carlos Mendoza Lopez'),
 -- Carlos reserva una bendición de casa en San Pedro Apóstol
-(4, 6, 17, 6, '2025-11-05', '15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00);
+(4, 6, 17, 6, '2025-11-05', '15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00, 'Carlos Mendoza Lopez');
 
 -- Requisitos de la reserva 1: Bautismo Individual de María
 -- Se copian TODOS los base_requirement del evento Bautismo (event_id=1) + los chapel_event_requirement
@@ -693,24 +693,22 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 -- RESERVAS DE USUARIO 5: María Gonzales
 -- ====================================================================
 
--- Reservas pendientes (RESERVED, IN_PROGRESS) - Fechas futuras
-INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
-(100, 5, 1, 5, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00),
-(101, 5, 3, 5, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00),
-(102, 5, 7, 5, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00),
-(103, 5, 15, 5, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00),
-(104, 5, 21, 5, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00);
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
+(100, 5, 1, 5, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
+(101, 5, 3, 5, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00, 'María Gonzales Ramos'),
+(102, 5, 7, 5, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00, 'María Gonzales Ramos'),
+(103, 5, 15, 5, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00, 'María Gonzales Ramos'),
+(104, 5, 21, 5, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00, 'María Gonzales Ramos');
 
--- Reservas históricas (COMPLETED, FULFILLED, CANCELLED, REJECTED) - Fechas pasadas
-INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount) VALUES
-(105, 5, 2, 5, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00),
-(106, 5, 9, 5, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00),
-(107, 5, 17, 5, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00),
-(108, 5, 13, 5, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00),
-(109, 5, 18, 5, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00),
-(110, 5, 19, 5, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00),
-(111, 5, 23, 5, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00),
-(112, 5, 20, 5, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00);
+INSERT INTO public.reservation (id, user_id, event_variant_id, person_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
+(105, 5, 2, 5, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00, 'María Gonzales Ramos'),
+(106, 5, 9, 5, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00, 'María Gonzales Ramos'),
+(107, 5, 17, 5, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00, 'María Gonzales Ramos'),
+(108, 5, 13, 5, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00, 'María Gonzales Ramos'),
+(109, 5, 18, 5, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00, 'María Gonzales Ramos'),
+(110, 5, 19, 5, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00, 'María Gonzales Ramos'),
+(111, 5, 23, 5, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
+(112, 5, 20, 5, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00, 'María Gonzales Ramos');
 
 -- Requisitos para reserva 100: Bautismo Individual (event_id=1, chapel_event_id=1)
 INSERT INTO public.reservation_requirement (id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed) VALUES

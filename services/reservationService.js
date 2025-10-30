@@ -101,6 +101,7 @@ class ReservationService {
     return {
       reservation_id: reservation.id,
       status: reservation.status,
+      beneficiary_full_name: reservation.beneficiary_full_name || reservationInfo.beneficiary_full_name || null,
       confirmation_message: `Su reserva ha sido confirmada para ${reservationInfo.event_name} el día ${dateFormatted} a las ${timeFormatted}`
     };
   }

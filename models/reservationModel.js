@@ -115,18 +115,23 @@ class ReservationModel {
     
     const personId = userResult.rows[0].person_id;
     
+    const personQuery2 = `SELECT first_names, paternal_surname, maternal_surname FROM public.person WHERE id = $1`;
+    const personRes = await db.query(personQuery2, [personId]);
+    const personRow = personRes.rows[0] || {};
+    const beneficiaryFullName = `${personRow.first_names || ''} ${personRow.paternal_surname || ''}${personRow.maternal_surname ? ' ' + personRow.maternal_surname : ''}`.trim();
+
     const query = `
       INSERT INTO public.reservation (
         id, user_id, person_id, event_variant_id, event_date, event_time, 
-        status, registration_date, created_at, updated_at
+        status, registration_date, created_at, updated_at, beneficiary_full_name
       )
       VALUES (
         (SELECT COALESCE(MAX(id), 0) + 1 FROM public.reservation),
-        $1, $2, $3, $4, $5, 'RESERVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        $1, $2, $3, $4, $5, 'RESERVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $6
       )
-      RETURNING id, user_id, person_id, event_variant_id, event_date, event_time, status, created_at
+      RETURNING id, user_id, person_id, event_variant_id, event_date, event_time, status, created_at, beneficiary_full_name
     `;
-    const values = [userId, personId, eventVariantId, eventDate, eventTime];
+    const values = [userId, personId, eventVariantId, eventDate, eventTime, beneficiaryFullName];
     const result = await db.query(query, values);
     return result.rows[0];
   }
@@ -140,6 +145,7 @@ class ReservationModel {
     const query = `
       SELECT 
         r.id as reservation_id,
+        r.beneficiary_full_name,
         r.status,
         r.event_date,
         r.event_time,
@@ -160,7 +166,24 @@ class ReservationModel {
       WHERE r.id = $1
     `;
     const result = await db.query(query, [reservationId]);
-    return result.rows[0];
+    const row = result.rows[0];
+    if (!row) return null;
+    // Preferir beneficiary_full_name si está presente, sino construir desde person
+    const beneficiary = row.beneficiary_full_name && row.beneficiary_full_name.trim().length > 0
+      ? row.beneficiary_full_name
+      : `${row.first_names || ''} ${row.paternal_surname || ''}${row.maternal_surname ? ' ' + row.maternal_surname : ''}`.trim();
+
+    return {
+      reservation_id: row.reservation_id,
+      status: row.status,
+      event_date: row.event_date,
+      event_time: row.event_time,
+      event_name: row.event_name,
+      event_description: row.event_description,
+      chapel_name: row.chapel_name,
+      parish_name: row.parish_name,
+      beneficiary_full_name: beneficiary
+    };
   }
 
   /**
@@ -279,6 +302,7 @@ class ReservationModel {
     const query = `
       SELECT 
         r.id,
+        r.beneficiary_full_name,
         ev.name as event_name,
         r.event_date,
         COALESCE(r.paid_amount, 0) as paid_amount,
@@ -334,6 +358,7 @@ class ReservationModel {
     const query = `
       SELECT 
         r.id,
+        r.beneficiary_full_name,
         ev.name as event_name,
         r.event_date,
         COALESCE(r.paid_amount, 0) as paid_amount,
@@ -421,6 +446,7 @@ class ReservationModel {
     const query = `
       SELECT 
         r.id,
+        r.beneficiary_full_name,
         ev.name as event_name,
         r.event_date,
         r.paid_amount,
@@ -506,6 +532,7 @@ class ReservationModel {
     const query = `
       SELECT 
         r.id,
+        r.beneficiary_full_name,
         ev.name as event_variant_name,
         r.event_date,
         r.status,
@@ -544,6 +571,7 @@ class ReservationModel {
 
     return {
       id: reservation.id,
+      beneficiary_full_name: reservation.beneficiary_full_name,
       event_variant_name: reservation.event_variant_name,
       event_date: reservation.event_date,
       status: reservation.status,
