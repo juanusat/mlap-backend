@@ -270,7 +270,6 @@ CREATE TABLE IF NOT EXISTS public.reservation (
     id INTEGER NOT NULL,
     user_id INTEGER NOT NULL,
     event_variant_id INTEGER NOT NULL,
-    person_id INTEGER NOT NULL,
     event_date DATE NOT NULL,
     event_time TIME NOT NULL,
     reschedule_date TIMESTAMP,
