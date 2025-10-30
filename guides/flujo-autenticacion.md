@@ -46,7 +46,7 @@
 O para modo feligrés:
 ```json
 {
-  "context_type": "PARISH", 
+  "context_type": "PARISHIONER", 
   "parishId": null
 }
 ```
@@ -56,6 +56,7 @@ O para modo diócesis:
   "context_type": "DIOCESE"
 }
 ```
+**Nota:** El JWT se actualiza con los permisos correspondientes al contexto seleccionado.
 
 ### Paso 4: Obtener Roles (`GET /api/auth/roles`)
 **Respuesta:**
@@ -70,6 +71,21 @@ O para modo diócesis:
 ```json
 {
   "roleId": 2
+}
+```
+**Respuesta:** El JWT se actualiza con los permisos del rol seleccionado.
+```json
+{
+  "message": "Operación exitosa",
+  "data": {
+    "permissions": [
+      "C_ACTOS_LITURGICOS_ACTOS",
+      "U_ESTADO_ACTOS_LITURGICOS",
+      "R_ACTOS_LITURGICOS_ACTOS",
+      "R_SEGURIDAD_ROL",
+      "U_SEGURIDAD_ROL_PERMS"
+    ]
+  }
 }
 ```
 

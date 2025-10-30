@@ -65,15 +65,25 @@ const selectContext = async (req, res, next) => {
         const { userId } = req.user;
 
         let tokenPayload;
+        let permissions = [];
         
         if (context_type === 'DIOCESE') {
-            tokenPayload = { userId, context_type: 'DIOCESE', parishId: null };
+            tokenPayload = { userId, context_type: 'DIOCESE', parishId: null, permissions };
         } else if (context_type === 'PARISH') {
-            tokenPayload = { userId, context_type: 'PARISH', parishId: parishId || null };
+            if (!parishId) {
+                return res.status(400).json({
+                    message: 'Solicitud incorrecta',
+                    error: 'parishId es requerido cuando context_type es PARISH'
+                });
+            }
+            tokenPayload = { userId, context_type: 'PARISH', parishId, permissions };
+        } else if (context_type === 'PARISHIONER') {
+            permissions = await userModel.findParishionerPermissions();
+            tokenPayload = { userId, context_type: 'PARISHIONER', parishId: null, permissions };
         } else {
             return res.status(400).json({
                 message: 'Solicitud incorrecta',
-                error: 'context_type debe ser PARISH o DIOCESE'
+                error: 'context_type debe ser PARISH, PARISHIONER o DIOCESE'
             });
         }
 
@@ -99,7 +109,9 @@ const selectRole = async (req, res, next) => {
             });
         }
 
-        const tokenPayload = { userId, context_type, parishId, roleId };
+        const permissions = await userModel.findRolePermissions(roleId);
+
+        const tokenPayload = { userId, context_type, parishId, roleId, permissions };
         const finalToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
 
         res.cookie('session_token', finalToken, cookieOptions);
@@ -142,7 +154,7 @@ const getRolesForCurrentParish = async (req, res, next) => {
 
 const getSession = async (req, res, next) => {
     try {
-        const { userId, parishId, context_type, roleId } = req.user;
+        const { userId, parishId, context_type, roleId, permissions } = req.user;
 
         const userInfo = await userModel.findUserSessionInfo(userId);
         if (!userInfo) {
@@ -153,7 +165,6 @@ const getSession = async (req, res, next) => {
 
         const fullName = `${userInfo.first_names} ${userInfo.paternal_surname}${userInfo.maternal_surname ? ' ' + userInfo.maternal_surname : ''}`.trim();
         
-        // Si no hay foto, enviar null para que el frontend genere el avatar con iniciales
         const profilePhoto = userInfo.profile_photo || null;
         
         let parishInfo = null;
@@ -171,7 +182,7 @@ const getSession = async (req, res, next) => {
             }
         }
 
-        const tokenPayload = { userId, context_type, parishId, roleId };
+        const tokenPayload = { userId, context_type, parishId, roleId, permissions: permissions || [] };
         const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
         res.cookie('session_token', newToken, cookieOptions);
 
@@ -189,7 +200,8 @@ const getSession = async (req, res, next) => {
                     name: parishInfo.name
                 } : null,
                 available_roles: availableRoles,
-                current_role: currentRole
+                current_role: currentRole,
+                permissions: permissions || []
             }
         });
     } catch (error) {
