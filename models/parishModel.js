@@ -340,7 +340,7 @@ class ParishModel {
       const personIdResult = await client.query(personIdQuery, [adminUserId]);
       const personId = personIdResult.rows[0].person_id;
 
-      await client.query(`DELETE FROM public.association WHERE chapel_id = $1`, [chapelId]);
+      await client.query(`DELETE FROM public.association WHERE parish_id = $1`, [id]);
 
       await client.query(`DELETE FROM public.chapel WHERE id = $1`, [chapelId]);
 
