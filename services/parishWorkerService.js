@@ -118,8 +118,8 @@ const inviteWorker = async (parishId, email) => {
   }
   
   const result = await pool.query(
-    `INSERT INTO association (user_id, parish_id, start_date, active)
-     VALUES ($1, $2, CURRENT_DATE, true)
+    `INSERT INTO association (id, user_id, parish_id, start_date, active)
+     VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM association), $1, $2, CURRENT_DATE, true)
      RETURNING id`,
     [person.user_id, parishId]
   );
