@@ -195,8 +195,8 @@ const assignRole = async (associationId, roleId) => {
   }
   
   await pool.query(
-    `INSERT INTO user_role (association_id, role_id, assignment_date)
-     VALUES ($1, $2, CURRENT_DATE)`,
+    `INSERT INTO user_role (id, association_id, role_id, assignment_date)
+     VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM user_role), $1, $2, CURRENT_DATE)`,
     [associationId, roleId]
   );
 };
