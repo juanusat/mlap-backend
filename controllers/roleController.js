@@ -215,6 +215,10 @@ const updateRolePermissions = async (req, res) => {
     const { roleId } = req.params;
     const { permissions } = req.body;
 
+    console.log('=== CONTROLLER updateRolePermissions ===');
+    console.log('Role ID:', roleId);
+    console.log('Permissions array length:', permissions?.length);
+
     if (!Array.isArray(permissions)) {
       return res.status(400).json({
         message: 'El campo permissions es requerido y debe ser un array',
@@ -227,6 +231,8 @@ const updateRolePermissions = async (req, res) => {
       parseInt(roleId),
       permissions
     );
+
+    console.log('Updated count from service:', updatedCount);
 
     res.status(200).json({
       message: 'Permisos del rol actualizados exitosamente.',
