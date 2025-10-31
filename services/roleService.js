@@ -195,6 +195,9 @@ const updateRolePermissions = async (roleId, permissions) => {
     await client.query('BEGIN');
     
     let updatedCount = 0;
+    let activatedCount = 0;
+    let deactivatedCount = 0;
+    let noChangeCount = 0;
     
     for (const permission of permissions) {
       const existingPerm = await client.query(
@@ -207,7 +210,7 @@ const updateRolePermissions = async (roleId, permissions) => {
         const currentGranted = existingPerm.rows[0].granted;
         
         if (permission.granted && !currentGranted) {
-          console.log(`Activando permiso ${permission.permission_id}`);
+          console.log(`✅ Activando permiso ${permission.permission_id} (era false, ahora true)`);
           await client.query(
             `UPDATE role_permission 
              SET granted = true, 
@@ -217,9 +220,10 @@ const updateRolePermissions = async (roleId, permissions) => {
              WHERE role_id = $1 AND permission_id = $2`,
             [roleId, permission.permission_id]
           );
+          activatedCount++;
           updatedCount++;
         } else if (!permission.granted && currentGranted) {
-          console.log(`Desactivando permiso ${permission.permission_id}`);
+          console.log(`❌ Desactivando permiso ${permission.permission_id} (era true, ahora false)`);
           await client.query(
             `UPDATE role_permission 
              SET granted = false,
@@ -228,11 +232,15 @@ const updateRolePermissions = async (roleId, permissions) => {
              WHERE role_id = $1 AND permission_id = $2`,
             [roleId, permission.permission_id]
           );
+          deactivatedCount++;
           updatedCount++;
+        } else {
+          console.log(`⏸️  Sin cambio en permiso ${permission.permission_id} (granted=${currentGranted})`);
+          noChangeCount++;
         }
       } else {
         if (permission.granted) {
-          console.log(`Insertando permiso ${permission.permission_id} como activo`);
+          console.log(`➕ Insertando permiso ${permission.permission_id} como activo`);
           await client.query(
             `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
              VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, true, CURRENT_DATE)`,
@@ -240,7 +248,7 @@ const updateRolePermissions = async (roleId, permissions) => {
           );
           updatedCount++;
         } else {
-          console.log(`Insertando permiso ${permission.permission_id} como inactivo`);
+          console.log(`➕ Insertando permiso ${permission.permission_id} como inactivo`);
           await client.query(
             `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
              VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, false, NULL)`,
@@ -251,7 +259,7 @@ const updateRolePermissions = async (roleId, permissions) => {
     }
     
     await client.query('COMMIT');
-    console.log(`Total de cambios realizados: ${updatedCount}`);
+    console.log(`📊 RESUMEN: Activados=${activatedCount}, Desactivados=${deactivatedCount}, Sin cambios=${noChangeCount}, Total actualizados=${updatedCount}`);
     return updatedCount;
   } catch (error) {
     await client.query('ROLLBACK');
