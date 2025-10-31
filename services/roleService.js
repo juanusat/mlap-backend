@@ -159,6 +159,9 @@ const deleteRole = async (roleId) => {
 };
 
 const getRolePermissions = async (roleId) => {
+  console.log('=== getRolePermissions SERVICE ===');
+  console.log('Role ID:', roleId);
+  
   const result = await pool.query(
     `SELECT 
       p.id as permission_id,
@@ -172,14 +175,26 @@ const getRolePermissions = async (roleId) => {
     [roleId]
   );
   
+  console.log('Total permisos encontrados:', result.rows.length);
+  console.log('Permisos con granted=true:', result.rows.filter(r => r.granted).length);
+  console.log('Primeros 5 permisos:', result.rows.slice(0, 5));
+  
   return result.rows;
 };
 
 const updateRolePermissions = async (roleId, permissions) => {
+  console.log('=== updateRolePermissions SERVICE ===');
+  console.log('Role ID:', roleId);
+  console.log('Permisos a actualizar:', permissions.length);
+  console.log('Permisos con granted=true:', permissions.filter(p => p.granted).length);
+  console.log('Primeros 5 permisos:', permissions.slice(0, 5));
+  
   const client = await pool.getClient();
   
   try {
     await client.query('BEGIN');
+    
+    let updatedCount = 0;
     
     for (const permission of permissions) {
       const existingPerm = await client.query(
@@ -192,6 +207,7 @@ const updateRolePermissions = async (roleId, permissions) => {
         const currentGranted = existingPerm.rows[0].granted;
         
         if (permission.granted && !currentGranted) {
+          console.log(`Activando permiso ${permission.permission_id}`);
           await client.query(
             `UPDATE role_permission 
              SET granted = true, 
@@ -201,7 +217,9 @@ const updateRolePermissions = async (roleId, permissions) => {
              WHERE role_id = $1 AND permission_id = $2`,
             [roleId, permission.permission_id]
           );
+          updatedCount++;
         } else if (!permission.granted && currentGranted) {
+          console.log(`Desactivando permiso ${permission.permission_id}`);
           await client.query(
             `UPDATE role_permission 
              SET granted = false,
@@ -210,15 +228,19 @@ const updateRolePermissions = async (roleId, permissions) => {
              WHERE role_id = $1 AND permission_id = $2`,
             [roleId, permission.permission_id]
           );
+          updatedCount++;
         }
       } else {
         if (permission.granted) {
+          console.log(`Insertando permiso ${permission.permission_id} como activo`);
           await client.query(
             `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
              VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, true, CURRENT_DATE)`,
             [roleId, permission.permission_id]
           );
+          updatedCount++;
         } else {
+          console.log(`Insertando permiso ${permission.permission_id} como inactivo`);
           await client.query(
             `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
              VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, false, NULL)`,
@@ -229,9 +251,11 @@ const updateRolePermissions = async (roleId, permissions) => {
     }
     
     await client.query('COMMIT');
-    return permissions.filter(p => p.granted).length;
+    console.log(`Total de cambios realizados: ${updatedCount}`);
+    return updatedCount;
   } catch (error) {
     await client.query('ROLLBACK');
+    console.error('Error en updateRolePermissions:', error);
     throw error;
   } finally {
     client.release();
