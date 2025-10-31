@@ -16,8 +16,8 @@ const register = async (userData) => {
     paternal_surname: userData.paternal_surname,
     maternal_surname: userData.maternal_surname,
     email: userData.email,
-    type_doc_id: userData.document_type_id,
-    doc_value: userData.document,
+    document_type_id: userData.document_type_id,
+    document: userData.document,
     username: userData.username,
     password_hash: passwordHash
   });
