@@ -229,6 +229,10 @@ paths:
                   type: string
                   description: Dirección.
                   example: Av. Principal 101
+                coordinates:
+                  type: string
+                  description: Coordenadas (latitud, longitud).
+                  example: -6.752588, -79.850562
                 phone:
                   type: string
                   description: Teléfono/Celular.
@@ -302,6 +306,10 @@ paths:
                           type: string
                           description: Dirección de la Capilla.
                           example: Dirección de la Capilla 1
+                        coordinates:
+                          type: string
+                          description: Coordenadas de la Capilla.
+                          example: -6.752588, -79.850562
                         active:
                           type: boolean
                           description: Estado de la Capilla.
@@ -360,6 +368,10 @@ paths:
                         type: string
                         description: Dirección de la Capilla.
                         example: Dirección de la Capilla 1
+                      coordinates:
+                        type: string
+                        description: Coordenadas de la Capilla.
+                        example: -6.752588, -79.850562
                       phone:
                         type: string
                         description: Teléfono/Celular.
@@ -405,6 +417,9 @@ paths:
                 address:
                   type: string
                   example: Nueva Dirección MOD
+                coordinates:
+                  type: string
+                  example: -6.752588, -79.850562
                 phone:
                   type: string
                   example: 999111222
