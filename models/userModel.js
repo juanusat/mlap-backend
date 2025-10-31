@@ -7,8 +7,8 @@ const create = async (userData) => {
     await client.query('BEGIN');
     
     const personQuery = `
-      INSERT INTO public.person (first_names, paternal_surname, maternal_surname, email, document_type_id, document)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO public.person (id, first_names, paternal_surname, maternal_surname, email, document_type_id, document)
+      VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM person), $1, $2, $3, $4, $5, $6)
       RETURNING id;
     `;
     const personResult = await client.query(personQuery, [
@@ -23,8 +23,8 @@ const create = async (userData) => {
     const personId = personResult.rows[0].id;
     
     const userQuery = `
-      INSERT INTO public.user (person_id, username, password_hash, active)
-      VALUES ($1, $2, $3, TRUE)
+      INSERT INTO public.user (id, person_id, username, password_hash, active)
+      VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM "user"), $1, $2, $3, TRUE)
       RETURNING id;
     `;
     const userResult = await client.query(userQuery, [
