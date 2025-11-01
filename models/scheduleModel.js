@@ -12,10 +12,9 @@ class ScheduleModel {
         chapel_id,
         day_of_week,
         start_time,
-        end_time,
-        active
+        end_time
       FROM public.general_schedule
-      WHERE chapel_id = $1 AND active = TRUE
+      WHERE chapel_id = $1
       ORDER BY day_of_week, start_time
     `;
     const result = await db.query(query, [chapelId]);
@@ -38,11 +37,11 @@ class ScheduleModel {
         for (const schedule of schedules) {
           const insertQuery = `
             INSERT INTO public.general_schedule (
-              id, chapel_id, day_of_week, start_time, end_time, active, created_at, updated_at
+              id, chapel_id, day_of_week, start_time, end_time, created_at, updated_at
             )
             VALUES (
               (SELECT COALESCE(MAX(id), 0) + 1 FROM public.general_schedule),
-              $1, $2, $3, $4, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+              $1, $2, $3, $4, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
             )
           `;
           await client.query(insertQuery, [
@@ -105,8 +104,7 @@ class ScheduleModel {
         start_time,
         end_time,
         exception_type,
-        reason,
-        active
+        reason
       FROM public.specific_schedule
       WHERE ${whereClause}
       ORDER BY date DESC, start_time
@@ -138,13 +136,13 @@ class ScheduleModel {
   static async createSpecificSchedule(chapelId, data) {
     const query = `
       INSERT INTO public.specific_schedule (
-        id, chapel_id, date, start_time, end_time, exception_type, reason, active, created_at, updated_at
+        id, chapel_id, date, start_time, end_time, exception_type, reason, created_at, updated_at
       )
       VALUES (
         (SELECT COALESCE(MAX(id), 0) + 1 FROM public.specific_schedule),
-        $1, $2, $3, $4, $5, $6, TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        $1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
-      RETURNING id, chapel_id, date, start_time, end_time, exception_type, reason, active
+      RETURNING id, chapel_id, date, start_time, end_time, exception_type, reason
     `;
 
     const result = await db.query(query, [
@@ -170,7 +168,7 @@ class ScheduleModel {
         reason = $5,
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $6 AND chapel_id = $7
-      RETURNING id, chapel_id, date, start_time, end_time, exception_type, reason, active
+      RETURNING id, chapel_id, date, start_time, end_time, exception_type, reason
     `;
 
     const result = await db.query(query, [
