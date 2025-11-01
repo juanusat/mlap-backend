@@ -11,7 +11,20 @@ class ChapelController {
         });
       }
 
-      const chapel = await ChapelModel.create(parishId, req.body);
+      const { name, address, coordinates, phone, profile_photo_name, cover_photo_name } = req.body;
+      const profilePhoto = req.files?.profile_photo?.[0];
+      const coverPhoto = req.files?.cover_photo?.[0];
+
+      const chapel = await ChapelModel.create(parishId, {
+        name,
+        address,
+        coordinates,
+        phone,
+        profile_photo: profilePhoto,
+        profile_photo_name,
+        cover_photo: coverPhoto,
+        cover_photo_name
+      });
 
       res.status(200).json({
         message: 'Capilla creada exitosamente',
@@ -90,7 +103,20 @@ class ChapelController {
         });
       }
 
-      const chapel = await ChapelModel.update(Number(id), parishId, req.body);
+      const { name, address, coordinates, phone, profile_photo_name, cover_photo_name } = req.body;
+      const profilePhoto = req.files?.profile_photo?.[0];
+      const coverPhoto = req.files?.cover_photo?.[0];
+
+      const chapel = await ChapelModel.update(Number(id), parishId, {
+        name,
+        address,
+        coordinates,
+        phone,
+        profile_photo: profilePhoto,
+        profile_photo_name,
+        cover_photo: coverPhoto,
+        cover_photo_name
+      });
 
       if (!chapel) {
         return res.status(404).json({

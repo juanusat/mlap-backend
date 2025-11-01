@@ -1,8 +1,34 @@
 const db = require('../db');
+const crypto = require('crypto');
+const path = require('path');
+const fs = require('fs').promises;
 
 class ChapelModel {
   static async create(parishId, data) {
-    const { name, address, coordinates, phone, profile_photo, cover_photo } = data;
+    const { name, address, coordinates, phone, profile_photo, profile_photo_name, cover_photo, cover_photo_name } = data;
+    
+    let profilePhotoFilename = null;
+    let coverPhotoFilename = null;
+    
+    // Procesar foto de perfil
+    if (profile_photo) {
+      const extension = path.extname(profile_photo_name || profile_photo.originalname);
+      profilePhotoFilename = crypto.randomBytes(6).toString('hex') + extension;
+      
+      const uploadDir = path.join(__dirname, '..', 'uploads');
+      await fs.mkdir(uploadDir, { recursive: true });
+      await fs.writeFile(path.join(uploadDir, profilePhotoFilename), profile_photo.buffer);
+    }
+    
+    // Procesar foto de portada
+    if (cover_photo) {
+      const extension = path.extname(cover_photo_name || cover_photo.originalname);
+      coverPhotoFilename = crypto.randomBytes(6).toString('hex') + extension;
+      
+      const uploadDir = path.join(__dirname, '..', 'uploads');
+      await fs.mkdir(uploadDir, { recursive: true });
+      await fs.writeFile(path.join(uploadDir, coverPhotoFilename), cover_photo.buffer);
+    }
     
     const query = `
       INSERT INTO public.chapel (
@@ -18,7 +44,7 @@ class ChapelModel {
     
     const result = await db.query(query, [
       parishId, name, coordinates || '', address, phone, 
-      profile_photo || null, cover_photo || null
+      profilePhotoFilename, coverPhotoFilename
     ]);
     
     return result.rows[0];
@@ -76,6 +102,8 @@ class ChapelModel {
   }
 
   static async update(id, parishId, data) {
+    const { profile_photo, profile_photo_name, cover_photo, cover_photo_name } = data;
+    
     const fields = [];
     const values = [];
     let index = 1;
@@ -96,13 +124,31 @@ class ChapelModel {
       fields.push(`phone = $${index++}`);
       values.push(data.phone);
     }
-    if (data.profile_photo !== undefined) {
+    
+    // Procesar foto de perfil
+    if (profile_photo) {
+      const extension = path.extname(profile_photo_name || profile_photo.originalname);
+      const profilePhotoFilename = crypto.randomBytes(6).toString('hex') + extension;
+      
+      const uploadDir = path.join(__dirname, '..', 'uploads');
+      await fs.mkdir(uploadDir, { recursive: true });
+      await fs.writeFile(path.join(uploadDir, profilePhotoFilename), profile_photo.buffer);
+      
       fields.push(`profile_photo = $${index++}`);
-      values.push(data.profile_photo);
+      values.push(profilePhotoFilename);
     }
-    if (data.cover_photo !== undefined) {
+    
+    // Procesar foto de portada
+    if (cover_photo) {
+      const extension = path.extname(cover_photo_name || cover_photo.originalname);
+      const coverPhotoFilename = crypto.randomBytes(6).toString('hex') + extension;
+      
+      const uploadDir = path.join(__dirname, '..', 'uploads');
+      await fs.mkdir(uploadDir, { recursive: true });
+      await fs.writeFile(path.join(uploadDir, coverPhotoFilename), cover_photo.buffer);
+      
       fields.push(`cover_photo = $${index++}`);
-      values.push(data.cover_photo);
+      values.push(coverPhotoFilename);
     }
 
     if (fields.length === 0) {
