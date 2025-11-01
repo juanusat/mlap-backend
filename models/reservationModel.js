@@ -321,7 +321,7 @@ class ReservationModel {
       INNER JOIN public.parish p ON c.parish_id = p.id
       WHERE r.user_id = $1 
         AND r.status IN ('RESERVED', 'IN_PROGRESS')
-      ORDER BY r.event_date ASC, r.created_at DESC
+      ORDER BY r.event_date, r.created_at 
       LIMIT $2 OFFSET $3
     `;
     const result = await db.query(query, [userId, limit, offset]);
@@ -378,7 +378,7 @@ class ReservationModel {
       WHERE r.user_id = $1 
         AND r.status IN ('RESERVED', 'IN_PROGRESS')
         AND LOWER(ev.name) LIKE LOWER($2)
-      ORDER BY r.event_date ASC, r.created_at DESC
+      ORDER BY r.event_date, r.created_at
       LIMIT $3 OFFSET $4
     `;
     const result = await db.query(query, [userId, searchPattern, limit, offset]);
@@ -460,7 +460,7 @@ class ReservationModel {
       INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
       WHERE r.user_id = $1
         AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
-      ORDER BY r.event_date DESC, r.created_at DESC
+      ORDER BY r.event_date, r.created_at 
       LIMIT $2 OFFSET $3
     `;
     const result = await db.query(query, [userId, limit, offset]);
@@ -511,7 +511,7 @@ class ReservationModel {
       WHERE r.user_id = $1
         AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
         AND LOWER(ev.name) LIKE LOWER($2)
-      ORDER BY r.event_date DESC, r.created_at DESC
+      ORDER BY r.event_date, r.created_at
       LIMIT $3 OFFSET $4
     `;
     const result = await db.query(query, [userId, searchPattern, limit, offset]);

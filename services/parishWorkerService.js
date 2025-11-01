@@ -26,7 +26,7 @@ const listWorkers = async (parishId, page, limit) => {
      INNER JOIN "user" u ON a.user_id = u.id
      INNER JOIN person p ON u.person_id = p.id
      WHERE a.parish_id = $1 AND a.end_date IS NULL
-     ORDER BY p.first_names ASC
+     ORDER BY p.first_names 
      LIMIT $2 OFFSET $3`,
     [parishId, limit, offset]
   );
@@ -69,7 +69,7 @@ const searchWorkers = async (parishId, page, limit, search) => {
      INNER JOIN person p ON u.person_id = p.id
      WHERE a.parish_id = $1 AND a.end_date IS NULL
      AND (p.first_names ILIKE $2 OR p.paternal_surname ILIKE $2 OR p.email ILIKE $2)
-     ORDER BY p.first_names ASC
+     ORDER BY p.first_names 
      LIMIT $3 OFFSET $4`,
     [parishId, searchPattern, limit, offset]
   );
@@ -169,7 +169,7 @@ const listWorkerRoles = async (associationId, page, limit) => {
      FROM user_role ur
      INNER JOIN role r ON ur.role_id = r.id
      WHERE ur.association_id = $1 AND ur.revocation_date IS NULL
-     ORDER BY ur.assignment_date DESC
+     ORDER BY ur.assignment_date
      LIMIT $2 OFFSET $3`,
     [associationId, limit, offset]
   );

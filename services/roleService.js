@@ -21,7 +21,7 @@ const listRoles = async (parishId, page, limit) => {
       active
      FROM role
      WHERE parish_id = $1
-     ORDER BY name ASC
+     ORDER BY name 
      LIMIT $2 OFFSET $3`,
     [parishId, limit, offset]
   );

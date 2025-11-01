@@ -396,6 +396,34 @@ CREATE TABLE IF NOT EXISTS public.event_audit_log (
 -- TABLAS ADICIONALES
 -- ====================================================================
 
+-- Tabla MentionType: Tipos de menciones/intenciones (ej: Difunto, Salud)
+CREATE TABLE IF NOT EXISTS public.mention_type (
+    id INTEGER NOT NULL,
+    code VARCHAR(10) UNIQUE NOT NULL, -- Código corto (ej: 'DIF', 'SAL')
+    name VARCHAR(100) NOT NULL,       -- Nombre (ej: 'Difunto', 'Salud')
+    description VARCHAR(255),
+    active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT mention_type_pkey PRIMARY KEY (id)
+);
+
+-- Tabla ReservationMention: Intenciones asociadas a una reserva
+CREATE TABLE IF NOT EXISTS public.reservation_mention (
+    id BIGSERIAL NOT NULL,
+    reservation_id INTEGER NOT NULL,      -- A qué reserva pertenece
+    mention_type_id INTEGER NOT NULL,     -- Qué tipo de intención es (Difunto, Salud, etc.)
+    mention_name VARCHAR(120) NOT NULL, -- El nombre de la persona (ej: "Juan Pérez García")
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT reservation_mention_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_mention_reservation FOREIGN KEY (reservation_id) 
+        REFERENCES public.reservation(id) ON DELETE CASCADE, -- Si se borra la reserva, se borran sus menciones
+    CONSTRAINT fk_mention_type FOREIGN KEY (mention_type_id) 
+        REFERENCES public.mention_type(id)
+);
+
 -- Tabla Notification: Almacena las notificaciones para los usuarios;
 CREATE TABLE IF NOT EXISTS public.notification (
     id BIGSERIAL NOT NULL, 

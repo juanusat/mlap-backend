@@ -89,7 +89,7 @@ const updateParishAccountInfo = async (req, res, next) => {
             });
         }
 
-        const { name, address, coordinates, phone, primary_color, secondary_color, profile_photo_name, cover_photo_name } = req.body;
+        const { name, address, coordinates, phone, email, primary_color, secondary_color, profile_photo_name, cover_photo_name } = req.body;
         const profilePhoto = req.files?.profile_photo?.[0];
         const coverPhoto = req.files?.cover_photo?.[0];
 
@@ -98,6 +98,7 @@ const updateParishAccountInfo = async (req, res, next) => {
             address,
             coordinates,
             phone,
+            email,
             primary_color,
             secondary_color,
             profile_photo: profilePhoto,

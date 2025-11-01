@@ -5,7 +5,7 @@ const fs = require('fs').promises;
 
 class ChapelModel {
   static async create(parishId, data) {
-    const { name, address, coordinates, phone, profile_photo, profile_photo_name, cover_photo, cover_photo_name } = data;
+    const { name, address, coordinates, phone, email, profile_photo, profile_photo_name, cover_photo, cover_photo_name } = data;
     
     let profilePhotoFilename = null;
     let coverPhotoFilename = null;
@@ -37,13 +37,13 @@ class ChapelModel {
       )
       VALUES (
         (SELECT COALESCE(MAX(id), 0) + 1 FROM public.chapel),
-        $1, $2, $3, $4, '', $5, $6, $7, false, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        $1, $2, $3, $4, $5, $6, $7, $8, false, true, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
       )
-      RETURNING id, parish_id, name, coordinates, address, phone, profile_photo, cover_photo, active
+      RETURNING id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, active
     `;
     
     const result = await db.query(query, [
-      parishId, name, coordinates || '', address, phone, 
+      parishId, name, coordinates || '', address, email || '', phone, 
       profilePhotoFilename, coverPhotoFilename
     ]);
     
@@ -54,7 +54,7 @@ class ChapelModel {
     const offset = (page - 1) * limit;
     
     let query = `
-      SELECT id, name, coordinates, address, phone, profile_photo, cover_photo, active, chapel_base
+      SELECT id, name, coordinates, address, email, phone, profile_photo, cover_photo, active, chapel_base
       FROM public.chapel
       WHERE parish_id = $1
     `;
@@ -66,7 +66,7 @@ class ChapelModel {
       params.push(`%${searchQuery}%`);
     }
     
-    query += ` ORDER BY chapel_base DESC, id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    query += ` ORDER BY chapel_base, id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
     
     const countQuery = `
@@ -92,7 +92,7 @@ class ChapelModel {
 
   static async findById(id, parishId) {
     const query = `
-      SELECT id, parish_id, name, coordinates, address, phone, profile_photo, cover_photo, active, chapel_base
+      SELECT id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, active, chapel_base
       FROM public.chapel
       WHERE id = $1 AND parish_id = $2
     `;
@@ -123,6 +123,10 @@ class ChapelModel {
     if (data.phone !== undefined) {
       fields.push(`phone = $${index++}`);
       values.push(data.phone);
+    }
+    if (data.email !== undefined) {
+      fields.push(`email = $${index++}`);
+      values.push(data.email);
     }
     
     // Procesar foto de perfil
@@ -161,7 +165,7 @@ class ChapelModel {
       UPDATE public.chapel
       SET ${fields.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${index++} AND parish_id = $${index++}
-      RETURNING id, parish_id, name, coordinates, address, phone, profile_photo, cover_photo, active
+      RETURNING id, parish_id, name, coordinates, address, email, phone, profile_photo, cover_photo, active
     `;
 
     const result = await db.query(query, values);
@@ -173,7 +177,7 @@ class ChapelModel {
       UPDATE public.chapel
       SET active = $1, updated_at = CURRENT_TIMESTAMP
       WHERE id = $2 AND parish_id = $3
-      RETURNING id, parish_id, name, address, phone, profile_photo, cover_photo, active
+      RETURNING id, parish_id, name, address, email, phone, profile_photo, cover_photo, active
     `;
 
     const result = await db.query(query, [active, id, parishId]);
