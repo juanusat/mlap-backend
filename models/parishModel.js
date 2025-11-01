@@ -288,50 +288,30 @@ class ParishModel {
     try {
       await client.query('BEGIN');
 
-      const chapelCountQuery = `
-        SELECT COUNT(*) as count FROM public.chapel WHERE parish_id = $1
-      `;
-      const chapelCountResult = await client.query(chapelCountQuery, [id]);
-      const chapelCount = parseInt(chapelCountResult.rows[0].count);
-
-      if (chapelCount !== 1) {
-        throw new Error('La parroquia debe tener exactamente una capilla base para ser eliminada');
-      }
-
-      const chapelIdQuery = `
-        SELECT id FROM public.chapel WHERE parish_id = $1 LIMIT 1
-      `;
-      const chapelIdResult = await client.query(chapelIdQuery, [id]);
-      const chapelId = chapelIdResult.rows[0].id;
-
-      const chapelEventQuery = `
-        SELECT COUNT(*) as count FROM public.chapel_event WHERE chapel_id = $1
-      `;
-      const chapelEventResult = await client.query(chapelEventQuery, [chapelId]);
-      const eventCount = parseInt(chapelEventResult.rows[0].count);
-
-      if (eventCount > 0) {
-        throw new Error('No se puede eliminar la parroquia porque la capilla tiene eventos asociados');
-      }
-
       const reservationQuery = `
         SELECT COUNT(*) as count 
         FROM public.reservation r
         INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
         INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
-        WHERE ce.chapel_id = $1
+        INNER JOIN public.chapel ch ON ce.chapel_id = ch.id
+        WHERE ch.parish_id = $1
       `;
-      const reservationResult = await client.query(reservationQuery, [chapelId]);
+      const reservationResult = await client.query(reservationQuery, [id]);
       const reservationCount = parseInt(reservationResult.rows[0].count);
 
       if (reservationCount > 0) {
-        throw new Error('No se puede eliminar la parroquia porque la capilla tiene reservas asociadas');
+        throw new Error('No se puede eliminar la parroquia porque tiene capillas con reservas asociadas');
       }
 
       const adminUserQuery = `
         SELECT admin_user_id FROM public.parish WHERE id = $1
       `;
       const adminUserResult = await client.query(adminUserQuery, [id]);
+      
+      if (!adminUserResult.rows[0]) {
+        throw new Error('Parroquia no encontrada');
+      }
+      
       const adminUserId = adminUserResult.rows[0].admin_user_id;
 
       const personIdQuery = `
@@ -342,7 +322,7 @@ class ParishModel {
 
       await client.query(`DELETE FROM public.association WHERE parish_id = $1`, [id]);
 
-      await client.query(`DELETE FROM public.chapel WHERE id = $1`, [chapelId]);
+      await client.query(`DELETE FROM public.chapel WHERE parish_id = $1`, [id]);
 
       await client.query(`DELETE FROM public.parish WHERE id = $1`, [id]);
 
@@ -391,6 +371,7 @@ class ParishModel {
         c.address,
         c.coordinates,
         c.phone,
+        c.email,
         c.profile_photo,
         c.cover_photo
       FROM public.parish p
@@ -456,6 +437,11 @@ class ParishModel {
       const chapelValues = [];
       let chapelIndex = 1;
 
+      if (data.name !== undefined) {
+        chapelFields.push(`name = $${chapelIndex++}`);
+        chapelValues.push(data.name);
+      }
+
       if (data.address !== undefined) {
         chapelFields.push(`address = $${chapelIndex++}`);
         chapelValues.push(data.address);
@@ -467,6 +453,10 @@ class ParishModel {
       if (data.phone !== undefined) {
         chapelFields.push(`phone = $${chapelIndex++}`);
         chapelValues.push(data.phone);
+      }
+      if (data.email !== undefined) {
+        chapelFields.push(`email = $${chapelIndex++}`);
+        chapelValues.push(data.email);
       }
 
       // Manejar profile_photo

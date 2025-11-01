@@ -11,7 +11,7 @@ class ChapelController {
         });
       }
 
-      const { name, address, coordinates, phone, profile_photo_name, cover_photo_name } = req.body;
+      const { name, address, coordinates, phone, email, profile_photo_name, cover_photo_name } = req.body;
       const profilePhoto = req.files?.profile_photo?.[0];
       const coverPhoto = req.files?.cover_photo?.[0];
 
@@ -20,6 +20,7 @@ class ChapelController {
         address,
         coordinates,
         phone,
+        email,
         profile_photo: profilePhoto,
         profile_photo_name,
         cover_photo: coverPhoto,
@@ -103,7 +104,7 @@ class ChapelController {
         });
       }
 
-      const { name, address, coordinates, phone, profile_photo_name, cover_photo_name } = req.body;
+      const { name, address, coordinates, phone, email, profile_photo_name, cover_photo_name } = req.body;
       const profilePhoto = req.files?.profile_photo?.[0];
       const coverPhoto = req.files?.cover_photo?.[0];
 
@@ -112,6 +113,7 @@ class ChapelController {
         address,
         coordinates,
         phone,
+        email,
         profile_photo: profilePhoto,
         profile_photo_name,
         cover_photo: coverPhoto,
