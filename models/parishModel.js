@@ -421,6 +421,10 @@ class ParishModel {
     try {
       await client.query('BEGIN');
 
+      const crypto = require('crypto');
+      const path = require('path');
+      const fs = require('fs').promises;
+
       const parishFields = [];
       const parishValues = [];
       let parishIndex = 1;
@@ -464,13 +468,31 @@ class ParishModel {
         chapelFields.push(`phone = $${chapelIndex++}`);
         chapelValues.push(data.phone);
       }
-      if (data.profile_photo !== undefined) {
+
+      // Manejar profile_photo
+      if (data.profile_photo) {
+        const extension = path.extname(data.profile_photo_name || data.profile_photo.originalname);
+        const profilePhotoFilename = crypto.randomBytes(6).toString('hex') + extension;
+        
+        const uploadDir = path.join(__dirname, '..', 'uploads');
+        await fs.mkdir(uploadDir, { recursive: true });
+        await fs.writeFile(path.join(uploadDir, profilePhotoFilename), data.profile_photo.buffer);
+        
         chapelFields.push(`profile_photo = $${chapelIndex++}`);
-        chapelValues.push(data.profile_photo);
+        chapelValues.push(profilePhotoFilename);
       }
-      if (data.cover_photo !== undefined) {
+
+      // Manejar cover_photo
+      if (data.cover_photo) {
+        const extension = path.extname(data.cover_photo_name || data.cover_photo.originalname);
+        const coverPhotoFilename = crypto.randomBytes(6).toString('hex') + extension;
+        
+        const uploadDir = path.join(__dirname, '..', 'uploads');
+        await fs.mkdir(uploadDir, { recursive: true });
+        await fs.writeFile(path.join(uploadDir, coverPhotoFilename), data.cover_photo.buffer);
+        
         chapelFields.push(`cover_photo = $${chapelIndex++}`);
-        chapelValues.push(data.cover_photo);
+        chapelValues.push(coverPhotoFilename);
       }
 
       if (chapelFields.length > 0) {

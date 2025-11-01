@@ -89,7 +89,22 @@ const updateParishAccountInfo = async (req, res, next) => {
             });
         }
 
-        const updatedInfo = await parishModel.updateParishAccountInfo(parishId, req.body);
+        const { name, address, coordinates, phone, primary_color, secondary_color, profile_photo_name, cover_photo_name } = req.body;
+        const profilePhoto = req.files?.profile_photo?.[0];
+        const coverPhoto = req.files?.cover_photo?.[0];
+
+        const updatedInfo = await parishModel.updateParishAccountInfo(parishId, {
+            name,
+            address,
+            coordinates,
+            phone,
+            primary_color,
+            secondary_color,
+            profile_photo: profilePhoto,
+            profile_photo_name,
+            cover_photo: coverPhoto,
+            cover_photo_name
+        });
 
         res.status(200).json({
             message: 'Información actualizada exitosamente',
