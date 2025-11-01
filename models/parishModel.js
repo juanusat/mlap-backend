@@ -375,7 +375,7 @@ class ParishModel {
       SELECT id, name, description, active
       FROM public.role
       WHERE parish_id = $1 AND active = TRUE
-      ORDER BY name ASC;
+      ORDER BY name ;
     `;
     const { rows } = await db.query(query, [parishId]);
     return rows;

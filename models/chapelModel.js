@@ -66,7 +66,7 @@ class ChapelModel {
       params.push(`%${searchQuery}%`);
     }
     
-    query += ` ORDER BY chapel_base DESC, id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    query += ` ORDER BY chapel_base, id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
     
     const countQuery = `

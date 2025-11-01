@@ -26,7 +26,7 @@ class PublicChurchModel {
       params.push(`%${query}%`);
     }
     
-    searchQuery += ` ORDER BY c.chapel_base DESC, c.id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    searchQuery += ` ORDER BY c.chapel_base, c.id LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
     params.push(limit, offset);
     
     const countQuery = `

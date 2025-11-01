@@ -45,7 +45,7 @@ class DocumentTypeModel {
       SELECT id, name, description, code, active, created_at, updated_at
       FROM public.document_type
       WHERE name ILIKE $1 OR description ILIKE $1 OR code ILIKE $1
-      ORDER BY id DESC
+      ORDER BY id 
       LIMIT $2 OFFSET $3
     `;
     const countQuery = `

@@ -27,7 +27,7 @@ class EventVariantModel {
       INNER JOIN chapel c ON ce.chapel_id = c.id
       INNER JOIN event e ON ce.event_id = e.id
       WHERE c.parish_id = $1
-      ORDER BY ev.id DESC
+      ORDER BY ev.id 
       LIMIT $2 OFFSET $3
     `;
     
@@ -78,7 +78,7 @@ class EventVariantModel {
       INNER JOIN event e ON ce.event_id = e.id
       WHERE c.parish_id = $1 
         AND (ev.name ILIKE $2 OR ev.description ILIKE $2 OR e.name ILIKE $2 OR c.name ILIKE $2)
-      ORDER BY ev.id DESC
+      ORDER BY ev.id 
       LIMIT $3 OFFSET $4
     `;
     
