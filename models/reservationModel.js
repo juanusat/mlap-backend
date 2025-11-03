@@ -310,6 +310,7 @@ class ReservationModel {
         r.beneficiary_full_name,
         ev.name as event_name,
         r.event_date,
+        r.event_time,
         COALESCE(r.paid_amount, 0) as paid_amount,
         r.status,
         c.name as chapel_name,
@@ -366,6 +367,7 @@ class ReservationModel {
         r.beneficiary_full_name,
         ev.name as event_name,
         r.event_date,
+        r.event_time,
         COALESCE(r.paid_amount, 0) as paid_amount,
         r.status,
         c.name as chapel_name,
@@ -454,6 +456,7 @@ class ReservationModel {
         r.beneficiary_full_name,
         ev.name as event_name,
         r.event_date,
+        r.event_time,
         r.paid_amount,
         r.status
       FROM public.reservation r
@@ -502,8 +505,10 @@ class ReservationModel {
     const query = `
       SELECT 
         r.id,
+        r.beneficiary_full_name,
         ev.name as event_name,
         r.event_date,
+        r.event_time,
         r.paid_amount,
         r.status
       FROM public.reservation r
@@ -540,6 +545,7 @@ class ReservationModel {
         r.beneficiary_full_name,
         ev.name as event_variant_name,
         r.event_date,
+        r.event_time,
         r.status,
         r.paid_amount,
         CASE 
@@ -579,6 +585,7 @@ class ReservationModel {
       beneficiary_full_name: reservation.beneficiary_full_name,
       event_variant_name: reservation.event_variant_name,
       event_date: reservation.event_date,
+      event_time: reservation.event_time,
       status: reservation.status,
       paid_amount: reservation.paid_amount,
       payment_status: reservation.payment_status,
