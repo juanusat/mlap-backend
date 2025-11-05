@@ -596,6 +596,284 @@ class ReservationModel {
       requirements: requirementsResult.rows
     };
   }
+
+  /**
+   * Listar reservas para gestión administrativa (por parroquia)
+   * @param {number} parishId - ID de la parroquia
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros
+   * @returns {Object} Listado paginado de reservas
+   */
+  static async listReservationsForManagement(parishId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+    
+    const query = `
+      SELECT 
+        r.id,
+        r.event_date,
+        r.event_time,
+        r.status,
+        r.paid_amount,
+        r.beneficiary_full_name,
+        ev.name as event_variant_name,
+        ev.current_price,
+        c.id as chapel_id,
+        c.name as chapel_name,
+        per.id as person_id,
+        CONCAT(per.first_names, ' ', per.paternal_surname, ' ', COALESCE(per.maternal_surname, '')) as user_full_name
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public."user" u ON r.user_id = u.id
+      INNER JOIN public.person per ON u.person_id = per.id
+      WHERE c.parish_id = $1
+      ORDER BY r.event_date DESC, r.event_time DESC
+      LIMIT $2 OFFSET $3
+    `;
+    
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      WHERE c.parish_id = $1
+    `;
+    
+    const [dataResult, countResult] = await Promise.all([
+      db.query(query, [parishId, limit, offset]),
+      db.query(countQuery, [parishId])
+    ]);
+    
+    return {
+      data: dataResult.rows,
+      total: parseInt(countResult.rows[0].total),
+      page,
+      limit,
+      totalPages: Math.ceil(countResult.rows[0].total / limit)
+    };
+  }
+
+  /**
+   * Buscar reservas por nombre de usuario (gestión administrativa)
+   * @param {number} parishId - ID de la parroquia
+   * @param {string} searchTerm - Término de búsqueda
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros
+   * @returns {Object} Resultados de búsqueda paginados
+   */
+  static async searchReservationsForManagement(parishId, searchTerm, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+    
+    const query = `
+      SELECT 
+        r.id,
+        r.event_date,
+        r.event_time,
+        r.status,
+        r.paid_amount,
+        r.beneficiary_full_name,
+        ev.name as event_variant_name,
+        ev.current_price,
+        c.id as chapel_id,
+        c.name as chapel_name,
+        per.id as person_id,
+        CONCAT(per.first_names, ' ', per.paternal_surname, ' ', COALESCE(per.maternal_surname, '')) as user_full_name
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public."user" u ON r.user_id = u.id
+      INNER JOIN public.person per ON u.person_id = per.id
+      WHERE c.parish_id = $1
+        AND (
+          LOWER(per.first_names) LIKE LOWER($2)
+          OR LOWER(per.paternal_surname) LIKE LOWER($2)
+          OR LOWER(per.maternal_surname) LIKE LOWER($2)
+          OR LOWER(CONCAT(per.first_names, ' ', per.paternal_surname)) LIKE LOWER($2)
+        )
+      ORDER BY r.event_date DESC, r.event_time DESC
+      LIMIT $3 OFFSET $4
+    `;
+    
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public."user" u ON r.user_id = u.id
+      INNER JOIN public.person per ON u.person_id = per.id
+      WHERE c.parish_id = $1
+        AND (
+          LOWER(per.first_names) LIKE LOWER($2)
+          OR LOWER(per.paternal_surname) LIKE LOWER($2)
+          OR LOWER(per.maternal_surname) LIKE LOWER($2)
+          OR LOWER(CONCAT(per.first_names, ' ', per.paternal_surname)) LIKE LOWER($2)
+        )
+    `;
+    
+    const searchPattern = `%${searchTerm}%`;
+    
+    const [dataResult, countResult] = await Promise.all([
+      db.query(query, [parishId, searchPattern, limit, offset]),
+      db.query(countQuery, [parishId, searchPattern])
+    ]);
+    
+    return {
+      data: dataResult.rows,
+      total: parseInt(countResult.rows[0].total),
+      page,
+      limit,
+      totalPages: Math.ceil(countResult.rows[0].total / limit)
+    };
+  }
+
+  /**
+   * Obtener detalles de una reserva para gestión administrativa
+   * @param {number} reservationId - ID de la reserva
+   * @param {number} parishId - ID de la parroquia
+   * @returns {Object} Detalles completos de la reserva
+   */
+  static async getReservationDetailsForManagement(reservationId, parishId) {
+    const query = `
+      SELECT 
+        r.id,
+        r.event_date,
+        r.event_time,
+        r.registration_date,
+        r.reschedule_date,
+        r.status,
+        r.paid_amount,
+        r.beneficiary_full_name,
+        ev.id as event_variant_id,
+        ev.name as event_variant_name,
+        ev.current_price,
+        c.id as chapel_id,
+        c.name as chapel_name,
+        per.id as person_id,
+        CONCAT(per.first_names, ' ', per.paternal_surname, ' ', COALESCE(per.maternal_surname, '')) as user_full_name,
+        per.email,
+        per.document
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public."user" u ON r.user_id = u.id
+      INNER JOIN public.person per ON u.person_id = per.id
+      WHERE r.id = $1 AND c.parish_id = $2
+    `;
+    
+    const result = await db.query(query, [reservationId, parishId]);
+    
+    if (!result.rows.length) {
+      throw new Error('Reserva no encontrada');
+    }
+    
+    return result.rows[0];
+  }
+
+  /**
+   * Actualizar el estado de una reserva
+   * @param {number} reservationId - ID de la reserva
+   * @param {number} parishId - ID de la parroquia
+   * @param {string} newStatus - Nuevo estado
+   * @returns {Object} Reserva actualizada
+   */
+  static async updateReservationStatus(reservationId, parishId, newStatus) {
+    // Primero verificar que la reserva pertenece a la parroquia
+    const checkQuery = `
+      SELECT r.id
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      WHERE r.id = $1 AND c.parish_id = $2
+    `;
+    
+    const checkResult = await db.query(checkQuery, [reservationId, parishId]);
+    
+    if (!checkResult.rows.length) {
+      throw new Error('Reserva no encontrada');
+    }
+    
+    const updateQuery = `
+      UPDATE public.reservation
+      SET status = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, status
+    `;
+    
+    const result = await db.query(updateQuery, [newStatus, reservationId]);
+    return result.rows[0];
+  }
+
+  /**
+   * Actualizar datos de una reserva (reprogramación)
+   * @param {number} reservationId - ID de la reserva
+   * @param {number} parishId - ID de la parroquia
+   * @param {Object} updateData - Datos a actualizar
+   * @returns {Object} Reserva actualizada
+   */
+  static async updateReservation(reservationId, parishId, updateData) {
+    // Verificar que la reserva pertenece a la parroquia
+    const checkQuery = `
+      SELECT r.id
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      WHERE r.id = $1 AND c.parish_id = $2
+    `;
+    
+    const checkResult = await db.query(checkQuery, [reservationId, parishId]);
+    
+    if (!checkResult.rows.length) {
+      throw new Error('Reserva no encontrada');
+    }
+    
+    const updates = [];
+    const values = [];
+    let paramIndex = 1;
+    
+    if (updateData.event_date) {
+      updates.push(`event_date = $${paramIndex++}`);
+      values.push(updateData.event_date);
+    }
+    
+    if (updateData.event_time) {
+      updates.push(`event_time = $${paramIndex++}`);
+      values.push(updateData.event_time);
+    }
+    
+    if (updateData.paid_amount !== undefined) {
+      updates.push(`paid_amount = $${paramIndex++}`);
+      values.push(updateData.paid_amount);
+    }
+    
+    if (updateData.reschedule_date !== undefined) {
+      updates.push(`reschedule_date = $${paramIndex++}`);
+      values.push(updateData.reschedule_date);
+    }
+    
+    if (updates.length === 0) {
+      throw new Error('No hay datos para actualizar');
+    }
+    
+    updates.push(`updated_at = CURRENT_TIMESTAMP`);
+    values.push(reservationId);
+    
+    const updateQuery = `
+      UPDATE public.reservation
+      SET ${updates.join(', ')}
+      WHERE id = $${paramIndex}
+      RETURNING *
+    `;
+    
+    const result = await db.query(updateQuery, values);
+    return result.rows[0];
+  }
 }
 
 module.exports = ReservationModel;

@@ -16,6 +16,7 @@ const reservationRoutes = require('./reservationRoutes');
 const eventVariantRoutes = require('./eventVariantRoutes');
 const chapelEventRequirementRoutes = require('./chapelEventRequirementRoutes');
 const scheduleRoutes = require('./scheduleRoutes');
+const actsReservationRoutes = require('./actsReservationRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/chapels', chapelRoutes);
@@ -31,6 +32,7 @@ router.use('/public/church', publicChurchRoutes);
 router.use('/client/reservation', reservationRoutes);
 router.use('/acts', eventVariantRoutes);
 router.use('/acts', chapelEventRequirementRoutes);
+router.use('/acts', actsReservationRoutes);
 router.use('/', scheduleRoutes);
 
 router.get('/health', (req, res) => {

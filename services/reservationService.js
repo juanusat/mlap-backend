@@ -198,6 +198,52 @@ class ReservationService {
 
     return await ReservationModel.getReservationDetails(reservationId, userId);
   }
+
+  // ===== Servicios para Gestión Administrativa =====
+
+  async listReservationsForManagement(parishId, page, limit) {
+    if (!parishId) {
+      throw new Error('El ID de la parroquia es requerido');
+    }
+
+    return await ReservationModel.listReservationsForManagement(parishId, page, limit);
+  }
+
+  async searchReservationsForManagement(parishId, searchTerm, page, limit) {
+    if (!parishId) {
+      throw new Error('El ID de la parroquia es requerido');
+    }
+
+    if (!searchTerm || searchTerm.trim() === '') {
+      throw new Error('El término de búsqueda es requerido');
+    }
+
+    return await ReservationModel.searchReservationsForManagement(parishId, searchTerm, page, limit);
+  }
+
+  async getReservationDetailsForManagement(reservationId, parishId) {
+    if (!reservationId || !parishId) {
+      throw new Error('El ID de la reserva y el ID de la parroquia son requeridos');
+    }
+
+    return await ReservationModel.getReservationDetailsForManagement(reservationId, parishId);
+  }
+
+  async updateReservationStatus(reservationId, parishId, newStatus) {
+    if (!reservationId || !parishId || !newStatus) {
+      throw new Error('Todos los campos son requeridos');
+    }
+
+    return await ReservationModel.updateReservationStatus(reservationId, parishId, newStatus);
+  }
+
+  async updateReservation(reservationId, parishId, updateData) {
+    if (!reservationId || !parishId) {
+      throw new Error('El ID de la reserva y el ID de la parroquia son requeridos');
+    }
+
+    return await ReservationModel.updateReservation(reservationId, parishId, updateData);
+  }
 }
 
 module.exports = new ReservationService();
