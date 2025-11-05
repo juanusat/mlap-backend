@@ -12,6 +12,7 @@ const dioceseParishRoutes = require('./dioceseParishRoutes');
 const eventRoutes = require('./eventRoutes');
 const baseRequirementRoutes = require('./baseRequirementRoutes');
 const publicChurchRoutes = require('./publicChurchRoutes');
+const documentTypeController = require('../controllers/documentTypeController');
 const reservationRoutes = require('./reservationRoutes');
 const eventVariantRoutes = require('./eventVariantRoutes');
 const chapelEventRequirementRoutes = require('./chapelEventRequirementRoutes');
@@ -28,6 +29,8 @@ router.use('/diocese', dioceseParishRoutes);
 router.use('/diocese', eventRoutes);
 router.use('/diocese', baseRequirementRoutes);
 router.use('/public/church', publicChurchRoutes);
+// Public endpoint for document types (used by registration screen without auth)
+router.get('/public/document-types', documentTypeController.publicList);
 router.use('/client/reservation', reservationRoutes);
 router.use('/acts', eventVariantRoutes);
 router.use('/acts', chapelEventRequirementRoutes);
