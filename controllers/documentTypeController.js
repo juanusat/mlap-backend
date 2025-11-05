@@ -36,6 +36,23 @@ class DocumentTypeController {
     }
   }
 
+  // Public list endpoint (no auth) to allow frontend registration page to fetch document types
+  async publicList(req, res, next) {
+    try {
+      // default to first page and a generous limit
+      const result = await documentTypeService.listDocumentTypes(1, 100);
+      const types = result && result.data ? result.data : [];
+      res.status(200).json({
+        message: 'Lista pública de tipos de documentos obtenida exitosamente',
+        data: types,
+        error: null,
+        traceback: null
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async search(req, res, next) {
     try {
       const { query, page = 1, limit = 10 } = req.body;

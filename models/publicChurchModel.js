@@ -200,6 +200,7 @@ class PublicChurchModel {
     
     return {
       parish_name: chapel.parish_name,
+      chapel_base: chapel.chapel_base,
       chapel_name: chapel.chapel_name,
       cover_photo: chapel.cover_photo || '',
       profile_photo: chapel.profile_photo || '',
