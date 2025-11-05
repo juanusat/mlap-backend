@@ -199,6 +199,14 @@ class ParishModel {
       `;
       const parishResult = await client.query(parishQuery, [name, id]);
 
+      // Actualizar el nombre de la capilla base cuando cambia el nombre de la parroquia
+      const updateChapelQuery = `
+        UPDATE public.chapel
+        SET name = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE parish_id = $2 AND chapel_base = true
+      `;
+      await client.query(updateChapelQuery, [name, id]);
+
       await client.query('COMMIT');
       return parishResult.rows[0];
     } catch (error) {
@@ -243,6 +251,12 @@ class ParishModel {
       if (fields.name !== undefined) {
         await client.query(
           `UPDATE public.parish SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [fields.name, id]
+        );
+        
+        // Actualizar el nombre de la capilla base cuando cambia el nombre de la parroquia
+        await client.query(
+          `UPDATE public.chapel SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE parish_id = $2 AND chapel_base = true`,
           [fields.name, id]
         );
       }
