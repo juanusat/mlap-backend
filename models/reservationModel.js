@@ -13,8 +13,10 @@ class ReservationModel {
         ev.name as event_name,
         ev.description as event_description,
         ev.current_price,
+        ev.duration_minutes,
         c.id as chapel_id,
         c.name as chapel_name,
+        p.id as parish_id,
         p.name as parish_name,
         p.primary_color,
         p.secondary_color
@@ -26,6 +28,50 @@ class ReservationModel {
     `;
     const result = await db.query(query, [eventVariantId]);
     return result.rows[0];
+  }
+
+  /**
+   * Obtener horarios de una capilla (general y excepciones)
+   * @param {number} chapelId - ID de la capilla
+   * @param {string} startDate - Fecha de inicio (YYYY-MM-DD)
+   * @param {string} endDate - Fecha de fin (YYYY-MM-DD)
+   * @returns {Object} Horarios generales y excepciones
+   */
+  static async getChapelSchedules(chapelId, startDate, endDate) {
+    // Obtener horarios generales
+    const generalQuery = `
+      SELECT 
+        day_of_week,
+        start_time,
+        end_time
+      FROM public.general_schedule
+      WHERE chapel_id = $1
+      ORDER BY day_of_week, start_time
+    `;
+    
+    // Obtener excepciones específicas
+    const specificQuery = `
+      SELECT 
+        date,
+        start_time,
+        end_time,
+        exception_type,
+        reason
+      FROM public.specific_schedule
+      WHERE chapel_id = $1
+        AND date BETWEEN $2 AND $3
+      ORDER BY date, start_time
+    `;
+    
+    const [generalResult, specificResult] = await Promise.all([
+      db.query(generalQuery, [chapelId]),
+      db.query(specificQuery, [chapelId, startDate, endDate])
+    ]);
+    
+    return {
+      general_schedules: generalResult.rows,
+      specific_schedules: specificResult.rows
+    };
   }
 
   /**
@@ -102,43 +148,129 @@ class ReservationModel {
    * @param {number} eventVariantId - ID de la variante del evento
    * @param {string} eventDate - Fecha del evento (YYYY-MM-DD)
    * @param {string} eventTime - Hora del evento (HH:MM)
+  /**
+   * Crear una nueva reserva
+   * @param {number} userId - ID del usuario que hace la reserva
+   * @param {number} eventVariantId - ID de la variante del evento
+   * @param {string} eventDate - Fecha del evento (YYYY-MM-DD)
+   * @param {string} eventTime - Hora del evento (HH:MM)
    * @param {string} beneficiaryFullName - Nombre completo del beneficiario (opcional, si no se proporciona se usa el del usuario)
+   * @param {Array} mentions - Array de menciones [{mention_type_id, mention_name}] (opcional)
    * @returns {Object} Reserva creada
    */
-  static async create(userId, eventVariantId, eventDate, eventTime, beneficiaryFullName = null) {
-    // Si no se proporciona beneficiaryFullName, obtenerlo del usuario
-    let finalBeneficiaryName = beneficiaryFullName;
-    if (!finalBeneficiaryName || finalBeneficiaryName.trim() === '') {
-      const userQuery = `
-        SELECT p.first_names, p.paternal_surname, p.maternal_surname 
-        FROM public.user u
-        INNER JOIN public.person p ON u.person_id = p.id
-        WHERE u.id = $1
-      `;
-      const userResult = await db.query(userQuery, [userId]);
+  static async create(userId, eventVariantId, eventDate, eventTime, beneficiaryFullName = null, mentions = []) {
+    const client = await db.getClient();
+    
+    try {
+      await client.query('BEGIN');
       
-      if (!userResult.rows.length) {
-        throw new Error('Usuario no encontrado');
+      // Si no se proporciona beneficiaryFullName, obtenerlo del usuario
+      let finalBeneficiaryName = beneficiaryFullName;
+      if (!finalBeneficiaryName || finalBeneficiaryName.trim() === '') {
+        const userQuery = `
+          SELECT p.first_names, p.paternal_surname, p.maternal_surname 
+          FROM public.user u
+          INNER JOIN public.person p ON u.person_id = p.id
+          WHERE u.id = $1
+        `;
+        const userResult = await client.query(userQuery, [userId]);
+        
+        if (!userResult.rows.length) {
+          throw new Error('Usuario no encontrado');
+        }
+        
+        const personRow = userResult.rows[0];
+        finalBeneficiaryName = `${personRow.first_names || ''} ${personRow.paternal_surname || ''}${personRow.maternal_surname ? ' ' + personRow.maternal_surname : ''}`.trim();
       }
-      
-      const personRow = userResult.rows[0];
-      finalBeneficiaryName = `${personRow.first_names || ''} ${personRow.paternal_surname || ''}${personRow.maternal_surname ? ' ' + personRow.maternal_surname : ''}`.trim();
-    }
 
-    const query = `
-      INSERT INTO public.reservation (
-        id, user_id, event_variant_id, event_date, event_time, 
-        status, registration_date, created_at, updated_at, beneficiary_full_name
-      )
-      VALUES (
-        (SELECT COALESCE(MAX(id), 0) + 1 FROM public.reservation),
-        $1, $2, $3, $4, 'RESERVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $5
-      )
-      RETURNING id, user_id, event_variant_id, event_date, event_time, status, created_at, beneficiary_full_name
-    `;
-    const values = [userId, eventVariantId, eventDate, eventTime, finalBeneficiaryName];
-    const result = await db.query(query, values);
-    return result.rows[0];
+      // Crear la reserva
+      const reservationQuery = `
+        INSERT INTO public.reservation (
+          id, user_id, event_variant_id, event_date, event_time, 
+          status, registration_date, created_at, updated_at, beneficiary_full_name
+        )
+        VALUES (
+          (SELECT COALESCE(MAX(id), 0) + 1 FROM public.reservation),
+          $1, $2, $3, $4, 'RESERVED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, $5
+        )
+        RETURNING id, user_id, event_variant_id, event_date, event_time, status, created_at, beneficiary_full_name
+      `;
+      const reservationValues = [userId, eventVariantId, eventDate, eventTime, finalBeneficiaryName];
+      const reservationResult = await client.query(reservationQuery, reservationValues);
+      const reservation = reservationResult.rows[0];
+
+      // Insertar menciones si existen
+      if (mentions && mentions.length > 0) {
+        for (const mention of mentions) {
+          const mentionQuery = `
+            INSERT INTO public.reservation_mention (
+              reservation_id, mention_type_id, mention_name, created_at, updated_at
+            )
+            VALUES ($1, $2, $3, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+          `;
+          await client.query(mentionQuery, [
+            reservation.id,
+            mention.mention_type_id,
+            mention.mention_name
+          ]);
+        }
+      }
+
+      // Copiar requisitos base del evento
+      const baseRequirementsQuery = `
+        INSERT INTO public.reservation_requirement (
+          id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
+        )
+        SELECT 
+          (SELECT COALESCE(MAX(id), 0) FROM public.reservation_requirement) + ROW_NUMBER() OVER (),
+          $1,
+          br.id,
+          NULL,
+          br.name,
+          br.description,
+          false,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        FROM public.base_requirement br
+        INNER JOIN public.event_variant ev ON br.event_id = (
+          SELECT e.id FROM public.event e
+          INNER JOIN public.chapel_event ce ON e.id = ce.event_id
+          WHERE ce.id = ev.chapel_event_id
+        )
+        WHERE ev.id = $2 AND br.active = true
+      `;
+      await client.query(baseRequirementsQuery, [reservation.id, eventVariantId]);
+
+      // Copiar requisitos adicionales de la capilla
+      const chapelRequirementsQuery = `
+        INSERT INTO public.reservation_requirement (
+          id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
+        )
+        SELECT 
+          (SELECT COALESCE(MAX(id), 0) FROM public.reservation_requirement) + ROW_NUMBER() OVER (),
+          $1,
+          NULL,
+          cer.id,
+          cer.name,
+          cer.description,
+          false,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        FROM public.chapel_event_requirement cer
+        INNER JOIN public.event_variant ev ON cer.chapel_event_id = ev.chapel_event_id
+        WHERE ev.id = $2 AND cer.active = true
+      `;
+      await client.query(chapelRequirementsQuery, [reservation.id, eventVariantId]);
+
+      await client.query('COMMIT');
+      return reservation;
+      
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -771,7 +903,26 @@ class ReservationModel {
       throw new Error('Reserva no encontrada');
     }
     
-    return result.rows[0];
+    const reservation = result.rows[0];
+    
+    // Obtener menciones de la reserva
+    const mentionsQuery = `
+      SELECT 
+        rm.id,
+        rm.mention_type_id,
+        rm.mention_name,
+        mt.code as mention_type_code,
+        mt.name as mention_type_name
+      FROM public.reservation_mention rm
+      INNER JOIN public.mention_type mt ON rm.mention_type_id = mt.id
+      WHERE rm.reservation_id = $1
+      ORDER BY rm.id
+    `;
+    
+    const mentionsResult = await db.query(mentionsQuery, [reservationId]);
+    reservation.mentions = mentionsResult.rows || [];
+    
+    return reservation;
   }
 
   /**

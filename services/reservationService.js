@@ -18,7 +18,8 @@ class ReservationService {
       event_description: formInfo.event_description,
       current_price: formInfo.current_price,
       chapel_id: formInfo.chapel_id,
-      chapel_name: formInfo.chapel_name
+      chapel_name: formInfo.chapel_name,
+      parish_id: formInfo.parish_id
     };
   }
 
@@ -65,10 +66,19 @@ class ReservationService {
   }
 
   async createReservation(userId, reservationData) {
-    const { event_variant_id, event_date, event_time, beneficiary_full_name } = reservationData;
+    const { event_variant_id, event_date, event_time, beneficiary_full_name, mentions } = reservationData;
 
     if (!event_variant_id || !event_date || !event_time) {
       throw new Error('Todos los campos son requeridos: event_variant_id, event_date, event_time');
+    }
+
+    // Validar menciones si existen
+    if (mentions && Array.isArray(mentions)) {
+      for (const mention of mentions) {
+        if (!mention.mention_type_id || !mention.mention_name || mention.mention_name.trim() === '') {
+          throw new Error('Cada mención debe tener un tipo y un nombre válido');
+        }
+      }
     }
 
     const availability = await this.checkAvailability(event_variant_id, event_date, event_time);
@@ -82,7 +92,8 @@ class ReservationService {
       event_variant_id,
       event_date,
       event_time,
-      beneficiary_full_name
+      beneficiary_full_name,
+      mentions || []
     );
 
     const reservationInfo = await ReservationModel.findById(reservation.id);
