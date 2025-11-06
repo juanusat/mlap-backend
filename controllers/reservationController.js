@@ -27,9 +27,10 @@ class ReservationController {
         event_time
       );
 
-      const message = result.available 
+      // Usar el reason del servicio que ya incluye el mensaje apropiado
+      const message = result.reason || (result.available 
         ? 'El horario está disponible' 
-        : 'El horario no está disponible';
+        : 'El horario no está disponible');
 
       res.status(200).json({
         message,

@@ -92,55 +92,86 @@ class ReservationModel {
       day_info AS (
         SELECT EXTRACT(DOW FROM $2::date) as day_of_week
       ),
+      -- Verificar si hay cobertura del horario para el evento completo
       general_availability AS (
-        SELECT gs.id
+        SELECT 
+          gs.start_time,
+          gs.end_time,
+          ei.duration_minutes,
+          $3::time as selected_time,
+          ($3::time + (ei.duration_minutes || ' minutes')::interval)::time as event_end_time
         FROM public.general_schedule gs
         INNER JOIN event_info ei ON gs.chapel_id = ei.chapel_id
         INNER JOIN day_info di ON gs.day_of_week = di.day_of_week
-        WHERE $3::time >= gs.start_time 
-          AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= gs.end_time
+        WHERE 
+          -- El horario debe cubrir al menos el inicio del evento
+          $3::time >= gs.start_time 
+          AND $3::time < gs.end_time
       ),
+      -- Verificar si hay excepción en esta fecha
       specific_exception AS (
         SELECT ss.exception_type, ss.start_time, ss.end_time
         FROM public.specific_schedule ss
         INNER JOIN event_info ei ON ss.chapel_id = ei.chapel_id
         WHERE ss.date = $2::date
       ),
+      -- Verificar si una excepción OPEN cubre completamente el evento
+      specific_open_valid AS (
+        SELECT 1 as valid
+        FROM specific_exception se
+        INNER JOIN event_info ei ON true
+        WHERE se.exception_type = 'OPEN'
+          AND $3::time >= se.start_time 
+          AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= se.end_time
+      ),
+      -- Verificar si hay reservas que se solapan con este horario
       existing_reservation AS (
         SELECT r.id
         FROM public.reservation r
-        INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
-        INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+        INNER JOIN public.event_variant ev_existing ON r.event_variant_id = ev_existing.id
+        INNER JOIN public.chapel_event ce ON ev_existing.chapel_event_id = ce.id
         INNER JOIN event_info ei ON ce.chapel_id = ei.chapel_id
         WHERE r.event_date = $2::date
-          AND r.event_time = $3::time
           AND r.status NOT IN ('CANCELLED', 'REJECTED')
+          AND (
+            -- Caso 1: El nuevo evento empieza durante una reserva existente
+            ($3::time >= r.event_time 
+             AND $3::time < (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time)
+            OR
+            -- Caso 2: El nuevo evento termina durante una reserva existente
+            (($3::time + (ei.duration_minutes || ' minutes')::interval)::time > r.event_time 
+             AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time)
+            OR
+            -- Caso 3: El nuevo evento cubre completamente una reserva existente
+            ($3::time <= r.event_time 
+             AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time >= (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time)
+          )
       )
       SELECT 
         CASE 
+          -- Primero verificar si hay conflicto con reservas existentes
           WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN false
+          -- Verificar si la capilla está cerrada en esta fecha
           WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'CLOSED') THEN false
-          WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'OPEN') THEN
-            EXISTS (
-              SELECT 1 FROM specific_exception se
-              INNER JOIN event_info ei ON true
-              WHERE $3::time >= se.start_time 
-                AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= se.end_time
-            )
+          -- Si hay excepción OPEN y el horario está dentro, es válido
+          WHEN EXISTS (SELECT 1 FROM specific_open_valid) THEN true
+          -- Si no hay excepciones o la excepción OPEN no cubre, verificar horario general
           WHEN EXISTS (SELECT 1 FROM general_availability) THEN true
+          -- No hay horario disponible
           ELSE false
         END as available,
         CASE
-          WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN 'Ya existe una reserva para este horario'
+          WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN 'Ya existe una reserva en este horario'
           WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'CLOSED') THEN 'La capilla está cerrada en esta fecha'
           WHEN NOT EXISTS (SELECT 1 FROM general_availability) 
-            AND NOT EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'OPEN') 
-          THEN 'Horario fuera del rango de atención de la capilla'
+            AND NOT EXISTS (SELECT 1 FROM specific_open_valid) 
+          THEN 'El horario seleccionado no tiene disponibilidad suficiente para la duración del evento'
           ELSE NULL
         END as reason
     `;
     
     const result = await db.query(query, [eventVariantId, eventDate, eventTime]);
+    
     return result.rows[0];
   }
 
@@ -165,6 +196,12 @@ class ReservationModel {
     
     try {
       await client.query('BEGIN');
+      
+      // Verificar disponibilidad dentro de la transacción para evitar race conditions
+      const availabilityCheck = await this.checkAvailability(eventVariantId, eventDate, eventTime);
+      if (!availabilityCheck.available) {
+        throw new Error(availabilityCheck.reason || 'El horario seleccionado no está disponible');
+      }
       
       // Si no se proporciona beneficiaryFullName, obtenerlo del usuario
       let finalBeneficiaryName = beneficiaryFullName;

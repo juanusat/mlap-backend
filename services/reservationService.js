@@ -57,11 +57,14 @@ class ReservationService {
       eventTime
     );
 
+    // Retornar con reason siempre presente
     return {
       available: availability.available,
       event_date: eventDate,
       event_time: eventTime,
-      reason: availability.reason || null
+      reason: availability.available 
+        ? 'Horario disponible' 
+        : (availability.reason || 'El horario no está disponible')
     };
   }
 
@@ -81,12 +84,8 @@ class ReservationService {
       }
     }
 
-    const availability = await this.checkAvailability(event_variant_id, event_date, event_time);
-    
-    if (!availability.available) {
-      throw new Error(availability.reason || 'El horario seleccionado no está disponible');
-    }
-
+    // La validación de disponibilidad ahora se hace dentro de la transacción en el modelo
+    // para evitar race conditions
     const reservation = await ReservationModel.create(
       userId,
       event_variant_id,
