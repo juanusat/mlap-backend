@@ -109,7 +109,9 @@ class ReservationModel {
       existing_reservation AS (
         SELECT r.id
         FROM public.reservation r
-        INNER JOIN event_info ei ON r.event_variant_id = ei.id
+        INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+        INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+        INNER JOIN event_info ei ON ce.chapel_id = ei.chapel_id
         WHERE r.event_date = $2::date
           AND r.event_time = $3::time
           AND r.status NOT IN ('CANCELLED', 'REJECTED')
