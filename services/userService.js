@@ -11,11 +11,14 @@ const getUserAccountInfo = async (userId) => {
       p.paternal_surname,
       p.maternal_surname,
       p.document,
+      p.document_type_id,
+      dt.name as document_type_name,
       p.profile_photo,
       u.username,
       p.email
     FROM "user" u
     INNER JOIN person p ON u.person_id = p.id
+    LEFT JOIN document_type dt ON p.document_type_id = dt.id
     WHERE u.id = $1`,
     [userId]
   );
@@ -28,7 +31,7 @@ const getUserAccountInfo = async (userId) => {
 };
 
 const updatePersonalInfo = async (userId, data) => {
-  const { first_names, paternal_surname, maternal_surname, document, profile_photo, profile_photo_name } = data;
+  const { first_names, paternal_surname, maternal_surname, document, document_type_id, profile_photo, profile_photo_name } = data;
 
   const userResult = await pool.query('SELECT person_id FROM "user" WHERE id = $1', [userId]);
   if (userResult.rows.length === 0) {
@@ -65,6 +68,10 @@ const updatePersonalInfo = async (userId, data) => {
   if (document !== undefined) {
     updates.push(`document = $${paramCount++}`);
     values.push(document);
+  }
+  if (document_type_id !== undefined) {
+    updates.push(`document_type_id = $${paramCount++}`);
+    values.push(document_type_id);
   }
   if (photoFilename) {
     updates.push(`profile_photo = $${paramCount++}`);

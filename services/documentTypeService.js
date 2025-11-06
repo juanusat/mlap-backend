@@ -1,6 +1,17 @@
 const DocumentTypeModel = require('../models/documentTypeModel');
+const db = require('../db');
 
 class DocumentTypeService {
+  async listActiveDocumentTypes() {
+    const result = await db.query(
+      `SELECT id, code, name, description 
+       FROM public.document_type 
+       WHERE active = true 
+       ORDER BY name`
+    );
+    return result.rows;
+  }
+
   async createDocumentType(data) {
     const { name, description, code } = data;
 

@@ -1,6 +1,20 @@
 const documentTypeService = require('../services/documentTypeService');
 
 class DocumentTypeController {
+  async listActive(req, res, next) {
+    try {
+      const data = await documentTypeService.listActiveDocumentTypes();
+      res.status(200).json({
+        message: 'Lista de tipos de documentos activos obtenida exitosamente',
+        data,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
   async create(req, res, next) {
     try {
       const data = await documentTypeService.createDocumentType(req.body);

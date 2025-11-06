@@ -4,6 +4,9 @@ const documentTypeController = require('../controllers/documentTypeController');
 const authMiddleware = require('../middleware/authMiddleware');
 const dioceseMiddleware = require('../middleware/dioceseMiddleware');
 
+// Ruta pública para obtener tipos de documento activos (sin requerir permisos de diócesis)
+router.get('/document-types/active', authMiddleware, documentTypeController.listActive);
+
 router.post('/document-types/create', authMiddleware, dioceseMiddleware, documentTypeController.create);
 router.post('/document-types/list', authMiddleware, dioceseMiddleware, documentTypeController.list);
 router.post('/document-types/search', authMiddleware, dioceseMiddleware, documentTypeController.search);
