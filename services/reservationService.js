@@ -17,6 +17,7 @@ class ReservationService {
       event_name: formInfo.event_name,
       event_description: formInfo.event_description,
       current_price: formInfo.current_price,
+      duration_minutes: formInfo.duration_minutes,
       chapel_id: formInfo.chapel_id,
       chapel_name: formInfo.chapel_name,
       parish_id: formInfo.parish_id
