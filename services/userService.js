@@ -33,6 +33,11 @@ const getUserAccountInfo = async (userId) => {
 const updatePersonalInfo = async (userId, data) => {
   const { first_names, paternal_surname, maternal_surname, document, document_type_id, profile_photo, profile_photo_name } = data;
 
+  // Validar que document_type_id sea proporcionado
+  if (!document_type_id) {
+    throw new Error('El tipo de documento es requerido');
+  }
+
   const userResult = await pool.query('SELECT person_id FROM "user" WHERE id = $1', [userId]);
   if (userResult.rows.length === 0) {
     throw new Error('Usuario no encontrado');
