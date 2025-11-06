@@ -164,7 +164,7 @@ class ParishModel {
     return result.rows[0];
   }
 
-  static async update(id, { name, email, username }) {
+  static async update(id, { name, email, username, passwordHash }) {
     const client = await db.getClient();
     try {
       await client.query('BEGIN');
@@ -186,10 +186,18 @@ class ParishModel {
         [email, personId]
       );
 
-      await client.query(
-        `UPDATE public.user SET username = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
-        [username, adminUserId]
-      );
+      // Actualizar usuario (username y opcionalmente password)
+      if (passwordHash) {
+        await client.query(
+          `UPDATE public.user SET username = $1, password_hash = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3`,
+          [username, passwordHash, adminUserId]
+        );
+      } else {
+        await client.query(
+          `UPDATE public.user SET username = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [username, adminUserId]
+        );
+      }
 
       const parishQuery = `
         UPDATE public.parish

@@ -37,13 +37,19 @@ class ParishService {
   }
 
   async updateParish(id, data) {
-    const { name, email, username } = data;
+    const { name, email, username, password } = data;
 
     if (!name || !email || !username) {
       throw new Error('Todos los campos son requeridos');
     }
 
-    const parish = await ParishModel.update(id, { name, email, username });
+    // Si se proporciona una nueva contraseña, hashearla
+    let passwordHash = null;
+    if (password && password.trim() !== '') {
+      passwordHash = crypto.createHash('sha256').update(password).digest('hex');
+    }
+
+    const parish = await ParishModel.update(id, { name, email, username, passwordHash });
     
     if (!parish) {
       throw new Error('Parroquia no encontrada');
