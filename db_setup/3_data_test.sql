@@ -500,7 +500,7 @@ INSERT INTO public.general_schedule (id, chapel_id, day_of_week, start_time, end
 
 -- Capilla 1: La Consolación - Cerrada el 25 de diciembre de 2025 (Navidad)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(1, 1, '2025-12-25', NULL, NULL, 'CLOSED', 'Día de Navidad - Capilla cerrada');
+(1, 1, '2025-12-25', '06:00:00', '22:00:00', 'CLOSED', 'Día de Navidad - Capilla cerrada');
 
 -- Capilla 1: La Consolación - Horario especial el 1 de enero de 2026 (Año Nuevo)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
@@ -512,7 +512,7 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 
 -- Capilla 2: Nuestra Señora del Carmen - Cerrada el 1 de noviembre de 2025 (Día de Todos los Santos)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(4, 2, '2025-11-01', NULL, NULL, 'CLOSED', 'Día de Todos los Santos - Evento especial en otra sede');
+(4, 2, '2025-11-01', '06:00:00', '22:00:00', 'CLOSED', 'Día de Todos los Santos - Evento especial en otra sede');
 
 -- Capilla 2: Nuestra Señora del Carmen - Horario especial el 16 de julio de 2026 (Día del Carmen)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
@@ -524,7 +524,7 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 
 -- Capilla 3: Santa Rosa de Lima - Cerrada el 15 de noviembre de 2025 (Mantenimiento)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(7, 3, '2025-11-15', NULL, NULL, 'CLOSED', 'Mantenimiento de instalaciones eléctricas');
+(7, 3, '2025-11-15', '06:00:00', '22:00:00', 'CLOSED', 'Mantenimiento de instalaciones eléctricas');
 
 
 -------------------------------------------------------------------
@@ -614,25 +614,24 @@ INSERT INTO public.general_schedule (id, chapel_id, day_of_week, start_time, end
 
 -- San José Obrero - Cerrado por Mantenimiento (15 de Noviembre 2025)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(8, 4, '2025-11-15', NULL, NULL, 'CLOSED', 'Mantenimiento general de instalaciones');
+(8, 4, '2025-11-15', '06:00:00', '22:00:00', 'CLOSED', 'Mantenimiento general de instalaciones');
 
--- San José Obrero - Horario Especial por Fiesta Patronal (1 de Mayo 2026)
--- Abierto de 5:00 AM - 10:00 PM
+-- San José Obrero - Horario Especial por Fiesta Patronal (20 de noviembre de 2025)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(9, 4, '2026-05-01', '05:00:00', '22:00:00', 'OPEN', 'Fiesta Patronal de San José Obrero');
+(9, 4, '2025-11-20', '13:00:00', '16:00:00', 'OPEN', 'Fiesta Patronal de San José Obrero');
 
 -- Capilla del Buen Pastor - Cerrado por Evento Especial (20 de Diciembre 2025)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(10, 5, '2025-12-20', NULL, NULL, 'CLOSED', 'Evento privado programado');
+(10, 5, '2025-12-20', '06:00:00', '22:00:00', 'CLOSED', 'Evento privado programado');
 
 -- Nuestra Señora de Fátima - Horario Extendido por Vigilia (24 de Diciembre 2025)
 -- Abierto de 6:00 AM - 11:59 PM
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
 (11, 6, '2025-12-24', '06:00:00', '23:59:00', 'OPEN', 'Vigilia de Navidad');
 
--- Nuestra Señora de Fátima - Horario Especial por Fiesta Patronal (13 de Mayo 2026)
+-- Nuestra Señora de Fátima - Horario Especial por Fiesta Patronal (20 de noviembre de 2025)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(12, 6, '2026-05-13', '05:00:00', '22:00:00', 'OPEN', 'Celebración de Nuestra Señora de Fátima');
+(12, 6, '2025-11-20', '13:00:00', '16:00:00', 'OPEN', 'Celebración de Nuestra Señora de Fátima');
 
 
 -- ====================================================================
