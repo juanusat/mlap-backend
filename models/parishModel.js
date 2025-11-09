@@ -164,7 +164,7 @@ class ParishModel {
     return result.rows[0];
   }
 
-  static async update(id, { name, email, username }) {
+  static async update(id, { name, email, username, passwordHash }) {
     const client = await db.getClient();
     try {
       await client.query('BEGIN');
@@ -186,10 +186,18 @@ class ParishModel {
         [email, personId]
       );
 
-      await client.query(
-        `UPDATE public.user SET username = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
-        [username, adminUserId]
-      );
+      // Actualizar usuario (username y opcionalmente password)
+      if (passwordHash) {
+        await client.query(
+          `UPDATE public.user SET username = $1, password_hash = $2, updated_at = CURRENT_TIMESTAMP WHERE id = $3`,
+          [username, passwordHash, adminUserId]
+        );
+      } else {
+        await client.query(
+          `UPDATE public.user SET username = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [username, adminUserId]
+        );
+      }
 
       const parishQuery = `
         UPDATE public.parish
@@ -198,6 +206,14 @@ class ParishModel {
         RETURNING id, name, primary_color, secondary_color, admin_user_id, active, created_at, updated_at
       `;
       const parishResult = await client.query(parishQuery, [name, id]);
+
+      // Actualizar el nombre de la capilla base cuando cambia el nombre de la parroquia
+      const updateChapelQuery = `
+        UPDATE public.chapel
+        SET name = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE parish_id = $2 AND chapel_base = true
+      `;
+      await client.query(updateChapelQuery, [name, id]);
 
       await client.query('COMMIT');
       return parishResult.rows[0];
@@ -243,6 +259,12 @@ class ParishModel {
       if (fields.name !== undefined) {
         await client.query(
           `UPDATE public.parish SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`,
+          [fields.name, id]
+        );
+        
+        // Actualizar el nombre de la capilla base cuando cambia el nombre de la parroquia
+        await client.query(
+          `UPDATE public.chapel SET name = $1, updated_at = CURRENT_TIMESTAMP WHERE parish_id = $2 AND chapel_base = true`,
           [fields.name, id]
         );
       }

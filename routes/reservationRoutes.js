@@ -17,4 +17,11 @@ router.post('/history/list', authMiddleware, reservationController.listHistoryRe
 router.post('/history/search', authMiddleware, reservationController.searchHistoryReservations);
 router.get('/:id', authMiddleware, reservationController.getReservationDetails);
 
+// Rutas para gestión administrativa (requieren contexto de parroquia)
+router.post('/management/list', authMiddleware, reservationController.listReservationsForManagement);
+router.post('/management/search', authMiddleware, reservationController.searchReservationsForManagement);
+router.get('/management/:id', authMiddleware, reservationController.getReservationDetailsForManagement);
+router.patch('/management/:id/status', authMiddleware, reservationController.updateReservationStatus);
+router.patch('/management/:id/reject', authMiddleware, reservationController.rejectReservation);
+
 module.exports = router;

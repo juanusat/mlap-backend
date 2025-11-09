@@ -27,9 +27,10 @@ class ReservationController {
         event_time
       );
 
-      const message = result.available 
+      // Usar el reason del servicio que ya incluye el mensaje apropiado
+      const message = result.reason || (result.available 
         ? 'El horario está disponible' 
-        : 'El horario no está disponible';
+        : 'El horario no está disponible');
 
       res.status(200).json({
         message,
@@ -273,6 +274,204 @@ class ReservationController {
 
       res.status(200).json({
         message: 'Detalles de la reserva obtenidos exitosamente',
+        data: result,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  // ===== Funciones para Gestión Administrativa de Reservas =====
+
+  async listReservationsForManagement(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { page = 1, limit = 10 } = req.body;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      const result = await reservationService.listReservationsForManagement(
+        parishId,
+        Number(page),
+        Number(limit)
+      );
+
+      res.status(200).json({
+        message: 'Reservas obtenidas exitosamente',
+        data: result.data,
+        error: '',
+        traceback: '',
+        meta: {
+          total_records: result.total,
+          page: result.page,
+          limit: result.limit,
+          total_pages: result.totalPages
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async searchReservationsForManagement(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { search, page = 1, limit = 10 } = req.body;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      if (!search || search.trim() === '') {
+        return res.status(400).json({
+          message: 'El término de búsqueda es requerido',
+          data: null,
+          error: 'BAD_REQUEST',
+          traceback: null
+        });
+      }
+
+      const result = await reservationService.searchReservationsForManagement(
+        parishId,
+        search.trim(),
+        Number(page),
+        Number(limit)
+      );
+
+      res.status(200).json({
+        message: 'Búsqueda de reservas completada exitosamente',
+        data: result.data,
+        error: '',
+        traceback: '',
+        meta: {
+          total_records: result.total,
+          page: result.page,
+          limit: result.limit,
+          total_pages: result.totalPages
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async getReservationDetailsForManagement(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { id } = req.params;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      const result = await reservationService.getReservationDetailsForManagement(
+        Number(id),
+        parishId
+      );
+
+      res.status(200).json({
+        message: 'Detalles de la reserva obtenidos exitosamente',
+        data: result,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateReservationStatus(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { id } = req.params;
+      const { new_status } = req.body;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      if (!new_status) {
+        return res.status(400).json({
+          message: 'El nuevo estado es requerido',
+          data: null,
+          error: 'BAD_REQUEST',
+          traceback: null
+        });
+      }
+
+      const validStatuses = ['RESERVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED', 'FULFILLED', 'CANCELLED'];
+      if (!validStatuses.includes(new_status)) {
+        return res.status(400).json({
+          message: 'Estado inválido',
+          data: null,
+          error: 'BAD_REQUEST',
+          traceback: null
+        });
+      }
+
+      const result = await reservationService.updateReservationStatus(
+        Number(id),
+        parishId,
+        new_status
+      );
+
+      res.status(200).json({
+        message: 'Estado de la reserva actualizado exitosamente',
+        data: result,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async rejectReservation(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { id } = req.params;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      const result = await reservationService.updateReservationStatus(
+        Number(id),
+        parishId,
+        'REJECTED'
+      );
+
+      res.status(200).json({
+        message: 'Reserva rechazada exitosamente',
         data: result,
         error: '',
         traceback: ''

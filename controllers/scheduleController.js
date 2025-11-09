@@ -9,9 +9,10 @@ const listGeneralSchedules = async (req, res, next) => {
     const { parishId, context_type } = req.user;
     const { chapelId } = req.params;
 
-    if (!parishId || context_type !== 'PARISH') {
+    // Permitir acceso a feligreses (PARISHIONER) y usuarios de parroquia (PARISH)
+    if (!context_type || (context_type !== 'PARISH' && context_type !== 'PARISHIONER')) {
       return res.status(403).json({
-        message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+        message: 'Prohibido. Debe estar autenticado para ver los horarios.',
         data: null,
         error: 'FORBIDDEN',
         traceback: null
@@ -81,9 +82,10 @@ const listSpecificSchedules = async (req, res, next) => {
     const { chapelId } = req.params;
     const { page = 1, limit = 4, filters = {} } = req.body;
 
-    if (!parishId || context_type !== 'PARISH') {
+    // Permitir acceso a feligreses (PARISHIONER) y usuarios de parroquia (PARISH)
+    if (!context_type || (context_type !== 'PARISH' && context_type !== 'PARISHIONER')) {
       return res.status(403).json({
-        message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+        message: 'Prohibido. Debe estar autenticado para ver los horarios.',
         data: null,
         error: 'FORBIDDEN',
         traceback: null

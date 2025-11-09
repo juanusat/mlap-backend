@@ -19,7 +19,7 @@ const getUserAccount = async (req, res, next) => {
 const updatePersonalInfo = async (req, res, next) => {
   try {
     const userId = req.user.userId;
-    const { first_names, paternal_surname, maternal_surname, document, profile_photo_name } = req.body;
+    const { first_names, paternal_surname, maternal_surname, document, document_type_id, profile_photo_name } = req.body;
     const profilePhoto = req.file;
 
     await userService.updatePersonalInfo(userId, {
@@ -27,6 +27,7 @@ const updatePersonalInfo = async (req, res, next) => {
       paternal_surname,
       maternal_surname,
       document,
+      document_type_id: document_type_id ? parseInt(document_type_id) : undefined,
       profile_photo: profilePhoto,
       profile_photo_name
     });

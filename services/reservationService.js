@@ -17,8 +17,10 @@ class ReservationService {
       event_name: formInfo.event_name,
       event_description: formInfo.event_description,
       current_price: formInfo.current_price,
+      duration_minutes: formInfo.duration_minutes,
       chapel_id: formInfo.chapel_id,
-      chapel_name: formInfo.chapel_name
+      chapel_name: formInfo.chapel_name,
+      parish_id: formInfo.parish_id
     };
   }
 
@@ -56,33 +58,42 @@ class ReservationService {
       eventTime
     );
 
+    // Retornar con reason siempre presente
     return {
       available: availability.available,
       event_date: eventDate,
       event_time: eventTime,
-      reason: availability.reason || null
+      reason: availability.available 
+        ? 'Horario disponible' 
+        : (availability.reason || 'El horario no está disponible')
     };
   }
 
   async createReservation(userId, reservationData) {
-    const { event_variant_id, event_date, event_time, beneficiary_full_name } = reservationData;
+    const { event_variant_id, event_date, event_time, beneficiary_full_name, mentions } = reservationData;
 
     if (!event_variant_id || !event_date || !event_time) {
       throw new Error('Todos los campos son requeridos: event_variant_id, event_date, event_time');
     }
 
-    const availability = await this.checkAvailability(event_variant_id, event_date, event_time);
-    
-    if (!availability.available) {
-      throw new Error(availability.reason || 'El horario seleccionado no está disponible');
+    // Validar menciones si existen
+    if (mentions && Array.isArray(mentions)) {
+      for (const mention of mentions) {
+        if (!mention.mention_type_id || !mention.mention_name || mention.mention_name.trim() === '') {
+          throw new Error('Cada mención debe tener un tipo y un nombre válido');
+        }
+      }
     }
 
+    // La validación de disponibilidad ahora se hace dentro de la transacción en el modelo
+    // para evitar race conditions
     const reservation = await ReservationModel.create(
       userId,
       event_variant_id,
       event_date,
       event_time,
-      beneficiary_full_name
+      beneficiary_full_name,
+      mentions || []
     );
 
     const reservationInfo = await ReservationModel.findById(reservation.id);
@@ -197,6 +208,52 @@ class ReservationService {
     }
 
     return await ReservationModel.getReservationDetails(reservationId, userId);
+  }
+
+  // ===== Servicios para Gestión Administrativa =====
+
+  async listReservationsForManagement(parishId, page, limit) {
+    if (!parishId) {
+      throw new Error('El ID de la parroquia es requerido');
+    }
+
+    return await ReservationModel.listReservationsForManagement(parishId, page, limit);
+  }
+
+  async searchReservationsForManagement(parishId, searchTerm, page, limit) {
+    if (!parishId) {
+      throw new Error('El ID de la parroquia es requerido');
+    }
+
+    if (!searchTerm || searchTerm.trim() === '') {
+      throw new Error('El término de búsqueda es requerido');
+    }
+
+    return await ReservationModel.searchReservationsForManagement(parishId, searchTerm, page, limit);
+  }
+
+  async getReservationDetailsForManagement(reservationId, parishId) {
+    if (!reservationId || !parishId) {
+      throw new Error('El ID de la reserva y el ID de la parroquia son requeridos');
+    }
+
+    return await ReservationModel.getReservationDetailsForManagement(reservationId, parishId);
+  }
+
+  async updateReservationStatus(reservationId, parishId, newStatus) {
+    if (!reservationId || !parishId || !newStatus) {
+      throw new Error('Todos los campos son requeridos');
+    }
+
+    return await ReservationModel.updateReservationStatus(reservationId, parishId, newStatus);
+  }
+
+  async updateReservation(reservationId, parishId, updateData) {
+    if (!reservationId || !parishId) {
+      throw new Error('El ID de la reserva y el ID de la parroquia son requeridos');
+    }
+
+    return await ReservationModel.updateReservation(reservationId, parishId, updateData);
   }
 }
 
