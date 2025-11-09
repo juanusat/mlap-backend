@@ -616,10 +616,9 @@ INSERT INTO public.general_schedule (id, chapel_id, day_of_week, start_time, end
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
 (8, 4, '2025-11-15', '06:00:00', '22:00:00', 'CLOSED', 'Mantenimiento general de instalaciones');
 
--- San José Obrero - Horario Especial por Fiesta Patronal (1 de Mayo 2026)
--- Abierto de 5:00 AM - 10:00 PM
+-- San José Obrero - Horario Especial por Fiesta Patronal (20 de noviembre de 2025)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(9, 4, '2026-05-01', '05:00:00', '22:00:00', 'OPEN', 'Fiesta Patronal de San José Obrero');
+(9, 4, '2025-11-20', '13:00:00', '16:00:00', 'OPEN', 'Fiesta Patronal de San José Obrero');
 
 -- Capilla del Buen Pastor - Cerrado por Evento Especial (20 de Diciembre 2025)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
@@ -630,9 +629,9 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
 (11, 6, '2025-12-24', '06:00:00', '23:59:00', 'OPEN', 'Vigilia de Navidad');
 
--- Nuestra Señora de Fátima - Horario Especial por Fiesta Patronal (13 de Mayo 2026)
+-- Nuestra Señora de Fátima - Horario Especial por Fiesta Patronal (20 de noviembre de 2025)
 INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time, exception_type, reason) VALUES
-(12, 6, '2026-05-13', '05:00:00', '22:00:00', 'OPEN', 'Celebración de Nuestra Señora de Fátima');
+(12, 6, '2025-11-20', '13:00:00', '16:00:00', 'OPEN', 'Celebración de Nuestra Señora de Fátima');
 
 
 -- ====================================================================

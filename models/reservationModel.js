@@ -84,13 +84,23 @@ class ReservationModel {
   static async checkAvailability(eventVariantId, eventDate, eventTime) {
     const query = `
       WITH event_info AS (
-        SELECT ev.id, ce.chapel_id, ev.duration_minutes
+        SELECT ev.id, ce.chapel_id, ev.duration_minutes, ev.name as event_name
         FROM public.event_variant ev
         INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
         WHERE ev.id = $1 AND ev.active = true
       ),
       day_info AS (
-        SELECT EXTRACT(DOW FROM $2::date) as day_of_week
+        SELECT 
+          EXTRACT(DOW FROM $2::date) as day_of_week,
+          CASE EXTRACT(DOW FROM $2::date)
+            WHEN 0 THEN 'Domingo'
+            WHEN 1 THEN 'Lunes'
+            WHEN 2 THEN 'Martes'
+            WHEN 3 THEN 'Miércoles'
+            WHEN 4 THEN 'Jueves'
+            WHEN 5 THEN 'Viernes'
+            WHEN 6 THEN 'Sábado'
+          END as day_name
       ),
       -- Verificar si hay cobertura del horario para el evento completo
       general_availability AS (
@@ -110,7 +120,7 @@ class ReservationModel {
       ),
       -- Verificar si hay excepción en esta fecha
       specific_exception AS (
-        SELECT ss.exception_type, ss.start_time, ss.end_time
+        SELECT ss.exception_type, ss.start_time, ss.end_time, ss.reason as exception_reason
         FROM public.specific_schedule ss
         INNER JOIN event_info ei ON ss.chapel_id = ei.chapel_id
         WHERE ss.date = $2::date
@@ -126,7 +136,12 @@ class ReservationModel {
       ),
       -- Verificar si hay reservas que se solapan con este horario
       existing_reservation AS (
-        SELECT r.id
+        SELECT 
+          r.id,
+          r.event_time,
+          ev_existing.duration_minutes,
+          ev_existing.name as conflicting_event_name,
+          (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time as conflicting_end_time
         FROM public.reservation r
         INNER JOIN public.event_variant ev_existing ON r.event_variant_id = ev_existing.id
         INNER JOIN public.chapel_event ce ON ev_existing.chapel_event_id = ce.id
@@ -146,12 +161,13 @@ class ReservationModel {
             ($3::time <= r.event_time 
              AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time >= (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time)
           )
+        LIMIT 1
       )
       SELECT 
         CASE 
           -- Primero verificar si hay conflicto con reservas existentes
           WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN false
-          -- Verificar si la capilla está cerrada en esta fecha
+          -- Verificar si la capilla no está disponible para ese momento
           WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'CLOSED') THEN false
           -- Si hay excepción OPEN y el horario está dentro, es válido
           WHEN EXISTS (SELECT 1 FROM specific_open_valid) THEN true
@@ -161,11 +177,29 @@ class ReservationModel {
           ELSE false
         END as available,
         CASE
-          WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN 'Ya existe una reserva en este horario'
-          WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'CLOSED') THEN 'La capilla está cerrada en esta fecha'
+          WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN 
+            'Ya existe una reserva de ' || 
+            (SELECT conflicting_event_name FROM existing_reservation) || 
+            ' desde las ' || 
+            TO_CHAR((SELECT event_time FROM existing_reservation), 'HH24:MI') ||
+            ' hasta las ' ||
+            TO_CHAR((SELECT conflicting_end_time FROM existing_reservation), 'HH24:MI')
+          WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'CLOSED') THEN 
+            CASE 
+              WHEN (SELECT exception_reason FROM specific_exception WHERE exception_type = 'CLOSED') IS NOT NULL 
+                AND TRIM((SELECT exception_reason FROM specific_exception WHERE exception_type = 'CLOSED')) != ''
+              THEN 'La capilla no está disponible: ' || (SELECT exception_reason FROM specific_exception WHERE exception_type = 'CLOSED')
+              ELSE 'La capilla está cerrada en esta fecha desde las ' || 
+                   TO_CHAR((SELECT start_time FROM specific_exception WHERE exception_type = 'CLOSED'), 'HH24:MI') ||
+                   ' hasta las ' ||
+                   TO_CHAR((SELECT end_time FROM specific_exception WHERE exception_type = 'CLOSED'), 'HH24:MI')
+            END
           WHEN NOT EXISTS (SELECT 1 FROM general_availability) 
             AND NOT EXISTS (SELECT 1 FROM specific_open_valid) 
-          THEN 'El horario seleccionado no tiene disponibilidad suficiente para la duración del evento'
+          THEN 
+            'La capilla no tiene horario disponible los ' || (SELECT day_name FROM day_info) || 
+            ' a las ' || TO_CHAR($3::time, 'HH24:MI') ||
+            ' (duración del evento: ' || (SELECT duration_minutes FROM event_info) || ' minutos)'
           ELSE NULL
         END as reason
     `;
