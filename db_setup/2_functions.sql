@@ -106,3 +106,83 @@ CREATE TRIGGER trg_after_insert_reservation
 AFTER INSERT ON public.reservation
 FOR EACH ROW
 EXECUTE FUNCTION public.copy_requirements_to_reservation();
+
+
+-- Obtener el horario general y las excepciones (específico) de una capilla dada su ID.
+CREATE OR REPLACE FUNCTION public.get_chapel_schedule (p_chapel_id INTEGER)
+RETURNS TABLE (
+    tipo_horario VARCHAR,
+    dia VARCHAR,
+    fecha DATE,
+    hora_inicio TIME,
+    hora_fin TIME,
+    razon_o_estado TEXT
+)
+LANGUAGE sql
+AS $$
+WITH combined_schedule AS (
+    -- 1. Horario General (Recurrente)
+    SELECT
+        'GENERAL' AS tipo_horario,
+        CASE gs.day_of_week
+            WHEN 0 THEN 'Domingo'
+            WHEN 1 THEN 'Lunes'
+            WHEN 2 THEN 'Martes'
+            WHEN 3 THEN 'Miércoles'
+            WHEN 4 THEN 'Jueves'
+            WHEN 5 THEN 'Viernes'
+            WHEN 6 THEN 'Sábado'
+        END AS dia,
+        NULL::DATE AS fecha,
+        gs.start_time AS hora_inicio,
+        gs.end_time AS hora_fin,
+        'Abierto (Recurrente)' AS razon_o_estado
+    FROM
+        public.general_schedule gs
+    WHERE
+        gs.chapel_id = p_chapel_id
+
+    UNION ALL
+
+    -- 2. Horario Específico (Excepciones)
+    SELECT
+        'ESPECÍFICO' AS tipo_horario,
+        to_char(ss.date, 'Day') AS dia,
+        ss.date AS fecha,
+        ss.start_time AS hora_inicio,
+        ss.end_time AS hora_fin,
+        CASE ss.exception_type
+            WHEN 'OPEN' THEN 'Abierto (Excepción)'
+            WHEN 'CLOSED' THEN 'Cerrado: ' || COALESCE(ss.reason, 'Sin especificar')
+        END AS razon_o_estado
+    FROM
+        public.specific_schedule ss
+    WHERE
+        ss.chapel_id = p_chapel_id
+)
+SELECT 
+    cs.tipo_horario,
+    cs.dia,
+    cs.fecha,
+    cs.hora_inicio,
+    cs.hora_fin,
+    cs.razon_o_estado
+FROM
+    combined_schedule cs
+ORDER BY
+    cs.fecha NULLS FIRST, -- Las reglas generales primero
+    CASE cs.tipo_horario 
+        WHEN 'GENERAL' THEN 
+            CASE cs.dia 
+                WHEN 'Domingo' THEN 0 
+                WHEN 'Lunes' THEN 1 
+                WHEN 'Martes' THEN 2 
+                WHEN 'Miércoles' THEN 3 
+                WHEN 'Jueves' THEN 4 
+                WHEN 'Viernes' THEN 5 
+                WHEN 'Sábado' THEN 6 
+            END 
+        ELSE EXTRACT(DOW FROM cs.fecha) 
+    END, -- Ordena por el día de la semana o fecha
+    cs.hora_inicio;
+$$;
