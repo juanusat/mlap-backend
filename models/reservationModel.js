@@ -1064,6 +1064,56 @@ class ReservationModel {
     const result = await db.query(updateQuery, values);
     return result.rows[0];
   }
+
+  /**
+   * Agregar un pago a una reserva
+   * @param {number} reservationId - ID de la reserva
+   * @param {number} parishId - ID de la parroquia
+   * @param {number} amount - Monto a pagar
+   * @returns {Object} Reserva actualizada
+   */
+  static async addPayment(reservationId, parishId, amount) {
+    // Verificar que la reserva pertenece a la parroquia y obtener el precio
+    const checkQuery = `
+      SELECT r.id, r.paid_amount, r.status, ev.current_price
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      WHERE r.id = $1 AND c.parish_id = $2
+    `;
+    
+    const checkResult = await db.query(checkQuery, [reservationId, parishId]);
+    
+    if (!checkResult.rows.length) {
+      throw new Error('Reserva no encontrada');
+    }
+
+    const reservation = checkResult.rows[0];
+
+    // Validar que la reserva esté en estado válido para pagar
+    if (!['RESERVED', 'IN_PROGRESS'].includes(reservation.status)) {
+      throw new Error('Solo se puede pagar reservas en estado RESERVADO o EN PROGRESO');
+    }
+
+    const currentPaid = parseFloat(reservation.paid_amount || 0);
+    const totalPrice = parseFloat(reservation.current_price || 0);
+    const newTotal = currentPaid + amount;
+
+    if (newTotal > totalPrice) {
+      throw new Error('El monto total pagado no puede exceder el precio del evento');
+    }
+    
+    const updateQuery = `
+      UPDATE public.reservation
+      SET paid_amount = $1, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $2
+      RETURNING id, paid_amount, status
+    `;
+    
+    const result = await db.query(updateQuery, [newTotal, reservationId]);
+    return result.rows[0];
+  }
 }
 
 module.exports = ReservationModel;

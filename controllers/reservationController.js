@@ -480,6 +480,47 @@ class ReservationController {
       next(error);
     }
   }
+
+  async addPayment(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { id } = req.params;
+      const { amount } = req.body;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      if (!amount || amount <= 0) {
+        return res.status(400).json({
+          message: 'El monto debe ser mayor a 0',
+          data: null,
+          error: 'BAD_REQUEST',
+          traceback: null
+        });
+      }
+
+      const result = await reservationService.addPayment(
+        Number(id),
+        parishId,
+        parseFloat(amount)
+      );
+
+      res.status(200).json({
+        message: 'Pago registrado exitosamente',
+        data: result,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ReservationController();

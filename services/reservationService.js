@@ -255,6 +255,18 @@ class ReservationService {
 
     return await ReservationModel.updateReservation(reservationId, parishId, updateData);
   }
+
+  async addPayment(reservationId, parishId, amount) {
+    if (!reservationId || !parishId || !amount) {
+      throw new Error('Todos los campos son requeridos');
+    }
+
+    if (amount <= 0) {
+      throw new Error('El monto debe ser mayor a 0');
+    }
+
+    return await ReservationModel.addPayment(reservationId, parishId, amount);
+  }
 }
 
 module.exports = new ReservationService();
