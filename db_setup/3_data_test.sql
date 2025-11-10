@@ -639,19 +639,19 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 -- ====================================================================
 
 INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
-(100, 5, 1, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
-(101, 5, 3, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00, 'María Gonzales Ramos'),
-(102, 5, 7, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00, 'María Gonzales Ramos'),
-(103, 5, 15, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00, 'María Gonzales Ramos'),
-(104, 5, 21, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00, 'María Gonzales Ramos');
+(5, 5, 1, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
+(6, 5, 3, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00, 'María Gonzales Ramos'),
+(7, 5, 7, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00, 'María Gonzales Ramos'),
+(8, 5, 15, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00, 'María Gonzales Ramos'),
+(9, 5, 21, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00, 'María Gonzales Ramos');
 
 INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
-(105, 5, 2, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00, 'María Gonzales Ramos'),
-(106, 5, 9, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00, 'María Gonzales Ramos'),
-(107, 5, 17, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00, 'María Gonzales Ramos'),
-(108, 5, 13, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00, 'María Gonzales Ramos'),
-(109, 5, 18, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00, 'María Gonzales Ramos'),
-(110, 5, 19, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00, 'María Gonzales Ramos'),
-(111, 5, 23, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
-(112, 5, 20, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00, 'María Gonzales Ramos');
+(10, 5, 2, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00, 'María Gonzales Ramos'),
+(11, 5, 9, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00, 'María Gonzales Ramos'),
+(12, 5, 17, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00, 'María Gonzales Ramos'),
+(13, 5, 13, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00, 'María Gonzales Ramos'),
+(14, 5, 18, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00, 'María Gonzales Ramos'),
+(15, 5, 19, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00, 'María Gonzales Ramos'),
+(16, 5, 23, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
+(17, 5, 20, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00, 'María Gonzales Ramos');
 

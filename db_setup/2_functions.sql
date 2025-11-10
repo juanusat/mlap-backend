@@ -186,3 +186,53 @@ ORDER BY
     END, -- Ordena por el día de la semana o fecha
     cs.hora_inicio;
 $$;
+
+-- Función para obtener todas las reservas de una capilla específica (p_chapel_id), con formato de fecha y hora estándar.
+CREATE OR REPLACE FUNCTION public.get_chapel_reservations (p_chapel_id INTEGER)
+RETURNS TABLE (
+    reserva_id INTEGER,
+    nombre_persona TEXT,
+    correo VARCHAR,
+    fecha_evento DATE,
+    hora_evento TIME,
+    fecha_reprogramada TIMESTAMP,
+    duracion_minutos INTEGER,
+    requisitos_cumplidos BIGINT,
+    monto_total DECIMAL(10, 2),
+    monto_pagado DECIMAL(10, 2)
+)
+LANGUAGE sql
+AS $$
+SELECT
+    r.id AS reserva_id,
+    (per.first_names || ' ' || per.paternal_surname || COALESCE(' ' || per.maternal_surname, ''))::TEXT AS nombre_persona,
+    per.email AS correo,
+    
+    r.event_date AS fecha_evento,
+    r.event_time AS hora_evento,
+    
+    r.reschedule_date AS fecha_reprogramada,
+    ev.duration_minutes AS duracion_minutos,
+    
+    (SELECT COUNT(*) 
+     FROM public.reservation_requirement rr 
+     WHERE rr.reservation_id = r.id AND rr.completed = TRUE) AS requisitos_cumplidos,
+     
+    ev.current_price AS monto_total,
+    r.paid_amount AS monto_pagado
+FROM
+    public.reservation r
+JOIN
+    public.user u ON r.user_id = u.id
+JOIN
+    public.person per ON u.person_id = per.id
+JOIN
+    public.event_variant ev ON r.event_variant_id = ev.id
+JOIN
+    public.chapel_event ce ON ev.chapel_event_id = ce.id
+WHERE
+    ce.chapel_id = p_chapel_id
+    AND r.status NOT IN ('CANCELLED', 'REJECTED')
+ORDER BY
+    r.event_date ASC, r.event_time ASC;
+$$;

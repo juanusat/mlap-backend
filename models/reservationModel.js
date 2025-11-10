@@ -114,16 +114,26 @@ class ReservationModel {
         INNER JOIN event_info ei ON gs.chapel_id = ei.chapel_id
         INNER JOIN day_info di ON gs.day_of_week = di.day_of_week
         WHERE 
-          -- El horario debe cubrir al menos el inicio del evento
           $3::time >= gs.start_time 
-          AND $3::time < gs.end_time
+          AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= gs.end_time
       ),
-      -- Verificar si hay excepción en esta fecha
       specific_exception AS (
         SELECT ss.exception_type, ss.start_time, ss.end_time, ss.reason as exception_reason
         FROM public.specific_schedule ss
         INNER JOIN event_info ei ON ss.chapel_id = ei.chapel_id
         WHERE ss.date = $2::date
+          AND (
+            (ss.exception_type = 'CLOSED' 
+              AND (
+                ($3::time >= ss.start_time AND $3::time < ss.end_time)
+                OR (($3::time + (ei.duration_minutes || ' minutes')::interval)::time > ss.start_time 
+                    AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= ss.end_time)
+                OR ($3::time <= ss.start_time 
+                    AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time >= ss.end_time)
+              )
+            )
+            OR ss.exception_type = 'OPEN'
+          )
       ),
       -- Verificar si una excepción OPEN cubre completamente el evento
       specific_open_valid AS (
@@ -295,7 +305,7 @@ class ReservationModel {
           id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
         )
         SELECT 
-          (SELECT COALESCE(MAX(id), 0) FROM public.reservation_requirement) + ROW_NUMBER() OVER (),
+          nextval('public.reservation_requirement_id_seq'),
           $1,
           br.id,
           NULL,
@@ -320,7 +330,7 @@ class ReservationModel {
           id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
         )
         SELECT 
-          (SELECT COALESCE(MAX(id), 0) FROM public.reservation_requirement) + ROW_NUMBER() OVER (),
+          nextval('public.reservation_requirement_id_seq'),
           $1,
           NULL,
           cer.id,
