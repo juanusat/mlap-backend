@@ -186,3 +186,51 @@ ORDER BY
     END, -- Ordena por el día de la semana o fecha
     cs.hora_inicio;
 $$;
+
+-- Función para obtener todas las reservas de una parroquia (p_parish_id), ordenadas por la más próxima.
+CREATE OR REPLACE FUNCTION public.get_parish_reservations (p_parish_id INTEGER)
+RETURNS TABLE (
+    reserva_id INTEGER,
+    nombre_persona TEXT,
+    correo VARCHAR,
+    para_cuando TEXT,
+    fecha_reprogramada TIMESTAMP,
+    duracion_minutos INTEGER,
+    requisitos_cumplidos BIGINT,
+    monto_total DECIMAL(10, 2),
+    monto_pagado DECIMAL(10, 2)
+)
+LANGUAGE sql
+AS $$
+SELECT
+    r.id AS reserva_id,
+    (per.first_names || ' ' || per.paternal_surname || COALESCE(' ' || per.maternal_surname, ''))::TEXT AS nombre_persona,
+    per.email AS correo,
+    to_char(r.event_date, 'TMDy, DD "de" TMMonth "de" YYYY') || ' a las ' || to_char(r.event_time, 'HH12:MI AM') AS para_cuando,
+    r.reschedule_date AS fecha_reprogramada,
+    ev.duration_minutes AS duracion_minutos,
+    
+    (SELECT COUNT(*) 
+     FROM public.reservation_requirement rr 
+     WHERE rr.reservation_id = r.id AND rr.completed = TRUE) AS requisitos_cumplidos,
+     
+    ev.current_price AS monto_total,
+    r.paid_amount AS monto_pagado
+FROM
+    public.reservation r
+JOIN
+    public.user u ON r.user_id = u.id
+JOIN
+    public.person per ON u.person_id = per.id
+JOIN
+    public.event_variant ev ON r.event_variant_id = ev.id
+JOIN
+    public.chapel_event ce ON ev.chapel_event_id = ce.id
+JOIN
+    public.chapel c ON ce.chapel_id = c.id
+WHERE
+    c.parish_id = p_parish_id
+    AND r.status NOT IN ('CANCELLED', 'REJECTED')
+ORDER BY
+    r.event_date ASC, r.event_time ASC;
+$$;
