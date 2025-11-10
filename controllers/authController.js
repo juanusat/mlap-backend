@@ -189,6 +189,7 @@ const getSession = async (req, res, next) => {
         res.status(200).json({
             message: 'Operación exitosa',
             data: {
+                context_type: context_type,
                 person: {
                     full_name: fullName,
                     profile_photo: profilePhoto
