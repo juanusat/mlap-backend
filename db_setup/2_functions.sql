@@ -236,3 +236,103 @@ WHERE
 ORDER BY
     r.event_date ASC, r.event_time ASC;
 $$;
+
+
+-- Trabajadores de una parroquia
+CREATE OR REPLACE FUNCTION public.get_parish_workers (p_parish_id INTEGER)
+RETURNS TABLE (
+    worker_id INTEGER,
+    full_name TEXT,
+    association_id INTEGER
+)
+LANGUAGE sql
+AS $$
+SELECT
+    u.id AS worker_id,
+    (per.first_names || ' ' || per.paternal_surname || COALESCE(' ' || per.maternal_surname, ''))::TEXT AS full_name,
+    a.id AS association_id
+FROM
+    public.association a
+JOIN
+    public.user u ON a.user_id = u.id
+JOIN
+    public.person per ON u.person_id = per.id
+WHERE
+    a.parish_id = p_parish_id
+    AND a.active = TRUE
+    AND u.active = TRUE
+ORDER BY
+    full_name;
+$$;
+
+
+-- Asociaciones de un trabajador
+CREATE OR REPLACE FUNCTION public.get_worker_associations (p_user_id INTEGER)
+RETURNS TABLE (
+    parish_name VARCHAR,
+    association_id INTEGER
+)
+LANGUAGE sql
+AS $$
+SELECT
+    p.name AS parish_name,
+    a.id AS association_id
+FROM
+    public.association a
+JOIN
+    public.parish p ON a.parish_id = p.id
+WHERE
+    a.user_id = p_user_id
+    AND a.active = TRUE
+ORDER BY
+    p.name;
+$$;
+
+
+-- Roles de una asociación
+CREATE OR REPLACE FUNCTION public.get_association_roles (p_association_id INTEGER)
+RETURNS TABLE (
+    role_name VARCHAR,
+    user_role_id INTEGER
+)
+LANGUAGE sql
+AS $$
+SELECT
+    r.name AS role_name,
+    ur.id AS user_role_id
+FROM
+    public.user_role ur
+JOIN
+    public.role r ON ur.role_id = r.id
+WHERE
+    ur.association_id = p_association_id
+    AND ur.revocation_date IS NULL
+    AND r.active = TRUE
+ORDER BY
+    r.name;
+$$;
+
+
+-- Permisos de un rol asignado (user role)
+CREATE OR REPLACE FUNCTION public.get_user_role_permissions (p_user_role_id INTEGER)
+RETURNS TABLE (
+    permission_code VARCHAR,
+    permission_name VARCHAR,
+    is_active BOOLEAN
+)
+LANGUAGE sql
+AS $$
+SELECT
+    p.code AS permission_code,
+    p.name AS permission_name,
+    rp.granted AS is_active
+FROM
+    public.role_permission rp
+JOIN
+    public.permission p ON rp.permission_id = p.id
+WHERE
+    rp.role_id = (SELECT ur.role_id FROM public.user_role ur WHERE ur.id = p_user_role_id LIMIT 1)
+    AND rp.revocation_date IS NULL
+ORDER BY
+    p.category, p.name;
+$$;
