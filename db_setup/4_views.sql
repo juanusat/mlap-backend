@@ -215,3 +215,24 @@ WHERE
 ORDER BY
     c.relname;
 COMMENT ON VIEW public.vw_list_views IS 'Lista todas las vistas (VIEWs) existentes en el esquema public y su comentario asociado.';
+
+
+-- Creación de la vista para obtener información administrativa de las parroquias y sus roles.
+CREATE OR REPLACE VIEW public.vw_chapel_admin_info AS
+SELECT
+    c.id AS chapel_id,
+    p.name AS parish_name,
+    (SELECT cb.id FROM public.chapel cb WHERE cb.parish_id = p.id AND cb.chapel_base = TRUE LIMIT 1) AS base_chapel_id,
+    per.email AS parish_admin_email,
+    (SELECT COUNT(r.id) FROM public.role r WHERE r.parish_id = p.id AND r.active = TRUE) AS active_role_count
+FROM
+    public.chapel c
+JOIN
+    public.parish p ON c.parish_id = p.id
+JOIN
+    public.user u ON p.admin_user_id = u.id
+JOIN
+    public.person per ON u.person_id = per.id
+ORDER BY
+    p.name, c.name;
+COMMENT ON VIEW public.vw_chapel_admin_info IS 'Muestra información administrativa clave de cada capilla y la cantidad de roles activos definidos en su parroquia.';
