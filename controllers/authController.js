@@ -171,6 +171,7 @@ const getSession = async (req, res, next) => {
         let availableRoles = null;
         let currentRole = null;
         let isParishAdmin = false;
+        let currentPermissions = permissions || [];
 
         if (context_type === 'PARISH' && parishId) {
             parishInfo = await userModel.findParishById(parishId);
@@ -179,10 +180,17 @@ const getSession = async (req, res, next) => {
             
             if (roleId) {
                 currentRole = await userModel.findRoleById(roleId);
+                if (isParishAdmin) {
+                    const allPermsQuery = `SELECT code FROM public.permission WHERE category IN ('ACTOS LITÚRGICOS', 'SEGURIDAD', 'PARROQUIA')`;
+                    const { rows } = await require('../db').query(allPermsQuery);
+                    currentPermissions = rows.map(r => r.code);
+                } else {
+                    currentPermissions = await userModel.findRolePermissions(roleId);
+                }
             }
         }
 
-        const tokenPayload = { userId, context_type, parishId, roleId, permissions: permissions || [] };
+        const tokenPayload = { userId, context_type, parishId, roleId, permissions: currentPermissions };
         const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
         res.cookie('session_token', newToken, cookieOptions);
 
@@ -202,7 +210,7 @@ const getSession = async (req, res, next) => {
                 } : null,
                 available_roles: availableRoles,
                 current_role: currentRole,
-                permissions: permissions || []
+                permissions: currentPermissions
             }
         });
     } catch (error) {
