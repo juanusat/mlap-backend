@@ -98,11 +98,8 @@ class ReservationService {
 
     const reservationInfo = await ReservationModel.findById(reservation.id);
 
-    const dateFormatted = new Date(event_date).toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric'
-    });
+    const [year, month, day] = event_date.split('-');
+    const dateFormatted = `${day}/${month}/${year}`;
 
     const timeFormatted = new Date(`2000-01-01T${event_time}`).toLocaleTimeString('es-ES', {
       hour: '2-digit',
