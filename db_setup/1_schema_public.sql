@@ -209,8 +209,7 @@ CREATE TABLE IF NOT EXISTS public.specific_schedule (
     CONSTRAINT chk_specific_schedule_valid CHECK (
         (exception_type = 'CLOSED') OR 
         (exception_type IN ('OPEN') AND start_time IS NOT NULL AND end_time IS NOT NULL AND end_time > start_time)
-    ),
-    CONSTRAINT uk_specific_schedule_chapel_date UNIQUE(chapel_id, date)
+    )
 );
 
 -- ====================================================================
