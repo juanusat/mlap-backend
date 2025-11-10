@@ -221,6 +221,7 @@ COMMENT ON VIEW public.vw_list_views IS 'Lista todas las vistas (VIEWs) existent
 CREATE OR REPLACE VIEW public.vw_chapel_admin_info AS
 SELECT
     c.id AS chapel_id,
+    c.name AS chapel_name,
     p.name AS parish_name,
     (SELECT cb.id FROM public.chapel cb WHERE cb.parish_id = p.id AND cb.chapel_base = TRUE LIMIT 1) AS base_chapel_id,
     per.email AS parish_admin_email,
