@@ -187,13 +187,14 @@ ORDER BY
     cs.hora_inicio;
 $$;
 
--- Función para obtener todas las reservas de una parroquia (p_parish_id), ordenadas por la más próxima.
-CREATE OR REPLACE FUNCTION public.get_parish_reservations (p_parish_id INTEGER)
+-- Función para obtener todas las reservas de una capilla específica (p_chapel_id), con formato de fecha y hora estándar.
+CREATE OR REPLACE FUNCTION public.get_chapel_reservations (p_chapel_id INTEGER)
 RETURNS TABLE (
     reserva_id INTEGER,
     nombre_persona TEXT,
     correo VARCHAR,
-    para_cuando TEXT,
+    fecha_evento DATE,
+    hora_evento TIME,
     fecha_reprogramada TIMESTAMP,
     duracion_minutos INTEGER,
     requisitos_cumplidos BIGINT,
@@ -206,7 +207,10 @@ SELECT
     r.id AS reserva_id,
     (per.first_names || ' ' || per.paternal_surname || COALESCE(' ' || per.maternal_surname, ''))::TEXT AS nombre_persona,
     per.email AS correo,
-    to_char(r.event_date, 'TMDy, DD "de" TMMonth "de" YYYY') || ' a las ' || to_char(r.event_time, 'HH12:MI AM') AS para_cuando,
+    
+    r.event_date AS fecha_evento,
+    r.event_time AS hora_evento,
+    
     r.reschedule_date AS fecha_reprogramada,
     ev.duration_minutes AS duracion_minutos,
     
@@ -226,10 +230,8 @@ JOIN
     public.event_variant ev ON r.event_variant_id = ev.id
 JOIN
     public.chapel_event ce ON ev.chapel_event_id = ce.id
-JOIN
-    public.chapel c ON ce.chapel_id = c.id
 WHERE
-    c.parish_id = p_parish_id
+    ce.chapel_id = p_chapel_id
     AND r.status NOT IN ('CANCELLED', 'REJECTED')
 ORDER BY
     r.event_date ASC, r.event_time ASC;
