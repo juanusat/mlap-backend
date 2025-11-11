@@ -261,7 +261,7 @@ class ReservationModel {
           id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
         )
         SELECT 
-          (SELECT COALESCE(MAX(id), 0) FROM public.reservation_requirement) + ROW_NUMBER() OVER (),
+          nextval('public.reservation_requirement_id_seq'),
           $1,
           br.id,
           NULL,
@@ -286,7 +286,7 @@ class ReservationModel {
           id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
         )
         SELECT 
-          (SELECT COALESCE(MAX(id), 0) FROM public.reservation_requirement) + ROW_NUMBER() OVER (),
+          nextval('public.reservation_requirement_id_seq'),
           $1,
           NULL,
           cer.id,
