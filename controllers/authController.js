@@ -117,7 +117,10 @@ const selectRole = async (req, res, next) => {
         res.cookie('session_token', finalToken, cookieOptions);
 
         res.status(200).json({
-            message: 'Operación exitosa'
+            message: 'Operación exitosa',
+            data: {
+                permissions
+            }
         });
     } catch (error) {
         next(error);
