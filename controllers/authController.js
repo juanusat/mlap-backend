@@ -76,6 +76,22 @@ const selectContext = async (req, res, next) => {
                     error: 'parishId es requerido cuando context_type es PARISH'
                 });
             }
+            
+            // Verificar si el usuario es administrador de esta parroquia
+            const isParishAdmin = await userModel.isParishAdmin(userId, parishId);
+            console.log(`\n=== SELECT CONTEXT (PARISH) ===`);
+            console.log(`Usuario ID: ${userId}, Parroquia ID: ${parishId}`);
+            console.log(`¿Es administrador?: ${isParishAdmin}`);
+            
+            // Si es administrador, darle todos los permisos
+            if (isParishAdmin) {
+                permissions = await userModel.findAllPermissions();
+                console.log(`✅ ADMINISTRADOR - Permisos cargados: ${permissions.length}`);
+                console.log(`Primeros 10 permisos:`, permissions.slice(0, 10));
+            } else {
+                console.log(`⚠️ NO es administrador - Sin permisos en este punto`);
+            }
+            
             tokenPayload = { userId, context_type: 'PARISH', parishId, permissions };
         } else if (context_type === 'PARISHIONER') {
             permissions = await userModel.findParishionerPermissions();
@@ -110,6 +126,11 @@ const selectRole = async (req, res, next) => {
         }
 
         const permissions = await userModel.findRolePermissions(roleId);
+        
+        console.log(`\n=== SELECT ROLE ===`);
+        console.log(`Usuario ID: ${userId}, Parroquia ID: ${parishId}, Rol ID: ${roleId}`);
+        console.log(`✅ Permisos del rol cargados: ${permissions.length}`);
+        console.log(`Permisos completos:`, permissions);
 
         const tokenPayload = { userId, context_type, parishId, roleId, permissions };
         const finalToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
@@ -174,18 +195,37 @@ const getSession = async (req, res, next) => {
         let availableRoles = null;
         let currentRole = null;
         let isParishAdmin = false;
+        let finalPermissions = permissions || [];
 
         if (context_type === 'PARISH' && parishId) {
             parishInfo = await userModel.findParishById(parishId);
             availableRoles = await userModel.findUserRolesInParish(userId, parishId);
             isParishAdmin = await userModel.isParishAdmin(userId, parishId);
             
+            console.log(`\n=== GET SESSION ===`);
+            console.log(`Usuario ID: ${userId}, Parroquia ID: ${parishId}, Rol ID: ${roleId}`);
+            console.log(`¿Es administrador?: ${isParishAdmin}`);
+            console.log(`Permisos en el token: ${finalPermissions.length}`);
+            
+            // Si es administrador de la parroquia, otorgar TODOS los permisos
+            if (isParishAdmin) {
+                finalPermissions = await userModel.findAllPermissions();
+                console.log(`✅ ADMINISTRADOR - Permisos actualizados: ${finalPermissions.length}`);
+            }
+            
             if (roleId) {
                 currentRole = await userModel.findRoleById(roleId);
             }
+            
+            console.log(`📋 Permisos finales enviados al frontend: ${finalPermissions.length}`);
+            if (finalPermissions.length > 0) {
+                console.log(`Primeros 10 permisos:`, finalPermissions.slice(0, 10));
+            } else {
+                console.log(`⚠️ ADVERTENCIA: Array de permisos vacío!`);
+            }
         }
 
-        const tokenPayload = { userId, context_type, parishId, roleId, permissions: permissions || [] };
+        const tokenPayload = { userId, context_type, parishId, roleId, permissions: finalPermissions };
         const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
         res.cookie('session_token', newToken, cookieOptions);
 
@@ -204,7 +244,7 @@ const getSession = async (req, res, next) => {
                 } : null,
                 available_roles: availableRoles,
                 current_role: currentRole,
-                permissions: permissions || []
+                permissions: finalPermissions
             }
         });
     } catch (error) {
