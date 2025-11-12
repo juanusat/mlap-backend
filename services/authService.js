@@ -6,7 +6,7 @@ const config = require('../config');
 const register = async (userData) => {
   const existingUser = await userModel.findByEmail(userData.email);
   if (existingUser) {
-    throw new Error('User already exists with this email');
+    throw new Error('Ya existe un usuario con este correo electrónico');
   }
 
   const passwordHash = crypto.createHash('sha256').update(userData.password).digest('hex');
@@ -28,14 +28,14 @@ const register = async (userData) => {
 const login = async (email, password) => {
   const user = await userModel.findByEmail(email);
   if (!user || !user.active) {
-    throw new Error('Invalid credentials or inactive user');
+    throw new Error('Credenciales inválidas o usuario inactivo');
   }
 
   const sha256Hash = crypto.createHash('sha256').update(password).digest('hex');
   const isPasswordMatch = sha256Hash === user.password_hash;
 
   if (!isPasswordMatch) {
-    throw new Error('Invalid credentials');
+    throw new Error('Credenciales inválidas');
   }
 
   console.log('Login - user.id:', user.id);
