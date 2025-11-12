@@ -237,3 +237,27 @@ JOIN
 ORDER BY
     p.name, c.name;
 COMMENT ON VIEW public.vw_chapel_admin_info IS 'Muestra información administrativa clave de cada capilla y la cantidad de roles activos definidos en su parroquia.';
+
+
+-- Obtener un resumen de las parroquias.
+CREATE OR REPLACE VIEW public.vw_parish_summary AS
+SELECT
+    p.name AS parish_name,
+    p.id AS parish_id,
+    
+    (SELECT COUNT(c.id) 
+     FROM public.chapel c 
+     WHERE c.parish_id = p.id) AS chapel_count,
+     
+    (SELECT COUNT(DISTINCT a.user_id) 
+     FROM public.association a 
+     WHERE a.parish_id = p.id AND a.active = TRUE) AS associated_users_count,
+     
+    (SELECT COUNT(r.id) 
+     FROM public.role r 
+     WHERE r.parish_id = p.id AND r.active = TRUE) AS active_roles_count
+FROM
+    public.parish p
+ORDER BY
+    p.name;
+COMMENT ON VIEW public.vw_parish_summary IS 'Proporciona un resumen por cada parroquia, mostrando el conteo total de capillas, el número de usuarios activamente asociados y la cantidad de roles activos que ha creado.';
