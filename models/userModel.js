@@ -161,7 +161,9 @@ const findRolePermissions = async (roleId) => {
     SELECT p.code
     FROM public.role_permission rp
     JOIN public.permission p ON rp.permission_id = p.id
-    WHERE rp.role_id = $1 AND rp.revocation_date IS NULL
+    WHERE rp.role_id = $1 
+      AND rp.revocation_date IS NULL
+      AND rp.granted = TRUE
     ORDER BY p.code;
   `;
   const { rows } = await db.query(query, [roleId]);
