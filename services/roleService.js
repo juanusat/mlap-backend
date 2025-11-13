@@ -214,7 +214,7 @@ const updateRolePermissions = async (roleId, permissions) => {
           await client.query(
             `UPDATE role_permission 
              SET granted = true, 
-                 assignment_date = CURRENT_DATE,
+                 assignment_date = CURRENT_TIMESTAMP,
                  revocation_date = NULL,
                  updated_at = CURRENT_TIMESTAMP
              WHERE role_id = $1 AND permission_id = $2`,
@@ -227,7 +227,7 @@ const updateRolePermissions = async (roleId, permissions) => {
           await client.query(
             `UPDATE role_permission 
              SET granted = false,
-                 revocation_date = CURRENT_DATE,
+                 revocation_date = CURRENT_TIMESTAMP,
                  updated_at = CURRENT_TIMESTAMP
              WHERE role_id = $1 AND permission_id = $2`,
             [roleId, permission.permission_id]
@@ -243,7 +243,7 @@ const updateRolePermissions = async (roleId, permissions) => {
           console.log(`➕ Insertando permiso ${permission.permission_id} como activo`);
           await client.query(
             `INSERT INTO role_permission (id, role_id, permission_id, granted, assignment_date)
-             VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, true, CURRENT_DATE)`,
+             VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM role_permission), $1, $2, true, CURRENT_TIMESTAMP)`,
             [roleId, permission.permission_id]
           );
           updatedCount++;
