@@ -655,3 +655,73 @@ INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event
 (16, 5, 23, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
 (17, 5, 20, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00, 'María Gonzales Ramos');
 
+
+-- ====================================================================
+-- 1. INSERCIÓN DE 5 NUEVOS ROLES PARA LA PARROQUIA 1 ('La Consolación')
+-- (Los roles existentes son 1 y 2, continuamos desde el ID 3)
+-- ====================================================================
+INSERT INTO public.role (id, parish_id, name, description, active) VALUES
+(3, 1, 'Catequista Principal', 'Coordina las actividades de catequesis y confirmación.', TRUE),
+(4, 1, 'Gestor de Eventos', 'Encargado de gestionar reservas y actos litúrgicos.', TRUE),
+(5, 1, 'Tesorero(a)', 'Gestión de finanzas y datos de la cuenta parroquial.', TRUE),
+(6, 1, 'Mantenimiento y Sede', 'Acceso para ver información de capillas y horarios.', TRUE),
+(7, 1, 'Comunicador Social', 'Encargado de la comunicación parroquial (acceso de lectura).', TRUE);
+
+---
+
+-- ====================================================================
+-- 2. ASIGNACIÓN DE PERMISOS A LOS NUEVOS ROLES
+-- (Se mezclan permisos activados 'granted = TRUE' y desactivados 'granted = FALSE')
+-- (Iniciamos IDs desde 1)
+-- ====================================================================
+INSERT INTO public.role_permission (id, role_id, permission_id, granted) VALUES
+-- Rol 3: Catequista Principal (Lectura básica de eventos y reservas)
+(1, 3, 3, TRUE),  -- Leer acto litúrgico
+(2, 3, 8, TRUE),  -- Leer requisitos
+(3, 3, 19, TRUE), -- Leer reservas
+(4, 3, 20, FALSE),-- Actualizar reservas (Desactivado)
+
+-- Rol 4: Gestor de Eventos (Control casi total de actos y reservas)
+(5, 4, 1, TRUE),  -- Crear acto litúrgico
+(6, 4, 3, TRUE),  -- Leer acto litúrgico
+(7, 4, 4, TRUE),  -- Actualizar acto litúrgico
+(8, 4, 19, TRUE), -- Leer reservas
+(9, 4, 20, TRUE), -- Actualizar reservas
+(10, 4, 11, TRUE),-- Crear horario
+(11, 4, 13, TRUE),-- Crear Excepción - Disponibilidad
+(12, 4, 16, TRUE),-- Crear Excepción NO - Disponibilidad
+(13, 4, 31, FALSE),-- Eliminar rol (Desactivado - Seguridad)
+
+-- Rol 5: Tesorero(a) (Control de info de parroquia y cuenta)
+(14, 5, 32, TRUE), -- Leer información de la parroquia
+(15, 5, 33, TRUE), -- Actualizar información de la parroquia
+(16, 5, 34, TRUE), -- Leer Datos de la cuenta
+(17, 5, 35, TRUE), -- Actualizar Datos de la cuenta
+(18, 5, 26, FALSE),-- Crear rol (Desactivado)
+
+-- Rol 6: Mantenimiento y Sede (Control de capillas)
+(19, 6, 38, TRUE), -- Leer capilla
+(20, 6, 39, TRUE), -- Actualizar capilla
+(21, 6, 12, TRUE), -- Actualizar horario
+(22, 6, 36, FALSE),-- Crear capilla (Desactivado)
+(23, 6, 37, FALSE),-- Actualizar estado capilla (Desactivado)
+
+-- Rol 7: Comunicador Social (Lectura general)
+(24, 7, 3, TRUE),  -- Leer acto litúrgico
+(25, 7, 19, TRUE), -- Leer reservas
+(26, 7, 38, TRUE), -- Leer capilla
+(27, 7, 32, TRUE); -- Leer información de la parroquia
+
+---
+
+-- ====================================================================
+-- 3. ASIGNACIÓN DE LOS NUEVOS ROLES A PAMELA
+-- (La persona 'Pamela' es user_id=3. Su association_id en la Parroquia 1 es 2)
+-- (Los user_role existentes son 1 y 2, continuamos desde el ID 3)
+-- ====================================================================
+INSERT INTO public.user_role (id, association_id, role_id) VALUES
+(3, 2, 3), -- Asignando rol 'Catequista Principal' a Pamela (association_id 2)
+(4, 2, 4), -- Asignando rol 'Gestor de Eventos' a Pamela
+(5, 2, 5), -- Asignando rol 'Tesorero(a)' a Pamela
+(6, 2, 6), -- Asignando rol 'Mantenimiento y Sede' a Pamela
+(7, 2, 7); -- Asignando rol 'Comunicador Social' a Pamela
