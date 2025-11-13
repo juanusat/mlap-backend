@@ -13,9 +13,9 @@ router.post('/create', authMiddleware, checkPermissions('PARROQUIA_CAPILLA_C'), 
   { name: 'cover_photo', maxCount: 1 }
 ]), chapelController.create);
 
-router.post('/search', authMiddleware, checkPermissions('PARROQUIA_CAPILLA_R'), chapelController.search);
+router.post('/search', authMiddleware, chapelController.search);
 
-router.get('/:id', authMiddleware, checkPermissions('PARROQUIA_CAPILLA_R'), chapelController.getById);
+router.get('/:id', authMiddleware, chapelController.getById);
 
 router.patch('/:id', authMiddleware, checkPermissions('PARROQUIA_CAPILLA_U'), upload.fields([
   { name: 'profile_photo', maxCount: 1 },
