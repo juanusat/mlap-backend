@@ -725,3 +725,78 @@ INSERT INTO public.user_role (id, association_id, role_id) VALUES
 (5, 2, 5), -- Asignando rol 'Tesorero(a)' a Pamela
 (6, 2, 6), -- Asignando rol 'Mantenimiento y Sede' a Pamela
 (7, 2, 7); -- Asignando rol 'Comunicador Social' a Pamela
+
+-- ====================================================================
+-- 1. ASOCIAR LOS EVENTOS BASE A LA CAPILLA 'La Consolación' (ID 1)
+-- (Se asocian los 10 eventos base proporcionados)
+-- ====================================================================
+INSERT INTO public.chapel_event (id, chapel_id, event_id, active) VALUES
+(24, 1, 1, TRUE),  -- Bautismo en La Consolación
+(25, 1, 2, TRUE),  -- Primera Comunión en La Consolación
+(26, 1, 3, TRUE),  -- Confirmación en La Consolación
+(27, 1, 4, TRUE),  -- Matrimonio en La Consolación
+(28, 1, 5, TRUE),  -- Misa Dominical en La Consolación
+(29, 1, 6, TRUE),  -- Funeral / Exequias en La Consolación
+(30, 1, 7, TRUE),  -- Catequesis en La Consolación
+(31, 1, 8, TRUE),  -- Bendición de Casa en La Consolación
+(32, 1, 9, TRUE),  -- Encuentro Pastoral en La Consolación
+(33, 1, 10, TRUE); -- Hora Santa / Adoración en La Consolación
+
+---
+
+-- ====================================================================
+-- 2. CREACIÓN DE 12 VARIANTES DE EVENTOS PARA LA CAPILLA 1
+-- (IDs 1-12. Se añaden 2 variantes a Matrimonio y 2 a Misa Dominical)
+-- ====================================================================
+INSERT INTO public.event_variant (id, chapel_event_id, name, description, current_price, max_capacity, duration_minutes, active) VALUES
+-- Bautismo (Asociado a chapel_event_id 11)
+(26, 24, 'Bautismo Comunitario (Sábado)', 'Celebración grupal de bautismo que se realiza los sábados.', 50.00, 20, 60, TRUE),
+
+-- Primera Comunión (Asociado a chapel_event_id 12)
+(27, 25, 'Misa de Primera Comunión', 'Misa de primera comunión para el grupo anual de catequesis.', 0.00, 100, 90, TRUE),
+
+-- Confirmación (Asociado a chapel_event_id 13)
+(28, 26, 'Confirmación Anual', 'Celebración anual de confirmaciones presidida por el obispo.', 0.00, 150, 120, TRUE),
+
+-- Matrimonio (Asociado a chapel_event_id 14) - Variante 1
+(29, 27, 'Matrimonio Regular', 'Ceremonia de matrimonio estándar sin Misa.', 350.00, 200, 60, TRUE),
+-- Matrimonio (Asociado a chapel_event_id 14) - Variante 2
+(30, 27, 'Matrimonio (Misa Completa)', 'Ceremonia de matrimonio con Eucaristía completa y coro parroquial.', 500.00, 200, 90, TRUE),
+
+-- Misa Dominical (Asociado a chapel_event_id 15) - Variante 1
+(31, 28, 'Intención Misa Dominical (Coro)', 'Intención para la Misa de domingo 7:00 PM (Coro Juvenil).', 10.00, 1, 60, TRUE),
+-- Misa Dominical (Asociado a chapel_event_id 15) - Variante 2
+(32, 28, 'Intención Misa Dominical (Niños)', 'Intención para la Misa adaptada a niños (Domingo 11:00 AM).', 10.00, 1, 60, TRUE),
+
+-- Funeral / Exequias (Asociado a chapel_event_id 16)
+(33, 29, 'Misa de Cuerpo Presente', 'Celebración de exequias en la capilla principal.', 150.00, 200, 60, TRUE),
+
+-- Catequesis (Asociado a chapel_event_id 17)
+(34, 30, 'Inscripción Catequesis (Anual)', 'Reserva de cupo para el ciclo de catequesis (Comunión o Confirmación).', 25.00, 50, 30, TRUE),
+
+-- Bendición de Casa (Asociado a chapel_event_id 18)
+(35, 31, 'Bendición a Domicilio', 'Visita del sacerdote para bendición (requiere coordinación de transporte).', 30.00, 1, 45, TRUE),
+
+-- Encuentro Pastoral (Asociado a chapel_event_id 19)
+(36, 32, 'Reserva de Salón Pastoral', 'Uso del salón de reuniones para grupos pastorales (Máx 2h).', 0.00, 30, 120, TRUE),
+
+-- Hora Santa / Adoración (Asociado a chapel_event_id 20)
+(37, 33, 'Intención Hora Santa', 'Registro de intenciones para la adoración eucarística del Jueves.', 5.00, 1, 60, TRUE);
+
+---
+
+-- ====================================================================
+-- 3. REQUISITOS ADICIONALES DEFINIDOS POR LA CAPILLA
+-- (Un requisito para cada 'chapel_event' creado anteriormente)
+-- ====================================================================
+INSERT INTO public.chapel_event_requirement (id, chapel_event_id, name, description, active) VALUES
+(11, 1, 'Constancia de Charlas Pre-Bautismales', 'Presentar la constancia física firmada por el catequista de la parroquia.', TRUE),
+(12, 2, 'Certificado de Bautismo (Copia)', 'Adjuntar copia simple del certificado de bautismo del niño/a.', TRUE),
+(13, 3, 'Constancia de Catequesis Completa', 'Certificado de haber completado los 2 años de catequesis de confirmación.', TRUE),
+(14, 4, 'Apertura de Pliego Matrimonial', 'Realizar la apertura del pliego en secretaría al menos 3 meses antes de la fecha.', TRUE),
+(15, 5, 'Comprobante de Intención (Misas)', 'Entregar el comprobante de intención impreso en secretaría antes de la Misa.', TRUE),
+(16, 6, 'Acta de Defunción (Copia)', 'Presentar copia del acta de defunción civil para el registro parroquial.', TRUE),
+(17, 7, 'Ficha de Matrícula (Catequesis)', 'Completar y firmar la ficha de datos personales y de contacto del estudiante.', TRUE),
+(18, 8, 'Coordinación de Transporte', 'Confirmar si la familia proveerá transporte de ida y vuelta al sacerdote.', TRUE),
+(19, 9, 'Carta del Coordinador Pastoral', 'Solicitud formal firmada por el coordinador general del grupo pastoral.', TRUE),
+(20, 10, 'Registro en Cuaderno de Intenciones', 'Anotar la intención en el cuaderno de la Hora Santa antes de la exposición.', TRUE);

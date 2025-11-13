@@ -336,3 +336,38 @@ WHERE
 ORDER BY
     p.category, p.name;
 $$;
+
+-- Eventos ofrecidos por una parroquia
+CREATE OR REPLACE FUNCTION public.get_parish_offered_events (p_parish_id INTEGER)
+RETURNS TABLE (
+    id_evento_variante INTEGER,
+    nombre VARCHAR,
+    nombre_evento_diocesis VARCHAR,
+    capilla VARCHAR,
+    limite_personas INTEGER,
+    monto DECIMAL(10, 2)
+)
+LANGUAGE sql
+AS $$
+SELECT
+    ev.id AS id_evento_variante,
+    ev.name AS nombre,
+    e.name AS nombre_evento_diocesis,
+    c.name AS capilla,
+    ev.max_capacity AS limite_personas,
+    ev.current_price AS monto
+FROM
+    public.event_variant ev
+JOIN
+    public.chapel_event ce ON ev.chapel_event_id = ce.id
+JOIN
+    public.event e ON ce.event_id = e.id
+JOIN
+    public.chapel c ON ce.chapel_id = c.id
+WHERE
+    c.parish_id = p_parish_id
+    AND ev.active = TRUE
+    AND ce.active = TRUE
+ORDER BY
+    c.name, e.name, ev.name;
+$$;
