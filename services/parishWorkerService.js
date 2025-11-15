@@ -21,10 +21,12 @@ const listWorkers = async (parishId, page, limit) => {
       p.first_names,
       p.paternal_surname,
       p.email,
-      a.active
+      a.active,
+      (par.admin_user_id = a.user_id) as is_parish_admin
      FROM association a
      INNER JOIN "user" u ON a.user_id = u.id
      INNER JOIN person p ON u.person_id = p.id
+     INNER JOIN parish par ON a.parish_id = par.id
      WHERE a.parish_id = $1 AND a.end_date IS NULL
      ORDER BY p.first_names 
      LIMIT $2 OFFSET $3`,
@@ -63,10 +65,12 @@ const searchWorkers = async (parishId, page, limit, search) => {
       p.first_names,
       p.paternal_surname,
       p.email,
-      a.active
+      a.active,
+      (par.admin_user_id = a.user_id) as is_parish_admin
      FROM association a
      INNER JOIN "user" u ON a.user_id = u.id
      INNER JOIN person p ON u.person_id = p.id
+     INNER JOIN parish par ON a.parish_id = par.id
      WHERE a.parish_id = $1 AND a.end_date IS NULL
      AND (p.first_names ILIKE $2 OR p.paternal_surname ILIKE $2 OR p.email ILIKE $2)
      ORDER BY p.first_names 
