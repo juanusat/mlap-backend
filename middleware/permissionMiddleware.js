@@ -3,17 +3,11 @@ const db = require('../db');
 const checkPermissions = (requiredPermissions) => {
     return async (req, res, next) => {
         try {
-            const { userId, context_type, parishId, roleId, permissions } = req.user;
+            const { userId, context_type, parishId, roleId } = req.user;
 
             if (context_type !== 'PARISH') {
                 return res.status(403).json({
                     message: 'Acceso denegado. Esta acción requiere contexto de parroquia.'
-                });
-            }
-
-            if (!roleId) {
-                return res.status(403).json({
-                    message: 'Acceso denegado. No hay rol activo seleccionado.'
                 });
             }
 
@@ -27,6 +21,12 @@ const checkPermissions = (requiredPermissions) => {
             
             if (adminResult.rows[0].is_admin) {
                 return next();
+            }
+
+            if (!roleId) {
+                return res.status(403).json({
+                    message: 'Acceso denegado. No hay rol activo seleccionado.'
+                });
             }
 
             const permissionsQuery = `

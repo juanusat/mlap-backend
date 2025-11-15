@@ -7,6 +7,7 @@ const { checkPermissions } = require('../middleware/permissionMiddleware');
 router.post(
   '/parishes/:parishId/chapels/:chapelId/general-schedules/list',
   authMiddleware,
+  checkPermissions(['ACTOS_LITURGICOS_HORA_R']),
   scheduleController.listGeneralSchedules
 );
 
@@ -20,6 +21,7 @@ router.post(
 router.post(
   '/parishes/:parishId/chapels/:chapelId/specific-schedules/list',
   authMiddleware,
+  checkPermissions(['EXCEP_DISP_R', 'EXCEP_NO_DISP_R']),
   scheduleController.listSpecificSchedules
 );
 

@@ -172,13 +172,39 @@ const getSession = async (req, res, next) => {
         let currentRole = null;
         let isParishAdmin = false;
         let currentPermissions = permissions || [];
+        let forceLogout = false;
 
         if (context_type === 'PARISH' && parishId) {
+            const associationStatus = await userModel.checkUserAssociationStatus(userId, parishId);
+            
+            if (!associationStatus || !associationStatus.active) {
+                forceLogout = true;
+                return res.status(200).json({
+                    message: 'Operación exitosa',
+                    data: {
+                        force_logout: true,
+                        logout_reason: 'Tu acceso a esta parroquia ha sido revocado. Por favor, inicia sesión nuevamente.'
+                    }
+                });
+            }
+
             parishInfo = await userModel.findParishById(parishId);
             availableRoles = await userModel.findUserRolesInParish(userId, parishId);
             isParishAdmin = await userModel.isParishAdmin(userId, parishId);
             
             if (roleId) {
+                const roleStillValid = availableRoles.some(r => r.id === roleId);
+                if (!roleStillValid && !isParishAdmin) {
+                    forceLogout = true;
+                    return res.status(200).json({
+                        message: 'Operación exitosa',
+                        data: {
+                            force_logout: true,
+                            logout_reason: 'El rol que tenías asignado ha sido revocado. Por favor, inicia sesión nuevamente.'
+                        }
+                    });
+                }
+
                 currentRole = await userModel.findRoleById(roleId);
                 if (isParishAdmin) {
                     const allPermsQuery = `SELECT code FROM public.permission WHERE category IN ('ACTOS LITÚRGICOS', 'SEGURIDAD', 'PARROQUIA')`;
@@ -210,7 +236,8 @@ const getSession = async (req, res, next) => {
                 } : null,
                 available_roles: availableRoles,
                 current_role: currentRole,
-                permissions: currentPermissions
+                permissions: currentPermissions,
+                force_logout: forceLogout
             }
         });
     } catch (error) {

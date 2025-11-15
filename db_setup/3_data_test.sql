@@ -15,46 +15,49 @@ INSERT INTO public.permission (id, category, code, name, description) VALUES
 (10, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_REQ_D', 'Eliminar requisitos', 'Permite eliminar requisitos.'),
 
 -- Actos Litúrgicos: Gestionar horarios
-(11, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_C', 'Crear horario', 'Permite definir nuevos horarios de actos litúrgicos.'),
-(12, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_U', 'Actualizar horario', 'Permite modificar horarios existentes.'),
-(13, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_C', 'Crear Excepción - Disponibilidad', 'Permite crear excepciones de disponibilidad en el horario.'),
-(14, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_U', 'Actualizar Excepción - Disponibilidad', 'Permite modificar excepciones de disponibilidad existentes.'),
-(15, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_D', 'Eliminar Excepción - Disponibilidad', 'Permite eliminar excepciones de disponibilidad.'),
-(16, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_C', 'Crear Excepción NO - Disponibilidad', 'Permite crear excepciones de NO disponibilidad en el horario.'),
-(17, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_U', 'Actualizar Excepción NO - Disponibilidad', 'Permite modificar excepciones de NO disponibilidad existentes.'),
-(18, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_D', 'Eliminar Excepción NO - Disponibilidad', 'Permite eliminar excepciones de NO disponibilidad.'),
+(11, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_R', 'Leer horarios', 'Permite visualizar los horarios de los actos litúrgicos.'),
+(12, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_C', 'Crear horario', 'Permite definir nuevos horarios de actos litúrgicos.'),
+(13, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_U', 'Actualizar horario', 'Permite modificar horarios existentes.'),
+(14, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_R', 'Leer excepciones - Disponibilidad', 'Permite visualizar las excepciones de disponibilidad.'),
+(15, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_C', 'Crear Excepción - Disponibilidad', 'Permite crear excepciones de disponibilidad en el horario.'),
+(16, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_U', 'Actualizar Excepción - Disponibilidad', 'Permite modificar excepciones de disponibilidad existentes.'),
+(17, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_D', 'Eliminar Excepción - Disponibilidad', 'Permite eliminar excepciones de disponibilidad.'),
+(18, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_R', 'Leer excepciones - NO Disponibilidad', 'Permite visualizar las excepciones de NO disponibilidad.'),
+(19, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_C', 'Crear Excepción - NO Disponibilidad', 'Permite crear excepciones de NO disponibilidad en el horario.'),
+(20, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_U', 'Actualizar Excepción - NO Disponibilidad', 'Permite modificar excepciones de NO disponibilidad existentes.'),
+(21, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_D', 'Eliminar Excepción - NO Disponibilidad', 'Permite eliminar excepciones de NO disponibilidad.'),
 
 -- Actos Litúrgicos: Gestionar Reservas (Vista TDP)
-(19, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_R', 'Leer reservas', 'Permite visualizar las reservas gestionadas.'),
-(20, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_U', 'Actualizar reservas', 'Permite modificar o cambiar el estado de las reservas gestionadas.'),
+(22, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_R', 'Leer reservas', 'Permite visualizar las reservas gestionadas.'),
+(23, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_U', 'Actualizar reservas', 'Permite modificar o cambiar el estado de las reservas gestionadas.'),
 
 -- Seguridad: Gestionar cuentas
-(21, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_C', 'Crear asociación usuario', 'Permite asociar un nuevo usuario al sistema.'),
-(22, 'SEGURIDAD', 'ESTADO_ASOC_USER_U', 'Actualizar estado asociación usuario', 'Permite cambiar el estado de la asociación de un usuario.'),
-(23, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_R', 'Leer asociación usuario', 'Permite visualizar la lista y detalles de las asociaciones de usuarios.'),
-(24, 'SEGURIDAD', 'ROL_ASOC_USER_C', 'Crear rol - asociación usuario', 'Permite asignar un rol a un usuario al momento de la asociación.'),
-(25, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_D', 'Eliminar asociación usuario', 'Permite desvincular o eliminar la asociación de un usuario.'),
+(24, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_C', 'Crear asociación usuario', 'Permite asociar un nuevo usuario al sistema.'),
+(25, 'SEGURIDAD', 'ESTADO_ASOC_USER_U', 'Actualizar estado asociación usuario', 'Permite cambiar el estado de la asociación de un usuario.'),
+(26, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_R', 'Leer asociación usuario', 'Permite visualizar la lista y detalles de las asociaciones de usuarios.'),
+(27, 'SEGURIDAD', 'ROL_ASOC_USER_C', 'Crear rol - asociación usuario', 'Permite asignar un rol a un usuario al momento de la asociación.'),
+(28, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_D', 'Eliminar asociación usuario', 'Permite desvincular o eliminar la asociación de un usuario.'),
 
 -- Seguridad: Gestionar roles
-(26, 'SEGURIDAD', 'SEGURIDAD_ROL_C', 'Crear rol', 'Permite crear nuevos roles de usuario.'),
-(27, 'SEGURIDAD', 'ESTADO_ROL_U', 'Actualizar estado rol', 'Permite cambiar el estado de un rol (habilitar/deshabilitar).'),
-(28, 'SEGURIDAD', 'SEGURIDAD_ROL_R', 'Leer rol', 'Permite visualizar la lista de roles existentes.'),
-(29, 'SEGURIDAD', 'SEGURIDAD_ROL_PERMS_U', 'Actualizar rol - permisos', 'Permite modificar los permisos asignados a un rol.'),
-(30, 'SEGURIDAD', 'SEGURIDAD_ROL_DATA_U', 'Actualizar rol', 'Permite modificar la información básica de un rol (nombre, descripción).'),
-(31, 'SEGURIDAD', 'SEGURIDAD_ROL_D', 'Eliminar rol', 'Permite eliminar roles.'),
+(29, 'SEGURIDAD', 'SEGURIDAD_ROL_C', 'Crear rol', 'Permite crear nuevos roles de usuario.'),
+(30, 'SEGURIDAD', 'ESTADO_ROL_U', 'Actualizar estado rol', 'Permite cambiar el estado de un rol (habilitar/deshabilitar).'),
+(31, 'SEGURIDAD', 'SEGURIDAD_ROL_R', 'Leer rol', 'Permite visualizar la lista de roles existentes.'),
+(32, 'SEGURIDAD', 'SEGURIDAD_ROL_PERMS_U', 'Actualizar rol - permisos', 'Permite modificar los permisos asignados a un rol.'),
+(33, 'SEGURIDAD', 'SEGURIDAD_ROL_DATA_U', 'Actualizar rol', 'Permite modificar la información básica de un rol (nombre, descripción).'),
+(34, 'SEGURIDAD', 'SEGURIDAD_ROL_D', 'Eliminar rol', 'Permite eliminar roles.'),
 
 -- Parroquia: Gestionar cuenta
-(32, 'PARROQUIA', 'PARROQUIA_INFO_R', 'Leer información de la parroquia', 'Permite visualizar los datos generales de la parroquia.'),
-(33, 'PARROQUIA', 'PARROQUIA_INFO_U', 'Actualizar información de la parroquia', 'Permite modificar los datos generales de la parroquia.'),
-(34, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_R', 'Leer Datos de la cuenta', 'Permite visualizar la información de la cuenta bancaria/financiera de la parroquia.'),
-(35, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_U', 'Actualizar Datos de la cuenta', 'Permite modificar la información de la cuenta bancaria/financiera de la parroquia.'),
+(35, 'PARROQUIA', 'PARROQUIA_INFO_R', 'Leer información de la parroquia', 'Permite visualizar los datos generales de la parroquia.'),
+(36, 'PARROQUIA', 'PARROQUIA_INFO_U', 'Actualizar información de la parroquia', 'Permite modificar los datos generales de la parroquia.'),
+(37, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_R', 'Leer Datos de la cuenta', 'Permite visualizar la información de la cuenta bancaria/financiera de la parroquia.'),
+(38, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_U', 'Actualizar Datos de la cuenta', 'Permite modificar la información de la cuenta bancaria/financiera de la parroquia.'),
 
 -- Parroquia: Gestionar capilla
-(36, 'PARROQUIA', 'PARROQUIA_CAPILLA_C', 'Crear capilla', 'Permite registrar una nueva capilla.'),
-(37, 'PARROQUIA', 'ESTADO_CAPILLA_U', 'Actualizar estado capilla', 'Permite cambiar el estado de una capilla (habilitar/deshabilitar).'),
-(38, 'PARROQUIA', 'PARROQUIA_CAPILLA_R', 'Leer capilla', 'Permite visualizar el listado y detalles de las capillas.'),
-(39, 'PARROQUIA', 'PARROQUIA_CAPILLA_U', 'Actualizar capilla', 'Permite modificar la información de una capilla.'),
-(40, 'PARROQUIA', 'PARROQUIA_CAPILLA_D', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.');
+(39, 'PARROQUIA', 'PARROQUIA_CAPILLA_C', 'Crear capilla', 'Permite registrar una nueva capilla.'),
+(40, 'PARROQUIA', 'ESTADO_CAPILLA_U', 'Actualizar estado capilla', 'Permite cambiar el estado de una capilla (habilitar/deshabilitar).'),
+(41, 'PARROQUIA', 'PARROQUIA_CAPILLA_R', 'Leer capilla', 'Permite visualizar el listado y detalles de las capillas.'),
+(42, 'PARROQUIA', 'PARROQUIA_CAPILLA_U', 'Actualizar capilla', 'Permite modificar la información de una capilla.'),
+(43, 'PARROQUIA', 'PARROQUIA_CAPILLA_D', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.');
 
 -- document_type: Tipos de documento de identidad
 INSERT INTO public.document_type (id, code, name, active, description, created_at, updated_at) VALUES
@@ -655,3 +658,148 @@ INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event
 (16, 5, 23, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
 (17, 5, 20, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00, 'María Gonzales Ramos');
 
+
+-- ====================================================================
+-- 1. INSERCIÓN DE 5 NUEVOS ROLES PARA LA PARROQUIA 1 ('La Consolación')
+-- (Los roles existentes son 1 y 2, continuamos desde el ID 3)
+-- ====================================================================
+INSERT INTO public.role (id, parish_id, name, description, active) VALUES
+(3, 1, 'Catequista Principal', 'Coordina las actividades de catequesis y confirmación.', TRUE),
+(4, 1, 'Gestor de Eventos', 'Encargado de gestionar reservas y actos litúrgicos.', TRUE),
+(5, 1, 'Tesorero(a)', 'Gestión de finanzas y datos de la cuenta parroquial.', TRUE),
+(6, 1, 'Mantenimiento y Sede', 'Acceso para ver información de capillas y horarios.', TRUE),
+(7, 1, 'Comunicador Social', 'Encargado de la comunicación parroquial (acceso de lectura).', TRUE);
+
+---
+
+-- ====================================================================
+-- 2. ASIGNACIÓN DE PERMISOS A LOS NUEVOS ROLES
+-- (Se mezclan permisos activados 'granted = TRUE' y desactivados 'granted = FALSE')
+-- (Iniciamos IDs desde 1)
+-- ====================================================================
+INSERT INTO public.role_permission (id, role_id, permission_id, granted) VALUES
+-- Rol 3: Catequista Principal (Lectura básica de eventos y reservas)
+(1, 3, 3, TRUE),  -- Leer acto litúrgico
+(2, 3, 8, TRUE),  -- Leer requisitos
+(3, 3, 19, TRUE), -- Leer reservas
+(4, 3, 20, FALSE),-- Actualizar reservas (Desactivado)
+
+-- Rol 4: Gestor de Eventos (Control casi total de actos y reservas)
+(5, 4, 1, TRUE),  -- Crear acto litúrgico
+(6, 4, 3, TRUE),  -- Leer acto litúrgico
+(7, 4, 4, TRUE),  -- Actualizar acto litúrgico
+(8, 4, 19, TRUE), -- Leer reservas
+(9, 4, 20, TRUE), -- Actualizar reservas
+(10, 4, 11, TRUE),-- Crear horario
+(11, 4, 13, TRUE),-- Crear Excepción - Disponibilidad
+(12, 4, 16, TRUE),-- Crear Excepción NO - Disponibilidad
+(13, 4, 31, FALSE),-- Eliminar rol (Desactivado - Seguridad)
+
+-- Rol 5: Tesorero(a) (Control de info de parroquia y cuenta)
+(14, 5, 32, TRUE), -- Leer información de la parroquia
+(15, 5, 33, TRUE), -- Actualizar información de la parroquia
+(16, 5, 34, TRUE), -- Leer Datos de la cuenta
+(17, 5, 35, TRUE), -- Actualizar Datos de la cuenta
+(18, 5, 26, FALSE),-- Crear rol (Desactivado)
+
+-- Rol 6: Mantenimiento y Sede (Control de capillas)
+(19, 6, 38, TRUE), -- Leer capilla
+(20, 6, 39, TRUE), -- Actualizar capilla
+(21, 6, 12, TRUE), -- Actualizar horario
+(22, 6, 36, FALSE),-- Crear capilla (Desactivado)
+(23, 6, 37, FALSE),-- Actualizar estado capilla (Desactivado)
+
+-- Rol 7: Comunicador Social (Lectura general)
+(24, 7, 3, TRUE),  -- Leer acto litúrgico
+(25, 7, 19, TRUE), -- Leer reservas
+(26, 7, 38, TRUE), -- Leer capilla
+(27, 7, 32, TRUE); -- Leer información de la parroquia
+
+---
+
+-- ====================================================================
+-- 3. ASIGNACIÓN DE LOS NUEVOS ROLES A PAMELA
+-- (La persona 'Pamela' es user_id=3. Su association_id en la Parroquia 1 es 2)
+-- (Los user_role existentes son 1 y 2, continuamos desde el ID 3)
+-- ====================================================================
+INSERT INTO public.user_role (id, association_id, role_id) VALUES
+(3, 2, 3), -- Asignando rol 'Catequista Principal' a Pamela (association_id 2)
+(4, 2, 4), -- Asignando rol 'Gestor de Eventos' a Pamela
+(5, 2, 5), -- Asignando rol 'Tesorero(a)' a Pamela
+(6, 2, 6), -- Asignando rol 'Mantenimiento y Sede' a Pamela
+(7, 2, 7); -- Asignando rol 'Comunicador Social' a Pamela
+
+-- ====================================================================
+-- 1. ASOCIAR LOS EVENTOS BASE A LA CAPILLA 'La Consolación' (ID 1)
+-- (Se asocian los 10 eventos base proporcionados)
+-- ====================================================================
+INSERT INTO public.chapel_event (id, chapel_id, event_id, active) VALUES
+(24, 1, 1, TRUE),  -- Bautismo en La Consolación
+(25, 1, 2, TRUE),  -- Primera Comunión en La Consolación
+(26, 1, 3, TRUE),  -- Confirmación en La Consolación
+(27, 1, 4, TRUE),  -- Matrimonio en La Consolación
+(28, 1, 5, TRUE),  -- Misa Dominical en La Consolación
+(29, 1, 6, TRUE),  -- Funeral / Exequias en La Consolación
+(30, 1, 7, TRUE),  -- Catequesis en La Consolación
+(31, 1, 8, TRUE),  -- Bendición de Casa en La Consolación
+(32, 1, 9, TRUE),  -- Encuentro Pastoral en La Consolación
+(33, 1, 10, TRUE); -- Hora Santa / Adoración en La Consolación
+
+---
+
+-- ====================================================================
+-- 2. CREACIÓN DE 12 VARIANTES DE EVENTOS PARA LA CAPILLA 1
+-- (IDs 1-12. Se añaden 2 variantes a Matrimonio y 2 a Misa Dominical)
+-- ====================================================================
+INSERT INTO public.event_variant (id, chapel_event_id, name, description, current_price, max_capacity, duration_minutes, active) VALUES
+-- Bautismo (Asociado a chapel_event_id 11)
+(26, 24, 'Bautismo Comunitario (Sábado)', 'Celebración grupal de bautismo que se realiza los sábados.', 50.00, 20, 60, TRUE),
+
+-- Primera Comunión (Asociado a chapel_event_id 12)
+(27, 25, 'Misa de Primera Comunión', 'Misa de primera comunión para el grupo anual de catequesis.', 0.00, 100, 90, TRUE),
+
+-- Confirmación (Asociado a chapel_event_id 13)
+(28, 26, 'Confirmación Anual', 'Celebración anual de confirmaciones presidida por el obispo.', 0.00, 150, 120, TRUE),
+
+-- Matrimonio (Asociado a chapel_event_id 14) - Variante 1
+(29, 27, 'Matrimonio Regular', 'Ceremonia de matrimonio estándar sin Misa.', 350.00, 200, 60, TRUE),
+-- Matrimonio (Asociado a chapel_event_id 14) - Variante 2
+(30, 27, 'Matrimonio (Misa Completa)', 'Ceremonia de matrimonio con Eucaristía completa y coro parroquial.', 500.00, 200, 90, TRUE),
+
+-- Misa Dominical (Asociado a chapel_event_id 15) - Variante 1
+(31, 28, 'Intención Misa Dominical (Coro)', 'Intención para la Misa de domingo 7:00 PM (Coro Juvenil).', 10.00, 1, 60, TRUE),
+-- Misa Dominical (Asociado a chapel_event_id 15) - Variante 2
+(32, 28, 'Intención Misa Dominical (Niños)', 'Intención para la Misa adaptada a niños (Domingo 11:00 AM).', 10.00, 1, 60, TRUE),
+
+-- Funeral / Exequias (Asociado a chapel_event_id 16)
+(33, 29, 'Misa de Cuerpo Presente', 'Celebración de exequias en la capilla principal.', 150.00, 200, 60, TRUE),
+
+-- Catequesis (Asociado a chapel_event_id 17)
+(34, 30, 'Inscripción Catequesis (Anual)', 'Reserva de cupo para el ciclo de catequesis (Comunión o Confirmación).', 25.00, 50, 30, TRUE),
+
+-- Bendición de Casa (Asociado a chapel_event_id 18)
+(35, 31, 'Bendición a Domicilio', 'Visita del sacerdote para bendición (requiere coordinación de transporte).', 30.00, 1, 45, TRUE),
+
+-- Encuentro Pastoral (Asociado a chapel_event_id 19)
+(36, 32, 'Reserva de Salón Pastoral', 'Uso del salón de reuniones para grupos pastorales (Máx 2h).', 0.00, 30, 120, TRUE),
+
+-- Hora Santa / Adoración (Asociado a chapel_event_id 20)
+(37, 33, 'Intención Hora Santa', 'Registro de intenciones para la adoración eucarística del Jueves.', 5.00, 1, 60, TRUE);
+
+---
+
+-- ====================================================================
+-- 3. REQUISITOS ADICIONALES DEFINIDOS POR LA CAPILLA
+-- (Un requisito para cada 'chapel_event' creado anteriormente)
+-- ====================================================================
+INSERT INTO public.chapel_event_requirement (id, chapel_event_id, name, description, active) VALUES
+(11, 1, 'Constancia de Charlas Pre-Bautismales', 'Presentar la constancia física firmada por el catequista de la parroquia.', TRUE),
+(12, 2, 'Certificado de Bautismo (Copia)', 'Adjuntar copia simple del certificado de bautismo del niño/a.', TRUE),
+(13, 3, 'Constancia de Catequesis Completa', 'Certificado de haber completado los 2 años de catequesis de confirmación.', TRUE),
+(14, 4, 'Apertura de Pliego Matrimonial', 'Realizar la apertura del pliego en secretaría al menos 3 meses antes de la fecha.', TRUE),
+(15, 5, 'Comprobante de Intención (Misas)', 'Entregar el comprobante de intención impreso en secretaría antes de la Misa.', TRUE),
+(16, 6, 'Acta de Defunción (Copia)', 'Presentar copia del acta de defunción civil para el registro parroquial.', TRUE),
+(17, 7, 'Ficha de Matrícula (Catequesis)', 'Completar y firmar la ficha de datos personales y de contacto del estudiante.', TRUE),
+(18, 8, 'Coordinación de Transporte', 'Confirmar si la familia proveerá transporte de ida y vuelta al sacerdote.', TRUE),
+(19, 9, 'Carta del Coordinador Pastoral', 'Solicitud formal firmada por el coordinador general del grupo pastoral.', TRUE),
+(20, 10, 'Registro en Cuaderno de Intenciones', 'Anotar la intención en el cuaderno de la Hora Santa antes de la exposición.', TRUE);
