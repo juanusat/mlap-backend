@@ -529,7 +529,8 @@ class ReservationModel {
         COALESCE(r.paid_amount, 0) as paid_amount,
         r.status,
         c.name as chapel_name,
-        p.name as parish_name
+        p.name as parish_name,
+        ev.current_price
       FROM public.reservation r
       INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
       INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
@@ -586,7 +587,8 @@ class ReservationModel {
         COALESCE(r.paid_amount, 0) as paid_amount,
         r.status,
         c.name as chapel_name,
-        p.name as parish_name
+        p.name as parish_name,
+        ev.current_price
       FROM public.reservation r
       INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
       INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
@@ -763,6 +765,7 @@ class ReservationModel {
         r.event_time,
         r.status,
         r.paid_amount,
+        ev.current_price,
         CASE 
           WHEN r.paid_amount >= ev.current_price THEN 'PAGADO'
           WHEN r.paid_amount > 0 THEN 'PENDIENTE'
@@ -803,6 +806,7 @@ class ReservationModel {
       event_time: reservation.event_time,
       status: reservation.status,
       paid_amount: reservation.paid_amount,
+      current_price: reservation.current_price,
       payment_status: reservation.payment_status,
       chapel: {
         name: reservation.chapel_name,

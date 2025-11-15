@@ -28,7 +28,7 @@ const register = async (userData) => {
 const login = async (email, password) => {
   const user = await userModel.findByEmail(email);
   if (!user || !user.active) {
-    throw new Error('Credenciales inválidas o cuentas inactivas');
+    throw new Error('Credenciales inválidas o usuario inactivo');
   }
 
   const sha256Hash = crypto.createHash('sha256').update(password).digest('hex');
