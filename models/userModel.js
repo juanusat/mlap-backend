@@ -181,6 +181,18 @@ const findParishionerPermissions = async () => {
   return rows.map(row => row.code);
 };
 
+const checkUserAssociationStatus = async (userId, parishId) => {
+  const query = `
+    SELECT 
+      id,
+      active
+    FROM public.association
+    WHERE user_id = $1 AND parish_id = $2;
+  `;
+  const { rows } = await db.query(query, [userId, parishId]);
+  return rows[0];
+};
+
 module.exports = {
   create,
   findByEmail,
@@ -192,5 +204,6 @@ module.exports = {
   findRoleById,
   isParishAdmin,
   findRolePermissions,
-  findParishionerPermissions
+  findParishionerPermissions,
+  checkUserAssociationStatus
 };
