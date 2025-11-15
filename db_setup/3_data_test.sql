@@ -15,46 +15,49 @@ INSERT INTO public.permission (id, category, code, name, description) VALUES
 (10, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_REQ_D', 'Eliminar requisitos', 'Permite eliminar requisitos.'),
 
 -- Actos Litúrgicos: Gestionar horarios
-(11, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_C', 'Crear horario', 'Permite definir nuevos horarios de actos litúrgicos.'),
-(12, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_U', 'Actualizar horario', 'Permite modificar horarios existentes.'),
-(13, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_C', 'Crear Excepción - Disponibilidad', 'Permite crear excepciones de disponibilidad en el horario.'),
-(14, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_U', 'Actualizar Excepción - Disponibilidad', 'Permite modificar excepciones de disponibilidad existentes.'),
-(15, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_D', 'Eliminar Excepción - Disponibilidad', 'Permite eliminar excepciones de disponibilidad.'),
-(16, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_C', 'Crear Excepción NO - Disponibilidad', 'Permite crear excepciones de NO disponibilidad en el horario.'),
-(17, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_U', 'Actualizar Excepción NO - Disponibilidad', 'Permite modificar excepciones de NO disponibilidad existentes.'),
-(18, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_D', 'Eliminar Excepción NO - Disponibilidad', 'Permite eliminar excepciones de NO disponibilidad.'),
+(11, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_R', 'Leer horarios', 'Permite visualizar los horarios de los actos litúrgicos.'),
+(12, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_C', 'Crear horario', 'Permite definir nuevos horarios de actos litúrgicos.'),
+(13, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_HORA_U', 'Actualizar horario', 'Permite modificar horarios existentes.'),
+(14, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_R', 'Leer excepciones - Disponibilidad', 'Permite visualizar las excepciones de disponibilidad.'),
+(15, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_C', 'Crear Excepción - Disponibilidad', 'Permite crear excepciones de disponibilidad en el horario.'),
+(16, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_U', 'Actualizar Excepción - Disponibilidad', 'Permite modificar excepciones de disponibilidad existentes.'),
+(17, 'ACTOS LITÚRGICOS', 'EXCEP_DISP_D', 'Eliminar Excepción - Disponibilidad', 'Permite eliminar excepciones de disponibilidad.'),
+(18, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_R', 'Leer excepciones - NO Disponibilidad', 'Permite visualizar las excepciones de NO disponibilidad.'),
+(19, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_C', 'Crear Excepción - NO Disponibilidad', 'Permite crear excepciones de NO disponibilidad en el horario.'),
+(20, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_U', 'Actualizar Excepción - NO Disponibilidad', 'Permite modificar excepciones de NO disponibilidad existentes.'),
+(21, 'ACTOS LITÚRGICOS', 'EXCEP_NO_DISP_D', 'Eliminar Excepción - NO Disponibilidad', 'Permite eliminar excepciones de NO disponibilidad.'),
 
 -- Actos Litúrgicos: Gestionar Reservas (Vista TDP)
-(19, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_R', 'Leer reservas', 'Permite visualizar las reservas gestionadas.'),
-(20, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_U', 'Actualizar reservas', 'Permite modificar o cambiar el estado de las reservas gestionadas.'),
+(22, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_R', 'Leer reservas', 'Permite visualizar las reservas gestionadas.'),
+(23, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_U', 'Actualizar reservas', 'Permite modificar o cambiar el estado de las reservas gestionadas.'),
 
 -- Seguridad: Gestionar cuentas
-(21, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_C', 'Crear asociación usuario', 'Permite asociar un nuevo usuario al sistema.'),
-(22, 'SEGURIDAD', 'ESTADO_ASOC_USER_U', 'Actualizar estado asociación usuario', 'Permite cambiar el estado de la asociación de un usuario.'),
-(23, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_R', 'Leer asociación usuario', 'Permite visualizar la lista y detalles de las asociaciones de usuarios.'),
-(24, 'SEGURIDAD', 'ROL_ASOC_USER_C', 'Crear rol - asociación usuario', 'Permite asignar un rol a un usuario al momento de la asociación.'),
-(25, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_D', 'Eliminar asociación usuario', 'Permite desvincular o eliminar la asociación de un usuario.'),
+(24, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_C', 'Crear asociación usuario', 'Permite asociar un nuevo usuario al sistema.'),
+(25, 'SEGURIDAD', 'ESTADO_ASOC_USER_U', 'Actualizar estado asociación usuario', 'Permite cambiar el estado de la asociación de un usuario.'),
+(26, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_R', 'Leer asociación usuario', 'Permite visualizar la lista y detalles de las asociaciones de usuarios.'),
+(27, 'SEGURIDAD', 'ROL_ASOC_USER_C', 'Crear rol - asociación usuario', 'Permite asignar un rol a un usuario al momento de la asociación.'),
+(28, 'SEGURIDAD', 'SEGURIDAD_ASOC_USER_D', 'Eliminar asociación usuario', 'Permite desvincular o eliminar la asociación de un usuario.'),
 
 -- Seguridad: Gestionar roles
-(26, 'SEGURIDAD', 'SEGURIDAD_ROL_C', 'Crear rol', 'Permite crear nuevos roles de usuario.'),
-(27, 'SEGURIDAD', 'ESTADO_ROL_U', 'Actualizar estado rol', 'Permite cambiar el estado de un rol (habilitar/deshabilitar).'),
-(28, 'SEGURIDAD', 'SEGURIDAD_ROL_R', 'Leer rol', 'Permite visualizar la lista de roles existentes.'),
-(29, 'SEGURIDAD', 'SEGURIDAD_ROL_PERMS_U', 'Actualizar rol - permisos', 'Permite modificar los permisos asignados a un rol.'),
-(30, 'SEGURIDAD', 'SEGURIDAD_ROL_DATA_U', 'Actualizar rol', 'Permite modificar la información básica de un rol (nombre, descripción).'),
-(31, 'SEGURIDAD', 'SEGURIDAD_ROL_D', 'Eliminar rol', 'Permite eliminar roles.'),
+(29, 'SEGURIDAD', 'SEGURIDAD_ROL_C', 'Crear rol', 'Permite crear nuevos roles de usuario.'),
+(30, 'SEGURIDAD', 'ESTADO_ROL_U', 'Actualizar estado rol', 'Permite cambiar el estado de un rol (habilitar/deshabilitar).'),
+(31, 'SEGURIDAD', 'SEGURIDAD_ROL_R', 'Leer rol', 'Permite visualizar la lista de roles existentes.'),
+(32, 'SEGURIDAD', 'SEGURIDAD_ROL_PERMS_U', 'Actualizar rol - permisos', 'Permite modificar los permisos asignados a un rol.'),
+(33, 'SEGURIDAD', 'SEGURIDAD_ROL_DATA_U', 'Actualizar rol', 'Permite modificar la información básica de un rol (nombre, descripción).'),
+(34, 'SEGURIDAD', 'SEGURIDAD_ROL_D', 'Eliminar rol', 'Permite eliminar roles.'),
 
 -- Parroquia: Gestionar cuenta
-(32, 'PARROQUIA', 'PARROQUIA_INFO_R', 'Leer información de la parroquia', 'Permite visualizar los datos generales de la parroquia.'),
-(33, 'PARROQUIA', 'PARROQUIA_INFO_U', 'Actualizar información de la parroquia', 'Permite modificar los datos generales de la parroquia.'),
-(34, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_R', 'Leer Datos de la cuenta', 'Permite visualizar la información de la cuenta bancaria/financiera de la parroquia.'),
-(35, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_U', 'Actualizar Datos de la cuenta', 'Permite modificar la información de la cuenta bancaria/financiera de la parroquia.'),
+(35, 'PARROQUIA', 'PARROQUIA_INFO_R', 'Leer información de la parroquia', 'Permite visualizar los datos generales de la parroquia.'),
+(36, 'PARROQUIA', 'PARROQUIA_INFO_U', 'Actualizar información de la parroquia', 'Permite modificar los datos generales de la parroquia.'),
+(37, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_R', 'Leer Datos de la cuenta', 'Permite visualizar la información de la cuenta bancaria/financiera de la parroquia.'),
+(38, 'PARROQUIA', 'PARROQUIA_DATOS_CUENTA_U', 'Actualizar Datos de la cuenta', 'Permite modificar la información de la cuenta bancaria/financiera de la parroquia.'),
 
 -- Parroquia: Gestionar capilla
-(36, 'PARROQUIA', 'PARROQUIA_CAPILLA_C', 'Crear capilla', 'Permite registrar una nueva capilla.'),
-(37, 'PARROQUIA', 'ESTADO_CAPILLA_U', 'Actualizar estado capilla', 'Permite cambiar el estado de una capilla (habilitar/deshabilitar).'),
-(38, 'PARROQUIA', 'PARROQUIA_CAPILLA_R', 'Leer capilla', 'Permite visualizar el listado y detalles de las capillas.'),
-(39, 'PARROQUIA', 'PARROQUIA_CAPILLA_U', 'Actualizar capilla', 'Permite modificar la información de una capilla.'),
-(40, 'PARROQUIA', 'PARROQUIA_CAPILLA_D', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.');
+(39, 'PARROQUIA', 'PARROQUIA_CAPILLA_C', 'Crear capilla', 'Permite registrar una nueva capilla.'),
+(40, 'PARROQUIA', 'ESTADO_CAPILLA_U', 'Actualizar estado capilla', 'Permite cambiar el estado de una capilla (habilitar/deshabilitar).'),
+(41, 'PARROQUIA', 'PARROQUIA_CAPILLA_R', 'Leer capilla', 'Permite visualizar el listado y detalles de las capillas.'),
+(42, 'PARROQUIA', 'PARROQUIA_CAPILLA_U', 'Actualizar capilla', 'Permite modificar la información de una capilla.'),
+(43, 'PARROQUIA', 'PARROQUIA_CAPILLA_D', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.');
 
 -- document_type: Tipos de documento de identidad
 INSERT INTO public.document_type (id, code, name, active, description, created_at, updated_at) VALUES
