@@ -480,6 +480,38 @@ class ReservationController {
       next(error);
     }
   }
+
+  async updateReservation(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { id } = req.params;
+      const updateData = req.body;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      const result = await reservationService.updateReservation(
+        Number(id),
+        parishId,
+        updateData
+      );
+
+      res.status(200).json({
+        message: 'Reserva actualizada exitosamente',
+        data: result,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ReservationController();
