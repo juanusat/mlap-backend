@@ -9,5 +9,6 @@ router.post('/reservations/search', authMiddleware, reservationController.search
 router.get('/reservations/:id', authMiddleware, reservationController.getReservationDetailsForManagement);
 router.patch('/reservations/:id/status', authMiddleware, reservationController.updateReservationStatus);
 router.patch('/reservations/:id/reject', authMiddleware, reservationController.rejectReservation);
+router.patch('/reservations/:id', authMiddleware, reservationController.updateReservation);
 
 module.exports = router;

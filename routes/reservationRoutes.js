@@ -23,5 +23,6 @@ router.post('/management/search', authMiddleware, reservationController.searchRe
 router.get('/management/:id', authMiddleware, reservationController.getReservationDetailsForManagement);
 router.patch('/management/:id/status', authMiddleware, reservationController.updateReservationStatus);
 router.patch('/management/:id/reject', authMiddleware, reservationController.rejectReservation);
+router.patch('/management/:id', authMiddleware, reservationController.updateReservation);
 
 module.exports = router;
