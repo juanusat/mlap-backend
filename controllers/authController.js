@@ -1,6 +1,7 @@
 const authService = require('../services/authService');
 const userModel = require('../models/userModel');
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const config = require('../config');
 
 const cookieOptions = {
@@ -8,6 +9,10 @@ const cookieOptions = {
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     path: '/',
+};
+
+const hashUserAgent = (userAgent) => {
+    return crypto.createHash('sha256').update(userAgent || '').digest('hex');
 };
 
 const register = async (req, res, next) => {
@@ -37,8 +42,15 @@ const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const result = await authService.login(email, password);
+    const userAgent = req.headers['user-agent'];
+    const uaHash = hashUserAgent(userAgent);
     
-    res.cookie('session_token', result.token, cookieOptions);
+    const decoded = jwt.verify(result.token, config.jwtSecret);
+    const { exp, iat, ...payload } = decoded;
+    const tokenPayload = { ...payload, uaHash };
+    const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
+    
+    res.cookie('session_token', newToken, cookieOptions);
 
     const responseData = {
       message: 'Operación exitosa',
@@ -67,8 +79,11 @@ const selectContext = async (req, res, next) => {
         let tokenPayload;
         let permissions = [];
         
+        const userAgent = req.headers['user-agent'];
+        const uaHash = hashUserAgent(userAgent);
+
         if (context_type === 'DIOCESE') {
-            tokenPayload = { userId, context_type: 'DIOCESE', parishId: null, permissions };
+            tokenPayload = { userId, context_type: 'DIOCESE', parishId: null, permissions, uaHash };
         } else if (context_type === 'PARISH') {
             if (!parishId) {
                 return res.status(400).json({
@@ -76,10 +91,10 @@ const selectContext = async (req, res, next) => {
                     error: 'parishId es requerido cuando context_type es PARISH'
                 });
             }
-            tokenPayload = { userId, context_type: 'PARISH', parishId, permissions };
+            tokenPayload = { userId, context_type: 'PARISH', parishId, permissions, uaHash };
         } else if (context_type === 'PARISHIONER') {
             permissions = await userModel.findParishionerPermissions();
-            tokenPayload = { userId, context_type: 'PARISHIONER', parishId: null, permissions };
+            tokenPayload = { userId, context_type: 'PARISHIONER', parishId: null, permissions, uaHash };
         } else {
             return res.status(400).json({
                 message: 'Solicitud incorrecta',
@@ -111,7 +126,10 @@ const selectRole = async (req, res, next) => {
 
         const permissions = await userModel.findRolePermissions(roleId);
 
-        const tokenPayload = { userId, context_type, parishId, roleId, permissions };
+        const userAgent = req.headers['user-agent'];
+        const uaHash = hashUserAgent(userAgent);
+
+        const tokenPayload = { userId, context_type, parishId, roleId, permissions, uaHash };
         const finalToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
 
         res.cookie('session_token', finalToken, cookieOptions);
@@ -216,7 +234,10 @@ const getSession = async (req, res, next) => {
             }
         }
 
-        const tokenPayload = { userId, context_type, parishId, roleId, permissions: currentPermissions };
+        const userAgent = req.headers['user-agent'];
+        const uaHash = hashUserAgent(userAgent);
+
+        const tokenPayload = { userId, context_type, parishId, roleId, permissions: currentPermissions, uaHash };
         const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
         res.cookie('session_token', newToken, cookieOptions);
 
