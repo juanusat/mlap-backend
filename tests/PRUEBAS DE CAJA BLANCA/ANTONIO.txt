@@ -1,36 +1,39 @@
-⬜ PRUEBAS DE CAJA BLANCA (Formato 2)
+⬜ PRUEBAS DE CAJA BLANCA
 
 Prueba CB-03
 
 *Requisito
-	-Módulo: Actos Litúrgicos
+	-Módulo: Reservas
 	-Tipo de requisito: Funcional
-	-Código del requisito: RF19
-	-Descripción del requisito: Gestionar horarios: Incluye la lógica de disponibilidad de la capilla, donde el horario específico prevalece sobre el horario general.
+	-Código del requisito: RF19, RF33
+	-Descripción del requisito: Gestionar reservas, Reservar evento
 *Datos del caso de prueba
-	-Código de prueba: CB-07
-	-Fecha de prueba: 10/11/2025
-	-Caso de prueba: Prueba unitaria de getChapelAvailability() con conflicto de horario
-	-Complejidad de la prueba: 
+	-Código de prueba: CB-03
+	-Fecha de prueba: 15/11/2025
+	-Caso de prueba: Revisión de transacciones en endpoint de reservas
+	-Complejidad de la prueba: Alta
 	-Estado de la prueba: Terminado
-	-Descripción de la prueba: Alta
-	Probar unitariamente la función/método que determina la disponibilidad final de una capilla (getChapelAvailability) para una fecha específica. Se debe validar que si existe un specific_schedule de tipo 'CLOSED' para un día que normalmente está 'OPEN' en el general_schedule, el resultado final sea 'CLOSED'.
+	-Descripción de la prueba: Inspeccionar el código del endpoint POST /api/reservations para verificar que toda la lógica de creación de reserva y sus requisitos asociados esté correctamente envuelta en una transacción de base de datos. Esto garantiza la atomicidad de la operación (todo o nada).
 	-Datos de entrada: 
-		-chapel_id: 5. 
-		-date: 15/05/2026 (Viernes). 
-		-Setup DB Pre-Prueba: general_schedule para Viernes (día 5): OPEN 08:00 a 18:00. specific_schedule para 15/05/2026: CLOSED todo el día.
-	-Resultado Esperado: La función debe retornar que la capilla está CERRADA (CLOSED) para el 15/05/2026, validando la lógica de que la excepción específica anula el horario general.
+		-Archivo a inspeccionar: models/reservationModel.js (método create).
+		-Buscar patrones: BEGIN, COMMIT, ROLLBACK.
+		-Verificar inserción en reservation y reservation_requirement dentro de la misma transacción.
+	-Resultado Esperado: El código debe implementar transacciones de base de datos correctamente, utilizando BEGIN al iniciar, COMMIT al finalizar exitosamente, y ROLLBACK en caso de error. Ambas tablas (reservation y reservation_requirement) deben ser modificadas dentro de la misma transacción para garantizar consistencia de datos.
 	-Requerimientos de ambiente de pruebas: 
-		-Entorno de desarrollo / Ejecución de Pruebas Unitarias. 
-		-Acceso a la función de lógica de horarios. 
-		-Mocks/Registros de la DB (general_schedule, specific_schedule).
+		-Acceso al código fuente del proyecto.
+		-Herramienta para lectura y análisis de archivos JavaScript.
+		-Conocimiento de patrones de transacciones en PostgreSQL con node-postgres (pg).
 	-Condiciones/Restricciones: 
-		La función debe ser probada de forma aislada.
+		La prueba es de revisión de código (caja blanca), no requiere ejecución de queries.
 	-Pasos de la prueba:
-		1. Configurar los datos de prueba en la base de datos (viernes abierto, pero 15/05/2026 cerrado). 
-		2. Invocar getChapelAvailability(5, 15/05/2026). 
-		3. Afirmar que el valor de retorno sea CLOSED. 
-		4. (Prueba Secundaria): Remover el specific_schedule y afirmar que el retorno sea OPEN con el rango de 08:00 a 18:00.
+		1. Leer el contenido del archivo models/reservationModel.js.
+		2. Localizar el método create que maneja la creación de reservas.
+		3. Verificar que se obtenga un cliente de conexión mediante getClient().
+		4. Verificar presencia de BEGIN para iniciar transacción.
+		5. Verificar que los INSERT a reservation y reservation_requirement estén dentro del try block.
+		6. Verificar presencia de COMMIT al final del try block.
+		7. Verificar presencia de ROLLBACK en el catch block.
+		8. Verificar que el cliente se libere con release() en el finally block.
 		
 *Seguimiento:
 	-Veredicto: Conforme
@@ -43,35 +46,42 @@ Prueba CB-03
 Prueba CB-04
 
 *Requisito
-	-Módulo: Reservas
+	-Módulo: Seguridad
 	-Tipo de requisito: Funcional
-	-Código del requisito: RF34
-	-Descripción del requisito: Revisión de Código/SQL: Inspeccionar la consulta SQL de disponibilidad de horarios.
+	-Código del requisito: RF25
+	-Descripción del requisito: Inicio de Sesión
 *Datos del caso de prueba
-	-Código de prueba: CB-08
-	-Fecha de prueba: 10/11/2025
-	-Caso de prueba: Revisión de Consulta SQL para disponibilidad de reserva
+	-Código de prueba: CB-04
+	-Fecha de prueba: 15/11/2025
+	-Caso de prueba: Revisión de validación de User-Agent en middleware de autenticación
 	-Complejidad de la prueba: Media
 	-Estado de la prueba: Terminado
-	-Descripción de la prueba: Analizar el plan de ejecución de la consulta SQL que calcula la disponibilidad de cupos para una variante de evento en una fecha específica, buscando JOINS ineficientes, falta de índices y consultas N+1. 
+	-Descripción de la prueba: Inspeccionar el código del middleware de autenticación para verificar que se implemente la validación de User-Agent. El sistema debe comparar el User-Agent de la petición HTTP actual con el User-Agent almacenado en el JWT durante el login, rechazando peticiones donde no coincidan (posible robo de token).
 	-Datos de entrada: 
-		-Consulta SQL que une event_variant, reservation, chapel_event. 
-		-Base de Datos con alto volumen de reservas (>10,000 registros).
-	-Resultado Esperado: El plan de ejecución (EXPLAIN ANALYZE) debe mostrar el uso de índices en chapel_event_id y event_date de la tabla reservation. El tiempo de ejecución total debe ser inferior a 200ms.
+		-Archivo a inspeccionar: middleware/authMiddleware_new.js.
+		-Buscar comparación de req.headers['user-agent'] con el User-Agent del JWT payload.
+		-Verificar respuesta 401 Unauthorized cuando no coincidan.
+	-Resultado Esperado: El middleware debe extraer el User-Agent del JWT decodificado, compararlo con el User-Agent del header de la petición actual, y retornar status 401 con mensaje de error apropiado si no coinciden. Esto previene el uso de tokens robados desde diferentes dispositivos o navegadores.
 	-Requerimientos de ambiente de pruebas: 
-		-Herramienta de análisis de consultas SQL (EXPLAIN ANALYZE en PostgreSQL). 
-		-Base de datos de pruebas con datos simulados de volumen.
-	-Condiciones/Restricciones: Los índices deben existir y ser utilizados por el optimizador.
+		-Acceso al código fuente del proyecto.
+		-Herramienta para lectura y análisis de archivos JavaScript.
+		-Conocimiento de estructura de JWT y middleware de Express.
+	-Condiciones/Restricciones: 
+		La prueba es de revisión de código (caja blanca), no requiere ejecución de peticiones HTTP.
 	-Pasos de la prueba:
-		1. Ejecutar la consulta de disponibilidad usando EXPLAIN ANALYZE en un entorno de alto volumen. 
-		2. Analizar el Plan de Ejecución: Verificar si se utilizan Seq Scan en lugar de Index Scan. 
-		3. Medir el Tiempo de Ejecución. 
-		4. Si es necesario, añadir o modificar índices y repetir los pasos 1-3.
+		1. Leer el contenido del archivo middleware/authMiddleware_new.js.
+		2. Verificar que se extraiga el token del header Authorization.
+		3. Verificar que se decodifique el JWT y se extraiga el payload.
+		4. Buscar la extracción del User-Agent actual: req.headers['user-agent'].
+		5. Buscar la extracción del User-Agent del JWT: decoded.userAgent o similar.
+		6. Verificar que exista una comparación entre ambos User-Agent.
+		7. Verificar que se retorne res.status(401) cuando no coincidan.
+		8. Verificar que el mensaje de error sea descriptivo (ej: "Token usado desde dispositivo diferente").
 
 *Seguimiento:
-	-Resultado obtenido: 
-		Código fuente sin documentación
+	-Veredicto: Conforme
+	-Resultado obtenido: Conforme
 	-Estado actual: Conforme
-	-Observaciones funcionales: 
+	-Observaciones funcionales: Establecer la documentación correspondiente 
 
 ---

@@ -1,4 +1,4 @@
-⬜ PRUEBAS DE CAJA BLANCA (Formato 2)
+⬜ PRUEBAS DE CAJA BLANCA
 
 Prueba CB-07
 
