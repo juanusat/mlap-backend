@@ -1,0 +1,105 @@
+⬜ PRUEBAS DE CAJA BLANCA
+
+Prueba CB-07
+
+*Requisito
+	-Módulo: Actos Litúrgicos
+	-Tipo de requisito: Funcional
+	-Código del requisito: RF19
+	-Descripción del requisito: Gestionar horarios: Incluye la lógica de disponibilidad de la capilla, donde el horario específico prevalece sobre el horario general.
+*Datos del caso de prueba
+	-Código de prueba: CB-07
+	-Fecha de prueba: 15/11/2025
+	-Caso de prueba: Prueba de prevalencia de specific_schedule sobre general_schedule
+	-Complejidad de la prueba: Alta
+	-Estado de la prueba: Automatizado
+	-Descripción de la prueba: 
+	Script automatizado (PCB-07_PAMELA.js) que verifica la lógica de disponibilidad de capillas implementada en reservationModel.checkAvailability(). Prueba que specific_schedule CLOSED anula el general_schedule OPEN. Incluye dos escenarios: (1) con excepción CLOSED activa y (2) sin excepción (horario general).
+	-Datos de entrada: 
+		-Script automatizado busca una capilla activa con evento disponible.
+		-Fecha de prueba: 15/05/2026 (Viernes).
+		-Hora de prueba: 10:00:00.
+		-Setup DB automático: Verifica/crea general_schedule para Viernes (08:00-18:00) y crea specific_schedule CLOSED temporal para la fecha de prueba.
+	-Resultado Esperado: La función de disponibilidad debe retornar que la capilla está CERRADA cuando existe una excepción específica de tipo CLOSED para la fecha consultada, incluso si el horario general indica que está ABIERTA para ese día de la semana. Al remover la excepción específica, la función debe retornar que la capilla está ABIERTA según el horario general configurado (08:00 a 18:00 para Viernes), validando así que el specific_schedule prevalece correctamente sobre el general_schedule.
+	-Requerimientos de ambiente de pruebas: 
+		-Node.js con acceso a PostgreSQL (mlap_t).
+		-Variables de entorno configuradas (.env con DB_HOST, DB_NAME, DB_USER, DB_PASSWORD, DB_PORT).
+		-Al menos una capilla activa con evento variant activo.
+		-Permisos INSERT/DELETE en general_schedule y specific_schedule.
+	-Condiciones/Restricciones: 
+		-La prueba crea y elimina registros temporales en specific_schedule.
+		-Replica la lógica de checkAvailability() mediante consulta SQL con CTEs.
+		-No modifica código de producción, solo verifica comportamiento.
+	-Pasos de la prueba:
+		1. Buscar capilla y evento activos en la base de datos.
+		2. Verificar/crear general_schedule para Viernes (08:00-18:00).
+		3. Crear specific_schedule CLOSED para 15/05/2026.
+		4. Ejecutar consulta de disponibilidad y verificar available=false.
+		5. Eliminar specific_schedule y ejecutar nuevamente.
+		6. Verificar available=true con horario general.
+		7. Verificar que la lógica esté implementada en reservationModel.js.
+		
+*Seguimiento:
+	-Veredicto: Conforme
+	-Resultado obtenido: La lógica de prevalencia de horarios funciona correctamente. Cuando existe un specific_schedule de tipo CLOSED para la fecha 15/05/2026, la consulta de disponibilidad retorna correctamente que la capilla está CERRADA, anulando el horario general que indica ABIERTO para los viernes. Al eliminar la excepción específica, la consulta retorna ABIERTO utilizando el horario general de 08:00 a 18:00, confirmando que el sistema implementa correctamente la regla de negocio donde las excepciones específicas prevalecen sobre los horarios generales.
+	-Estado actual: Conforme - Automatizado
+	-Observaciones funcionales: 
+		La lógica está correctamente implementada en reservationModel.checkAvailability() usando CTEs (specific_exception, general_availability).
+		El script es reutilizable y no requiere modificación de datos manuales.
+
+---
+
+Prueba CB-08
+
+*Requisito
+	-Módulo: Reservas
+	-Tipo de requisito: No Funcional (Rendimiento)
+	-Código del requisito: RF34
+	-Descripción del requisito: Optimización de consultas SQL: Asegurar que la consulta de disponibilidad de horarios use índices apropiados y tenga tiempo de ejecución óptimo (<200ms).
+*Datos del caso de prueba
+	-Código de prueba: CB-08
+	-Fecha de prueba: 15/11/2025
+	-Caso de prueba: Análisis de plan de ejecución SQL con EXPLAIN ANALYZE
+	-Complejidad de la prueba: Media
+	-Estado de la prueba: Automatizado
+	-Descripción de la prueba: 
+	Script automatizado que ejecuta EXPLAIN ANALYZE sobre la consulta de disponibilidad de reservas (basada en checkAvailability). Analiza el plan de ejecución para detectar: (1) Seq Scans en tablas críticas con alto volumen, (2) ausencia de índices en event_date y event_variant_id, (3) tiempo de ejecución total, (4) operaciones ineficientes (Hash Join costoso). Considera el volumen de datos: Seq Scan es aceptable con <100 registros pero problemático con >1000.
+	-Datos de entrada: 
+		-Script busca automáticamente event_variant activo.
+		-Fecha de prueba: 2026-05-15.
+		-Hora de prueba: 10:00:00.
+		-Consulta SQL con CTEs: event_info, existing_reservation (JOINS con event_variant, chapel_event, reservation).
+	-Resultado Esperado: El plan de ejecución debe mostrar el uso eficiente de índices en las columnas event_date y event_variant_id de la tabla reservation cuando el volumen de datos es superior a 100 registros, utilizando Index Scan o Bitmap Index Scan en lugar de Sequential Scan. El tiempo total de ejecución (planificación más ejecución) debe ser inferior a 200 milisegundos. Los JOINS entre las tablas event_variant, reservation y chapel_event deben ejecutarse mediante Nested Loop eficiente, evitando operaciones costosas como Hash Join sin índices.
+	-Requerimientos de ambiente de pruebas: 
+		-Node.js con acceso a PostgreSQL (mlap_t).
+		-Variables de entorno configuradas (.env).
+		-Permisos para ejecutar EXPLAIN ANALYZE.
+		-Consulta a pg_class, pg_index, pg_attribute para verificar índices existentes.
+		-Idealmente >1000 registros en reservation para pruebas realistas (advertencia si <100).
+	-Condiciones/Restricciones: 
+		-La prueba es read-only, no modifica datos ni estructura de BD.
+		-Analiza automáticamente el texto del plan de ejecución (regex para Seq Scan, Index Scan, tiempos).
+		-Lógica inteligente: Seq Scan con <100 registros = ADVERTENCIA (normal), con >100 = ERROR (ineficiente).
+		-No crea índices automáticamente, solo sugiere comandos SQL para crearlos.
+	-Pasos de la prueba:
+		1. Obtener datos de prueba (event_variant activo).
+		2. Contar registros en reservation (verificar volumen).
+		3. Listar índices existentes en reservation (pg_index).
+		4. Ejecutar EXPLAIN ANALYZE de la consulta de disponibilidad.
+		5. Parsear el plan de ejecución: detectar tipo de scan, tiempos, tablas afectadas.
+		6. Evaluar resultados considerando volumen de datos:
+		   - <100 registros: Seq Scan normal, no falla la prueba.
+		   - >100 registros: Seq Scan problemático, falla la prueba.
+		7. Verificar tiempo total < 200ms.
+		8. Generar reporte con sugerencias de optimización.
+
+*Seguimiento:
+	-Resultado obtenido: La consulta de disponibilidad presenta un tiempo de ejecución óptimo de 1.07 ms (planning 1.00 ms + execution 0.07 ms), cumpliendo ampliamente con el requisito de menos de 200ms. El plan de ejecución muestra el uso correcto de Index Scan en las tablas event_variant y chapel_event. Se detectó Sequential Scan en la tabla reservation, lo cual es aceptable y esperado dado que la tabla contiene solo 20 registros (por debajo del umbral de 100 registros donde PostgreSQL optimiza automáticamente usando lectura secuencial). Se identificó la ausencia de índices específicos en las columnas event_date y event_variant_id de la tabla reservation, los cuales serían recomendables implementar cuando el volumen de datos supere los 1000 registros para mantener el rendimiento óptimo.
+	-Estado actual: Conforme - Automatizado
+	-Observaciones funcionales: 
+		Con bajo volumen (<100 registros), PostgreSQL inteligentemente usa Seq Scan porque es más rápido que acceder al índice. Esto NO es un error.
+		El script proporciona comandos SQL para crear índices faltantes.
+		Explica problemas comunes: N+1 queries, JOINS sin índices, subconsultas repetidas.
+		La prueba escala correctamente: pasa con volumen bajo, detecta problemas con volumen alto. 
+
+---

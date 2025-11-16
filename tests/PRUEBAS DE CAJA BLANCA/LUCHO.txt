@@ -1,0 +1,59 @@
+⬜ PRUEBAS DE CAJA BLANCA
+
+-------------------------------------------Prueba CB-01-------------------------------------------
+
+*Requisito
+	-Módulo: Actos Litúrgicos / Reservas
+	-Tipo de requisito: Funcional
+	-Código del requisito: RF34
+	-Descripción del requisito: Gestionar y crear reservas, asegurando la Mantenibilidad Modular: El código debe estar estructurado para que los módulos de Catálogos Centrales (Event, DocumentType) puedan ser modificados sin afectar la lógica del flujo de Reservas y Horarios.
+*Datos del caso de prueba
+	-Código de prueba: CB-01
+	-Fecha de prueba: 09/11/2025
+	-Caso de prueba: Mantenibilidad Modular - Desacoplamiento de Reservas.
+	-Complejidad de la prueba: Media
+	-Estado de la prueba: Terminado
+	-Descripción de la prueba: (Revisión de Código + test automático) Validar que "controllers/reservationController.js" no depende directamente de los modelos "Event" ni "DocumentType", y que la responsabilidad de crear reservas está delegada a un servicio ("services/reservationService.js") o a los modelos "Reservation" y "EventVariant".
+	-Datos de entrada: Código fuente del archivo "mlap-backend/controllers/reservationController.js".
+	-Resultado Esperado: Asegurar que el controlador importa solo "Reservation", "EventVariant" (si aplica), "ReservationRequirement" o —preferible— que llame a "reservationService". No debe importar "Event" ni "DocumentType" directamente.
+	-Requerimientos de ambiente de pruebas: 
+		Acceso al repositorio de código fuente (mlap-backend).
+		IDE o visor de código (ej. Visual Studio Code).
+	-Condiciones/Restricciones: El código debe estar en la rama principal.
+	-Pasos de la prueba:
+		1. Abrir el proyecto "mlap-backend" en el IDE.
+		2. Navegar al archivo "controllers/reservationController.js".
+		3. Revisar la sección de imports en la parte superior del archivo.
+		4. Confirmar que no hay "import" o "require" directos a "Event" o "DocumentType".
+
+---
+
+-------------------------------------------Prueba CB-02-------------------------------------------
+
+*Requisito
+	-Módulo: Reservas
+	-Tipo de requisito: Funcional
+	-Código del requisito: RF34
+	-Descripción del requisito: Reservar evento asegurando la Inmutabilidad de la Historia: una vez registrada una reserva, los requisitos asociados deben ser inmutables, protegiendo los términos originales de la reserva del cliente.
+*Datos del caso de prueba
+	-Código de prueba: CB-02
+	-Fecha de prueba: 09/11/2025
+	-Caso de prueba: Inmutabilidad de Requisitos (Copia en Reserva).
+	-Complejidad de la prueba: Alta
+	-Estado de la prueba: Terminado
+	-Descripción de la prueba: (Revisión de Código + test automático) Validar que "models/reservationModel.js" contiene la lógica para crear registros en la tabla "reservation_requirement" copiando los campos relevantes de los requisitos base, garantizando la inmutabilidad de la historia de la reserva.
+	-Datos de entrada:
+		Código fuente del archivo "mlap-backend/models/reservationModel.js".
+	-Resultado Esperado: El test debe confirmar que en el método create() se realiza un INSERT INTO reservation_requirement con los campos copiados (name, description, etc.), garantizando que los requisitos quedan registrados de forma inmutable en cada reserva.
+	-Requerimientos de ambiente de pruebas: 
+		Acceso al repositorio de código fuente (mlap-backend).
+		IDE o visor de código (ej. Visual Studio Code).
+		Node.js instalado para ejecutar el script de verificación.
+	-Condiciones/Restricciones: El código debe estar en la rama principal y el modelo debe implementar la copia de requisitos.
+	-Pasos de la prueba:
+		1. Abrir el proyecto "mlap-backend" en el IDE.
+		2. Navegar al archivo "models/reservationModel.js".
+		3. Buscar el método create() o la función que maneja la creación de reservas.
+		4. Verificar que existe un INSERT INTO reservation_requirement.
+		5. Confirmar que se copian los campos name, description y otros relevantes.
+		6. Ejecutar el script automatizado "node tests/PCB-02_LUCHO.js" para validación.

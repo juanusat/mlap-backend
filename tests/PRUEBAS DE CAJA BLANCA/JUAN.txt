@@ -1,0 +1,75 @@
+⬜ PRUEBAS DE CAJA BLANCA
+
+Prueba CB-05
+
+*Requisito
+	-Módulo: Reservas
+	-Tipo de requisito: Funcionalidad
+    -Código del requisito: RF34
+	-Descripción del requisito: El sistema debe gestionar las reservas y el servidor debe ser capaz de gestionar la concurrencia de peticiones simultáneas sin conflictos de datos.
+*Datos del caso de prueba
+	-Código de prueba: CB-05
+	-Fecha de prueba: 10/11/2025
+	-Caso de prueba: Prueba de concurrencia real - Creación simultánea de reservas.
+	-Complejidad de la prueba: Alta
+	-Estado de la prueba: Terminado
+	-Descripción de la prueba: (Prueba de Base de Datos) Ejecutar 3 inserciones de reservas simultáneas (Promise.all) en el mismo segundo, cada una para una capilla diferente de parroquias distintas, con usuarios diferentes y horarios distintos. Verificar que todas las reservas se creen exitosamente sin conflictos de IDs, deadlocks o pérdida de datos.
+	-Datos de entrada: 
+		Tres conjuntos de datos de reserva (user_id, event_variant_id, schedule_date, schedule_time) correspondientes a:
+		- Usuario 1 -> Capilla de Parroquia A -> Horario 09:00
+		- Usuario 2 -> Capilla de Parroquia B -> Horario 10:00
+		- Usuario 3 -> Capilla de Parroquia C -> Horario 11:00
+	-Resultado Esperado: Las 3 reservas deben crearse exitosamente de forma concurrente sin errores de constraint, deadlock o duplicación de IDs. Cada reserva debe tener un ID único autogenerado y sus respectivos requisitos copiados en reservation_requirement.
+	-Requerimientos de ambiente de pruebas: 
+		Acceso a la base de datos PostgreSQL configurada.
+		Node.js instalado para ejecutar el script de prueba.
+		Datos de prueba válidos (usuarios, capillas, eventos) en la base de datos.
+	-Condiciones/Restricciones: La base de datos debe usar transacciones ACID para garantizar la integridad de los datos en operaciones concurrentes.
+	-Pasos de la prueba:
+		1. Verificar que existen datos válidos de prueba en la BD (usuarios, parroquias, capillas, eventos).
+		2. Preparar 3 conjuntos de datos de reserva distintos.
+		3. Ejecutar las 3 inserciones de forma simultánea usando Promise.all().
+		4. Verificar que las 3 reservas se crearon exitosamente.
+		5. Validar que cada reserva tiene un ID único.
+		6. Confirmar que los requisitos se copiaron correctamente a reservation_requirement.
+*Seguimiento:
+	-Código de prueba relacionado: PCB-05_JUAN.js
+	-Estado anterior: Pendiente
+	-Resultado obtenido: El script ejecuta 3 inserciones concurrentes usando Promise.all(). Se verifica que las 3 reservas se crean exitosamente con IDs únicos secuenciales y que los requisitos asociados se copian correctamente en reservation_requirement.
+	-Estado actual: Conforme
+	-Observaciones funcionales: PostgreSQL maneja correctamente la concurrencia mediante transacciones ACID. El patrón de generación de IDs con COALESCE(MAX(id), 0) + 1 funciona correctamente en operaciones concurrentes gracias al aislamiento de transacciones.
+
+---
+
+Prueba CB-06
+
+*Requisito
+	-Módulo: Usuario / Parroquia
+	-Tipo de requisito: No Funcional
+	-Código del requisito: RNF04
+	-Descripción del requisito: El sistema permite que en las pantallas "Mi cuenta" y "Gestionar capillas"debe tener una política de almacenamiento de archivos.
+*Datos del caso de prueba
+	-Código de prueba: CB-06
+	-Fecha de prueba: 10/11/2025
+	-Caso de prueba: Política de almacenamiento de archivos (No Blobs en BD).
+	-Complejidad de la prueba: Media
+	-Estado de la prueba: Terminado
+	-Descripción de la prueba: (Revisión de Código) Inspeccionar el controlador y el modelo que gestionan la subida de fotos (perfil o capilla) para verificar cómo se almacenan los archivos.
+	-Datos de entrada: Código fuente de los controladores y modelos responsables de la subida de imágenes ("routes/chapelRoutes.js", "controllers/chapelController.js", "models/chapelModel.js").
+	-Resultado Esperado: El código NO debe guardar el archivo (blob) directamente en la base de datos. Debe persistir el archivo en un almacenamiento de archivos (directorio "uploads/" o un bucket S3) y almacenar únicamente el "path" o "filename" en la tabla correspondiente.
+	-Requerimientos de ambiente de pruebas: 
+		Acceso al repositorio de código fuente ("mlap-backend").
+	-Condiciones/Restricciones: (N/A)
+	-Pasos de la prueba:
+		1. Abrir el proyecto "mlap-backend".
+		2. Navegar al router/endpoint que maneja la subida (ej. "routes/chapelRoutes.js").
+		3. Revisar el controlador ("controllers/chapelController.js") y el modelo ("models/chapelModel.js").
+		4. Verificar cómo se usa "multer" y cómo se guarda el archivo (buffer) en la lógica del modelo.
+*Seguimiento:
+	-Código de prueba relacionado: (N/A)
+	-Estado anterior: Pendiente
+	-Resultado obtenido: El proyecto usa "multer" con "memoryStorage()" en "routes/chapelRoutes.js". El "controllers/chapelController.js" pasa el buffer al modelo, y "models/chapelModel.js" escribe el archivo en el directorio "uploads/" con un nombre aleatorio y guarda el nombre de archivo en la columna "profile_photo" / "cover_photo" de la tabla "public.chapel".
+	-Estado actual: Conforme
+	-Observaciones funcionales: No se usa Multer-S3 en el repositorio actual; el almacenamiento es local ("uploads/"). Esto cumple RNF04 (no guardar blobs en la BD) siempre que existan políticas de backup/retención sobre el directorio "uploads/".
+
+---
