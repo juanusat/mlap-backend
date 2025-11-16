@@ -4,16 +4,19 @@
  * 
  * Objetivo:
  * Inspeccionar el codigo del middleware de autenticacion (authMiddleware_new.js) para
- * verificar que implemente la validacion de User-Agent. El sistema debe comparar el
- * User-Agent de la peticion actual con el almacenado en el JWT, rechazando peticiones
- * donde no coincidan (posible robo de token).
+ * verificar que implemente la validacion de User-Agent mediante hash SHA-256. El sistema
+ * debe comparar el hash del User-Agent de la peticion actual con el almacenado en el JWT,
+ * rechazando peticiones donde no coincidan (posible robo de token).
  * 
  * Criterio de Exito:
+ * - Debe existir funcion hashUserAgent que use crypto.createHash('sha256')
  * - Debe extraer el User-Agent del header: req.headers['user-agent']
- * - Debe extraer el User-Agent del JWT decodificado: decoded.userAgent
- * - Debe comparar ambos User-Agent
+ * - Debe hashear el User-Agent actual con hashUserAgent()
+ * - Debe extraer el hash del JWT decodificado: decoded.uaHash
+ * - Debe comparar ambos hashes
  * - Debe retornar 401 Unauthorized cuando no coincidan
- * - Mensaje de error descriptivo sobre cambio de dispositivo
+ * - Debe limpiar la cookie con clearCookie() al detectar robo
+ * - Debe incluir force_logout: true y redirect: true en la respuesta
  */
 
 const fs = require('fs');
@@ -56,7 +59,7 @@ try {
   console.log(`${colors.blue}Iniciando analisis del codigo...${colors.reset}\n`);
   
   // Verificacion 1: Verificar existencia del middleware
-  console.log(`[1/8] Verificando existencia del middleware authMiddleware...`);
+  console.log(`[1/10] Verificando existencia del middleware authMiddleware...`);
   
   const middlewarePattern = /(?:const|let|var)\s+authMiddleware\s*=\s*\(/;
   const hasMiddleware = middlewarePattern.test(fileContent);
@@ -71,9 +74,9 @@ try {
   }
   
   // Verificacion 2: Verificar extraccion de token
-  console.log(`\n[2/8] Verificando extraccion de token del header Authorization...`);
+  console.log(`\n[2/10] Verificando extraccion de token del header Authorization...`);
   
-  const tokenExtractionPattern = /(?:const|let|var)\s+.*token.*=.*req\.(?:cookies|headers)/;
+  const tokenExtractionPattern = /(?:const|let|var)\s+\w*token\w*\s*=.*(?:req\.cookies|req\.headers|authHeader)/i;
   const hasTokenExtraction = tokenExtractionPattern.test(fileContent);
   
   if (hasTokenExtraction) {
@@ -86,7 +89,7 @@ try {
   }
   
   // Verificacion 3: Verificar decodificacion del JWT
-  console.log(`\n[3/8] Verificando decodificacion del JWT...`);
+  console.log(`\n[3/10] Verificando decodificacion del JWT...`);
   
   const jwtVerifyPattern = /jwt\.verify\s*\(/;
   const hasJwtVerify = jwtVerifyPattern.test(fileContent);
@@ -100,10 +103,25 @@ try {
     testPassed = false;
   }
   
-  // Verificacion 4: Verificar extraccion del User-Agent del request
-  console.log(`\n[4/8] Verificando extraccion del User-Agent de la peticion...`);
+  // Verificacion 4: Verificar funcion hashUserAgent con crypto SHA-256
+  console.log(`\n[4/10] Verificando funcion hashUserAgent con crypto SHA-256...`);
   
-  const requestUserAgentPattern = /req\.headers\[['"`]user-agent['"`]\]/i;
+  const hashFunctionPattern = /(?:const|let|var)\s+hashUserAgent\s*=.*crypto\.createHash\s*\(\s*['"\`]sha256['"\`]\s*\)/s;
+  const hasHashFunction = hashFunctionPattern.test(fileContent);
+  
+  if (hasHashFunction) {
+    console.log(`  ${colors.green}CORRECTO: Funcion hashUserAgent con SHA-256 encontrada${colors.reset}`);
+    successes.push('Funcion hashUserAgent implementada con crypto.createHash("sha256")');
+  } else {
+    console.log(`  ${colors.red}ERROR: No se encontro funcion hashUserAgent con SHA-256${colors.reset}`);
+    issues.push('No existe funcion hashUserAgent o no usa SHA-256');
+    testPassed = false;
+  }
+  
+  // Verificacion 5: Verificar extraccion del User-Agent del request
+  console.log(`\n[5/10] Verificando extraccion del User-Agent de la peticion...`);
+  
+  const requestUserAgentPattern = /req\.headers\[['"\`]user-agent['"\`]\]/i;
   const hasRequestUserAgent = requestUserAgentPattern.test(fileContent);
   
   if (hasRequestUserAgent) {
@@ -115,63 +133,93 @@ try {
     testPassed = false;
   }
   
-  // Verificacion 5: Verificar extraccion del User-Agent del JWT
-  console.log(`\n[5/8] Verificando extraccion del User-Agent del JWT decodificado...`);
+  // Verificacion 6: Verificar hasheo del User-Agent actual
+  console.log(`\n[6/10] Verificando hasheo del User-Agent actual...`);
   
-  const jwtUserAgentPattern = /decoded\.(?:userAgent|user_agent|ua)/i;
-  const hasJwtUserAgent = jwtUserAgentPattern.test(fileContent);
+  const hashCurrentUaPattern = /hashUserAgent\s*\(\s*(?:userAgent|req\.headers)/i;
+  const hasHashCurrentUa = hashCurrentUaPattern.test(fileContent);
   
-  if (hasJwtUserAgent) {
-    console.log(`  ${colors.green}CORRECTO: Se extrae User-Agent del JWT decodificado${colors.reset}`);
-    successes.push('User-Agent extraido del payload del JWT');
+  if (hasHashCurrentUa) {
+    console.log(`  ${colors.green}CORRECTO: Se hashea el User-Agent actual con hashUserAgent()${colors.reset}`);
+    successes.push('User-Agent actual es hasheado antes de comparar');
   } else {
-    console.log(`  ${colors.red}ERROR: No se extrae el User-Agent del JWT${colors.reset}`);
-    issues.push('No se accede a decoded.userAgent (o similar)');
+    console.log(`  ${colors.red}ERROR: No se hashea el User-Agent actual${colors.reset}`);
+    issues.push('No se llama a hashUserAgent() con el User-Agent actual');
     testPassed = false;
   }
   
-  // Verificacion 6: Verificar comparacion de User-Agent
-  console.log(`\n[6/8] Verificando comparacion entre User-Agent actual y del JWT...`);
+  // Verificacion 7: Verificar extraccion del hash del JWT
+  console.log(`\n[7/10] Verificando extraccion del hash del JWT decodificado...`);
   
-  // Buscar comparaciones de User-Agent (puede ser con === o !== )
-  const userAgentComparisonPattern = /(?:user-agent|userAgent|ua).*(?:===|!==|!=|==)/i;
-  const hasUserAgentComparison = userAgentComparisonPattern.test(fileContent);
+  const jwtUaHashPattern = /decoded\.uaHash/;
+  const hasJwtUaHash = jwtUaHashPattern.test(fileContent);
   
-  if (hasUserAgentComparison) {
-    console.log(`  ${colors.green}CORRECTO: Se compara el User-Agent actual con el del JWT${colors.reset}`);
-    successes.push('Comparacion de User-Agent implementada');
+  if (hasJwtUaHash) {
+    console.log(`  ${colors.green}CORRECTO: Se extrae uaHash del JWT decodificado${colors.reset}`);
+    successes.push('Hash del User-Agent extraido del payload JWT (decoded.uaHash)');
   } else {
-    console.log(`  ${colors.red}ERROR: No se compara el User-Agent${colors.reset}`);
-    issues.push('No se compara User-Agent actual vs JWT');
+    console.log(`  ${colors.red}ERROR: No se extrae decoded.uaHash del JWT${colors.reset}`);
+    issues.push('No se accede a decoded.uaHash');
     testPassed = false;
   }
   
-  // Verificacion 7: Verificar respuesta 401 cuando no coincidan
-  console.log(`\n[7/8] Verificando respuesta 401 Unauthorized cuando no coinciden...`);
+  // Verificacion 8: Verificar comparacion de hashes
+  console.log(`\n[8/10] Verificando comparacion entre hash actual y hash del JWT...`);
   
-  const unauthorized401Pattern = /res\.status\s*\(\s*401\s*\)/;
-  const has401Response = unauthorized401Pattern.test(fileContent);
+  const hashComparisonPattern = /decoded\.uaHash\s*(?:&&|&)?\s*decoded\.uaHash\s*(?:!==|!=|===|==)\s*\w+UaHash|\w+UaHash\s*(?:!==|!=|===|==)\s*decoded\.uaHash/;
+  const hasHashComparison = hashComparisonPattern.test(fileContent);
   
-  if (has401Response) {
-    console.log(`  ${colors.green}CORRECTO: Se retorna status 401 Unauthorized${colors.reset}`);
-    successes.push('Respuesta 401 implementada');
+  if (hasHashComparison) {
+    console.log(`  ${colors.green}CORRECTO: Se compara el hash actual con el hash del JWT${colors.reset}`);
+    successes.push('Comparacion de hashes implementada correctamente');
   } else {
-    console.log(`  ${colors.yellow}ADVERTENCIA: No se encontro res.status(401)${colors.reset}`);
-    warnings.push('Deberia retornar 401 cuando User-Agent no coincide');
+    console.log(`  ${colors.red}ERROR: No se compara decoded.uaHash con el hash actual${colors.reset}`);
+    issues.push('No se compara decoded.uaHash !== currentUaHash');
+    testPassed = false;
   }
   
-  // Verificacion 8: Verificar mensaje de error descriptivo
-  console.log(`\n[8/8] Verificando mensaje de error descriptivo...`);
+  // Verificacion 9: Verificar limpieza de cookie cuando no coincidan
+  console.log(`\n[9/10] Verificando limpieza de cookie al detectar robo...`);
   
-  const errorMessagePattern = /message\s*:\s*['"`].*(?:dispositivo|device|user-agent|navegador|browser).*['"`]/i;
-  const hasErrorMessage = errorMessagePattern.test(fileContent);
+  const clearCookiePattern = /res\.clearCookie\s*\(\s*['"\`]session_token['"\`]/;
+  const hasClearCookie = clearCookiePattern.test(fileContent);
   
-  if (hasErrorMessage) {
-    console.log(`  ${colors.green}CORRECTO: Mensaje de error descriptivo encontrado${colors.reset}`);
-    successes.push('Mensaje de error indica problema de dispositivo/User-Agent');
+  if (hasClearCookie) {
+    console.log(`  ${colors.green}CORRECTO: Se limpia la cookie con clearCookie() al detectar robo${colors.reset}`);
+    successes.push('Cookie invalidada con res.clearCookie("session_token")');
   } else {
-    console.log(`  ${colors.yellow}ADVERTENCIA: No se encontro mensaje descriptivo especifico${colors.reset}`);
-    warnings.push('Se recomienda mensaje mas especifico sobre cambio de dispositivo');
+    console.log(`  ${colors.yellow}ADVERTENCIA: No se limpia la cookie al detectar robo${colors.reset}`);
+    warnings.push('Se recomienda limpiar cookie con clearCookie() al detectar discrepancia');
+  }
+  
+  // Verificacion 10: Verificar respuesta 401 con flags force_logout y redirect
+  console.log(`\n[10/10] Verificando respuesta 401 con force_logout y redirect...`);
+  
+  const response401Pattern = /res\.status\s*\(\s*401\s*\).*\.json\s*\(/s;
+  const forceLogoutPattern = /force_logout\s*:\s*true/;
+  const redirectPattern = /redirect\s*:\s*true/;
+  
+  const has401WithJson = response401Pattern.test(fileContent);
+  const hasForceLogout = forceLogoutPattern.test(fileContent);
+  const hasRedirect = redirectPattern.test(fileContent);
+  
+  if (has401WithJson && hasForceLogout && hasRedirect) {
+    console.log(`  ${colors.green}CORRECTO: Respuesta 401 con force_logout y redirect implementada${colors.reset}`);
+    successes.push('Respuesta 401 incluye force_logout: true y redirect: true');
+  } else {
+    if (!has401WithJson) {
+      console.log(`  ${colors.red}ERROR: No se retorna status 401${colors.reset}`);
+      issues.push('No se retorna res.status(401)');
+      testPassed = false;
+    }
+    if (!hasForceLogout) {
+      console.log(`  ${colors.yellow}ADVERTENCIA: No se incluye force_logout: true${colors.reset}`);
+      warnings.push('Se recomienda incluir force_logout: true para informar al frontend');
+    }
+    if (!hasRedirect) {
+      console.log(`  ${colors.yellow}ADVERTENCIA: No se incluye redirect: true${colors.reset}`);
+      warnings.push('Se recomienda incluir redirect: true para informar al frontend');
+    }
   }
   
   // Analisis adicional: Verificar si el middleware actual NO tiene validacion
@@ -179,22 +227,30 @@ try {
   console.log(`Verificando si la validacion de User-Agent esta realmente implementada...\n`);
   
   // Contar cuantas verificaciones pasaron relacionadas con User-Agent
-  const userAgentChecks = [hasRequestUserAgent, hasJwtUserAgent, hasUserAgentComparison];
+  const userAgentChecks = [
+    hasHashFunction,
+    hasRequestUserAgent, 
+    hasHashCurrentUa,
+    hasJwtUaHash, 
+    hasHashComparison
+  ];
   const userAgentChecksPassed = userAgentChecks.filter(check => check).length;
+  const totalUserAgentChecks = userAgentChecks.length;
   
   if (userAgentChecksPassed === 0) {
     console.log(`  ${colors.red}CRITICO: La validacion de User-Agent NO esta implementada${colors.reset}`);
     console.log(`  ${colors.yellow}El middleware actual solo verifica el token JWT pero no valida${colors.reset}`);
-    console.log(`  ${colors.yellow}que el User-Agent coincida con el registrado durante el login.${colors.reset}`);
+    console.log(`  ${colors.yellow}que el hash del User-Agent coincida con el registrado durante el login.${colors.reset}`);
     console.log(`  ${colors.yellow}Esto permite que tokens robados se usen desde cualquier dispositivo.${colors.reset}\n`);
     issues.push('CRITICO: Validacion de User-Agent completamente ausente');
     testPassed = false;
-  } else if (userAgentChecksPassed < 3) {
+  } else if (userAgentChecksPassed < totalUserAgentChecks) {
     console.log(`  ${colors.yellow}ADVERTENCIA: Validacion de User-Agent parcialmente implementada${colors.reset}`);
-    console.log(`  ${colors.yellow}Solo ${userAgentChecksPassed}/3 verificaciones relacionadas con User-Agent pasaron.${colors.reset}\n`);
-    warnings.push('Validacion de User-Agent incompleta');
+    console.log(`  ${colors.yellow}Solo ${userAgentChecksPassed}/${totalUserAgentChecks} verificaciones relacionadas con User-Agent pasaron.${colors.reset}\n`);
+    warnings.push(`Validacion de User-Agent incompleta (${userAgentChecksPassed}/${totalUserAgentChecks})`);
   } else {
-    console.log(`  ${colors.green}CORRECTO: Validacion de User-Agent completamente implementada${colors.reset}\n`);
+    console.log(`  ${colors.green}CORRECTO: Validacion de User-Agent completamente implementada${colors.reset}`);
+    console.log(`  ${colors.green}Se usa hash SHA-256 para comparar User-Agent de forma segura.${colors.reset}\n`);
     successes.push('Todas las verificaciones de User-Agent pasaron');
   }
   
@@ -246,14 +302,21 @@ console.log(`2. Detectar si un atacante robo el JWT y lo usa desde otro navegado
 console.log(`3. Agregar capa adicional de seguridad mas alla del token JWT.`);
 console.log(`4. Cumplir con mejores practicas de seguridad en autenticacion.\n`);
 
-console.log(`${colors.blue}Como funciona la validacion:${colors.reset}`);
-console.log(`1. Durante el login, se guarda el User-Agent en el payload del JWT.`);
+console.log(`${colors.blue}Como funciona la validacion (implementacion con hash SHA-256):${colors.reset}`);
+console.log(`1. Durante el login, se hashea el User-Agent con SHA-256 y se guarda en el JWT.`);
 console.log(`2. En cada peticion autenticada, el middleware:`);
 console.log(`   a) Extrae el User-Agent del header: req.headers['user-agent']`);
-console.log(`   b) Decodifica el JWT y extrae: decoded.userAgent`);
-console.log(`   c) Compara ambos valores`);
-console.log(`   d) Si NO coinciden: retorna 401 (token usado desde otro dispositivo)`);
-console.log(`   e) Si coinciden: permite continuar con la peticion\n`);
+console.log(`   b) Hashea el User-Agent actual: hashUserAgent(userAgent)`);
+console.log(`   c) Decodifica el JWT y extrae: decoded.uaHash`);
+console.log(`   d) Compara el hash actual con el hash del JWT`);
+console.log(`   e) Si NO coinciden: limpia la cookie y retorna 401 con force_logout y redirect`);
+console.log(`   f) Si coinciden: permite continuar con la peticion\n`);
+
+console.log(`${colors.blue}Ventajas del hash SHA-256:${colors.reset}`);
+console.log(`- No expone el User-Agent real en el token (privacidad).`);
+console.log(`- Longitud fija independiente del User-Agent original.`);
+console.log(`- Imposible revertir el hash para obtener el User-Agent original.`);
+console.log(`- Comparacion rapida y segura.\n`);
 
 console.log(`${colors.blue}Escenario de ataque sin validacion:${colors.reset}`);
 console.log(`1. Usuario inicia sesion desde Chrome en Windows.`);
@@ -262,44 +325,62 @@ console.log(`3. Atacante usa el JWT desde Firefox en Linux.`);
 console.log(`4. Sin validacion: El servidor acepta el token robado.`);
 console.log(`5. Con validacion: El servidor detecta cambio de User-Agent y rechaza.\n`);
 
-console.log(`${colors.blue}Implementacion recomendada:${colors.reset}`);
+console.log(`${colors.blue}Implementacion recomendada (con hash SHA-256):${colors.reset}`);
+console.log(`Funcion auxiliar (en ambos archivos):`);
+console.log(`  const crypto = require('crypto');`);
+console.log(`  const hashUserAgent = (userAgent) => {`);
+console.log(`    return crypto.createHash('sha256').update(userAgent || '').digest('hex');`);
+console.log(`  };`);
+console.log(``);
 console.log(`Durante el login (authController.js):`);
 console.log(`  const userAgent = req.headers['user-agent'];`);
-console.log(`  const token = jwt.sign({ userId, userAgent, ... }, secret);`);
+console.log(`  const uaHash = hashUserAgent(userAgent);`);
+console.log(`  const token = jwt.sign({ userId, uaHash, ... }, secret);`);
 console.log(``);
 console.log(`En el middleware (authMiddleware_new.js):`);
 console.log(`  const decoded = jwt.verify(token, secret);`);
-console.log(`  const currentUserAgent = req.headers['user-agent'];`);
-console.log(`  if (decoded.userAgent !== currentUserAgent) {`);
+console.log(`  const userAgent = req.headers['user-agent'];`);
+console.log(`  const currentUaHash = hashUserAgent(userAgent);`);
+console.log(`  if (decoded.uaHash && decoded.uaHash !== currentUaHash) {`);
+console.log(`    res.clearCookie('session_token', cookieOptions);`);
 console.log(`    return res.status(401).json({`);
-console.log(`      message: 'Token usado desde dispositivo diferente'`);
+console.log(`      message: 'No autorizado. El token de sesion falta, es invalido o ha expirado.',`);
+console.log(`      force_logout: true,`);
+console.log(`      redirect: true`);
 console.log(`    });`);
 console.log(`  }`);
-console.log(``);
+console.log(``);  
 
 console.log(`${colors.blue}Limitaciones y consideraciones:${colors.reset}`);
 console.log(`- El User-Agent puede ser falsificado por un atacante sofisticado.`);
+console.log(`- El hash SHA-256 previene la exposicion del User-Agent en el token.`);
 console.log(`- No es una solucion perfecta, pero agrega capa de defensa.`);
 console.log(`- Debe combinarse con otras medidas: HTTPS, tokens de corta duracion, etc.`);
-console.log(`- Algunos navegadores/proxies modifican el User-Agent automaticamente.\n`);
+console.log(`- Algunos navegadores/proxies modifican el User-Agent automaticamente.`);
+console.log(`- El hash protege la privacidad al no almacenar el User-Agent en texto plano.\n`);
 
 // Resultado final
 if (testPassed) {
   console.log(`${colors.green}========================================`);
   console.log(`RESULTADO: PRUEBA SUPERADA`);
   console.log(`========================================${colors.reset}`);
-  console.log(`\nEl middleware implementa correctamente la validacion de User-Agent.`);
-  console.log(`Se compara el User-Agent de la peticion con el almacenado en el JWT,`);
-  console.log(`rechazando peticiones donde no coincidan con status 401.\n`);
+  console.log(`\nEl middleware implementa correctamente la validacion de User-Agent con hash SHA-256.`);
+  console.log(`Se compara el hash del User-Agent de la peticion con el almacenado en el JWT,`);
+  console.log(`rechazando peticiones donde no coincidan con status 401, limpiando la cookie`);
+  console.log(`e indicando force_logout y redirect para que el frontend procese el cierre de sesion.\n`);
   process.exit(0);
 } else {
   console.log(`${colors.red}========================================`);
   console.log(`RESULTADO: PRUEBA FALLIDA`);
   console.log(`========================================${colors.reset}`);
-  console.log(`\nSe detectaron problemas en la validacion de User-Agent.`);
-  console.log(`El middleware NO implementa la validacion requerida para prevenir`);
+  console.log(`\nSe detectaron problemas en la validacion de User-Agent con hash SHA-256.`);
+  console.log(`El middleware NO implementa correctamente la validacion requerida para prevenir`);
   console.log(`el uso de tokens robados desde dispositivos diferentes.`);
-  console.log(`\nSe recomienda implementar la comparacion de User-Agent en:`);
-  console.log(`  middleware/authMiddleware_new.js\n`);
+  console.log(`\nSe recomienda implementar:`);
+  console.log(`  1. Funcion hashUserAgent con crypto.createHash('sha256')`);
+  console.log(`  2. Hasheo del User-Agent actual y comparacion con decoded.uaHash`);
+  console.log(`  3. Limpieza de cookie con clearCookie() al detectar discrepancia`);
+  console.log(`  4. Respuesta 401 con force_logout y redirect flags`);
+  console.log(`\nArchivo a modificar: middleware/authMiddleware_new.js\n`);
   process.exit(1);
 }
