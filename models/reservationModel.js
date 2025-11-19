@@ -84,7 +84,7 @@ class ReservationModel {
   static async checkAvailability(eventVariantId, eventDate, eventTime) {
     const query = `
       WITH event_info AS (
-        SELECT ev.id, ce.chapel_id, ev.duration_minutes, ev.name as event_name
+        SELECT ev.id, ce.chapel_id, ev.duration_minutes, ev.name as event_name, ev.max_capacity
         FROM public.event_variant ev
         INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
         WHERE ev.id = $1 AND ev.active = true
@@ -102,7 +102,6 @@ class ReservationModel {
             WHEN 6 THEN 'Sábado'
           END as day_name
       ),
-      -- Verificar si hay cobertura del horario para el evento completo
       general_availability AS (
         SELECT 
           gs.start_time,
@@ -135,7 +134,6 @@ class ReservationModel {
             OR ss.exception_type = 'OPEN'
           )
       ),
-      -- Verificar si una excepción OPEN cubre completamente el evento
       specific_open_valid AS (
         SELECT 1 as valid
         FROM specific_exception se
@@ -144,8 +142,18 @@ class ReservationModel {
           AND $3::time >= se.start_time 
           AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= se.end_time
       ),
-      -- Verificar si hay reservas que se solapan con este horario
-      existing_reservation AS (
+      same_event_reservations AS (
+        SELECT 
+          COUNT(r.id) as current_count,
+          ei.max_capacity
+        FROM event_info ei
+        LEFT JOIN public.reservation r ON r.event_variant_id = ei.id
+          AND r.event_date = $2::date
+          AND r.event_time = $3::time
+          AND r.status NOT IN ('CANCELLED', 'REJECTED')
+        GROUP BY ei.max_capacity
+      ),
+      different_event_reservations AS (
         SELECT 
           r.id,
           r.event_time,
@@ -158,16 +166,14 @@ class ReservationModel {
         INNER JOIN event_info ei ON ce.chapel_id = ei.chapel_id
         WHERE r.event_date = $2::date
           AND r.status NOT IN ('CANCELLED', 'REJECTED')
+          AND r.event_variant_id != $1
           AND (
-            -- Caso 1: El nuevo evento empieza durante una reserva existente
             ($3::time >= r.event_time 
              AND $3::time < (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time)
             OR
-            -- Caso 2: El nuevo evento termina durante una reserva existente
             (($3::time + (ei.duration_minutes || ' minutes')::interval)::time > r.event_time 
              AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time <= (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time)
             OR
-            -- Caso 3: El nuevo evento cubre completamente una reserva existente
             ($3::time <= r.event_time 
              AND ($3::time + (ei.duration_minutes || ' minutes')::interval)::time >= (r.event_time + (ev_existing.duration_minutes || ' minutes')::interval)::time)
           )
@@ -175,25 +181,33 @@ class ReservationModel {
       )
       SELECT 
         CASE 
-          -- Primero verificar si hay conflicto con reservas existentes
-          WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN false
-          -- Verificar si la capilla no está disponible para ese momento
+          WHEN EXISTS (
+            SELECT 1 FROM same_event_reservations 
+            WHERE current_count >= max_capacity
+          ) THEN false
+          WHEN EXISTS (SELECT 1 FROM different_event_reservations) THEN false
           WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'CLOSED') THEN false
-          -- Si hay excepción OPEN y el horario está dentro, es válido
           WHEN EXISTS (SELECT 1 FROM specific_open_valid) THEN true
-          -- Si no hay excepciones o la excepción OPEN no cubre, verificar horario general
           WHEN EXISTS (SELECT 1 FROM general_availability) THEN true
-          -- No hay horario disponible
           ELSE false
         END as available,
         CASE
-          WHEN EXISTS (SELECT 1 FROM existing_reservation) THEN 
+          WHEN EXISTS (
+            SELECT 1 FROM same_event_reservations 
+            WHERE current_count >= max_capacity
+          ) THEN 
+            'El evento ' || 
+            (SELECT event_name FROM event_info) || 
+            ' ha alcanzado su capacidad máxima de ' ||
+            (SELECT max_capacity FROM same_event_reservations) ||
+            ' reservas para este horario'
+          WHEN EXISTS (SELECT 1 FROM different_event_reservations) THEN 
             'Ya existe una reserva de ' || 
-            (SELECT conflicting_event_name FROM existing_reservation) || 
+            (SELECT conflicting_event_name FROM different_event_reservations) || 
             ' desde las ' || 
-            TO_CHAR((SELECT event_time FROM existing_reservation), 'HH24:MI') ||
+            TO_CHAR((SELECT event_time FROM different_event_reservations), 'HH24:MI') ||
             ' hasta las ' ||
-            TO_CHAR((SELECT conflicting_end_time FROM existing_reservation), 'HH24:MI')
+            TO_CHAR((SELECT conflicting_end_time FROM different_event_reservations), 'HH24:MI')
           WHEN EXISTS (SELECT 1 FROM specific_exception WHERE exception_type = 'CLOSED') THEN 
             CASE 
               WHEN (SELECT exception_reason FROM specific_exception WHERE exception_type = 'CLOSED') IS NOT NULL 
