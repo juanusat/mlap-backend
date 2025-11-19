@@ -20,6 +20,7 @@ const scheduleRoutes = require('./scheduleRoutes');
 const actsReservationRoutes = require('./actsReservationRoutes');
 const mentionTypeRoutes = require('./mentionTypeRoutes');
 const mentionTypeDioceseRoutes = require('./mentionTypeDioceseRoutes');
+const publicScheduleRoutes = require('./publicScheduleRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/chapels', chapelRoutes);
@@ -32,8 +33,8 @@ router.use('/diocese', dioceseParishRoutes);
 router.use('/diocese', eventRoutes);
 router.use('/diocese', baseRequirementRoutes);
 router.use('/public/church', publicChurchRoutes);
-// Public endpoint for document types (used by registration screen without auth)
 router.get('/public/document-types', documentTypeController.publicList);
+router.use('/public/schedules', publicScheduleRoutes);
 router.use('/client/reservation', reservationRoutes);
 router.use('/acts', eventVariantRoutes);
 router.use('/acts', chapelEventRequirementRoutes);

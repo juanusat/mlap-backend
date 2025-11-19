@@ -227,12 +227,63 @@ const deleteSpecificSchedule = async (req, res, next) => {
   }
 };
 
+const publicListGeneralSchedules = async (req, res, next) => {
+  try {
+    const { chapelId } = req.params;
+
+    const schedules = await ScheduleModel.listGeneralSchedules(Number(chapelId));
+
+    res.status(200).json({
+      message: 'Horario general obtenido con éxito.',
+      data: schedules,
+      error: '',
+      traceback: null,
+      meta: {
+        total_records: schedules.length
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const publicListSpecificSchedules = async (req, res, next) => {
+  try {
+    const { chapelId } = req.params;
+    const { page = 1, limit = 100, filters = {} } = req.body;
+
+    const result = await ScheduleModel.listSpecificSchedules(
+      Number(chapelId),
+      Number(page),
+      Number(limit),
+      filters
+    );
+
+    res.status(200).json({
+      message: 'Excepciones obtenidas con éxito.',
+      data: result.data,
+      error: '',
+      traceback: null,
+      meta: {
+        total_records: result.total,
+        page: result.page,
+        limit: result.limit,
+        total_pages: result.totalPages
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   listGeneralSchedules,
   bulkUpdateGeneralSchedules,
   listSpecificSchedules,
   createSpecificSchedule,
   updateSpecificSchedule,
-  deleteSpecificSchedule
+  deleteSpecificSchedule,
+  publicListGeneralSchedules,
+  publicListSpecificSchedules
 };
 
