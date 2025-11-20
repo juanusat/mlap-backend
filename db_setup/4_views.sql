@@ -281,3 +281,4 @@ JOIN pg_class c ON t.tgrelid = c.oid
 JOIN pg_namespace n ON c.relnamespace = n.oid
 LEFT JOIN pg_description d ON t.oid = d.objoid
 WHERE NOT t.tgisinternal;
+COMMENT ON VIEW public.view_system_triggers IS 'Lista todos los triggers del sistema, incluyendo su definición, estado y comentarios asociados.';
