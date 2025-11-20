@@ -248,6 +248,97 @@ EXECUTE FUNCTION public.notify_diocese_new_chapel();
 COMMENT ON TRIGGER trg_notify_diocese_new_chapel ON public.chapel 
 IS 'Genera una notificación para usuarios de la diócesis cada vez que se inserta una nueva capilla en el sistema.';
 
+CREATE OR REPLACE FUNCTION public.notify_worker_association_event() 
+RETURNS TRIGGER AS $$
+DECLARE
+    v_parish_name VARCHAR(255);
+BEGIN
+    SELECT name INTO v_parish_name FROM public.parish WHERE id = NEW.parish_id;
+
+    IF (TG_OP = 'INSERT') THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            NEW.user_id, 
+            'Vinculación a Parroquia', 
+            'Bienvenido: Has sido vinculado como personal de la parroquia ' || v_parish_name || '.'
+        );
+    ELSIF (TG_OP = 'UPDATE') THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            NEW.user_id, 
+            'Desvinculación de Parroquia', 
+            'Tu vinculación con la parroquia ' || v_parish_name || ' ha finalizado.'
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_worker_association_bind
+AFTER INSERT ON public.association
+FOR EACH ROW
+WHEN (NEW.active = TRUE)
+EXECUTE FUNCTION public.notify_worker_association_event();
+
+COMMENT ON TRIGGER trg_notify_worker_association_bind ON public.association 
+IS 'Notifica al usuario cuando ha sido vinculado (dado de alta) en una nueva parroquia.';
+
+CREATE OR REPLACE TRIGGER trg_notify_worker_association_unbind
+AFTER UPDATE ON public.association
+FOR EACH ROW
+WHEN (
+    (OLD.active = TRUE AND NEW.active = FALSE) OR 
+    (OLD.end_date IS NULL AND NEW.end_date IS NOT NULL)
+)
+EXECUTE FUNCTION public.notify_worker_association_event();
+
+COMMENT ON TRIGGER trg_notify_worker_association_unbind ON public.association 
+IS 'Notifica al usuario cuando su vinculación con una parroquia ha finalizado o ha sido desactivada.';
+
+CREATE OR REPLACE FUNCTION public.notify_worker_role_event() 
+RETURNS TRIGGER AS $$
+DECLARE
+    v_role_name VARCHAR(100);
+    v_user_id INTEGER;
+BEGIN
+    SELECT name INTO v_role_name FROM public.role WHERE id = NEW.role_id;
+    SELECT user_id INTO v_user_id FROM public.association WHERE id = NEW.association_id;
+
+    IF (TG_OP = 'INSERT') THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            v_user_id, 
+            'Nuevo Rol Asignado', 
+            'Permisos actualizados: Se te ha asignado el rol de ' || v_role_name || '.'
+        );
+    ELSIF (TG_OP = 'UPDATE') THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            v_user_id, 
+            'Rol Revocado', 
+            'Permisos actualizados: Ya no posees el rol de ' || v_role_name || ' en tu asignación actual.'
+        );
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_worker_role_assign
+AFTER INSERT ON public.user_role
+FOR EACH ROW
+EXECUTE FUNCTION public.notify_worker_role_event();
+
+COMMENT ON TRIGGER trg_notify_worker_role_assign ON public.user_role 
+IS 'Notifica al trabajador cuando se le agrega un nuevo rol específico dentro de su asociación.';
+
+CREATE OR REPLACE TRIGGER trg_notify_worker_role_revoke
+AFTER UPDATE ON public.user_role
+FOR EACH ROW
+WHEN (OLD.revocation_date IS NULL AND NEW.revocation_date IS NOT NULL)
+EXECUTE FUNCTION public.notify_worker_role_event();
+
+COMMENT ON TRIGGER trg_notify_worker_role_revoke ON public.user_role 
+IS 'Notifica al trabajador cuando uno de sus roles ha sido revocado (fecha de revocación establecida).';
 
 -- ====================================================================
 -- FUNCIONES DE DEPURACIÓN Y CONSULTA
