@@ -261,3 +261,23 @@ FROM
 ORDER BY
     p.name;
 COMMENT ON VIEW public.vw_parish_summary IS 'Proporciona un resumen por cada parroquia, mostrando el conteo total de capillas, el número de usuarios activamente asociados y la cantidad de roles activos que ha creado.';
+
+-- Creación de la vista para listar los triggers del sistema.
+CREATE OR REPLACE VIEW public.view_system_triggers AS
+SELECT 
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    t.tgname AS trigger_name,
+    pg_get_triggerdef(t.oid) AS trigger_definition,
+    CASE 
+        WHEN t.tgenabled = 'O' THEN 'Enabled'
+        WHEN t.tgenabled = 'D' THEN 'Disabled'
+        WHEN t.tgenabled = 'R' THEN 'Replica Only'
+        WHEN t.tgenabled = 'A' THEN 'Always'
+    END AS status,
+    d.description AS comment
+FROM pg_trigger t
+JOIN pg_class c ON t.tgrelid = c.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+LEFT JOIN pg_description d ON t.oid = d.objoid
+WHERE NOT t.tgisinternal;
