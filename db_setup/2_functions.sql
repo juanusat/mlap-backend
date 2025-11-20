@@ -340,6 +340,119 @@ EXECUTE FUNCTION public.notify_worker_role_event();
 COMMENT ON TRIGGER trg_notify_worker_role_revoke ON public.user_role 
 IS 'Notifica al trabajador cuando uno de sus roles ha sido revocado (fecha de revocación establecida).';
 
+CREATE OR REPLACE FUNCTION public.notify_parish_admin_reservation_ops() 
+RETURNS TRIGGER AS $$
+DECLARE
+    v_admin_id INTEGER;
+    v_event_name VARCHAR(255);
+    v_variant_name VARCHAR(255);
+    v_max_capacity INTEGER;
+    v_current_count INTEGER;
+    v_user_name VARCHAR(100);
+BEGIN
+    SELECT 
+        p.admin_user_id, 
+        e.name, 
+        ev.name, 
+        ev.max_capacity
+    INTO 
+        v_admin_id, 
+        v_event_name, 
+        v_variant_name, 
+        v_max_capacity
+    FROM public.event_variant ev
+    JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+    JOIN public.event e ON ce.event_id = e.id
+    JOIN public.chapel c ON ce.chapel_id = c.id
+    JOIN public.parish p ON c.parish_id = p.id
+    WHERE ev.id = NEW.event_variant_id;
+
+    SELECT username INTO v_user_name FROM public."user" WHERE id = NEW.user_id;
+
+    IF (TG_OP = 'INSERT') THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            v_admin_id, 
+            'Nueva Solicitud de Reserva', 
+            'Nueva solicitud pendiente: ' || v_user_name || ' desea reservar para ' || v_event_name || ' (' || v_variant_name || ') el ' || NEW.event_date || '.'
+        );
+
+        SELECT COUNT(*) INTO v_current_count 
+        FROM public.reservation 
+        WHERE event_variant_id = NEW.event_variant_id 
+          AND status NOT IN ('REJECTED', 'CANCELLED');
+
+        IF (v_current_count >= v_max_capacity) THEN
+            INSERT INTO public.notification (user_id, title, body)
+            VALUES (
+                v_admin_id, 
+                'Evento con Cupo Completo', 
+                'Aviso de capacidad: El evento ' || v_variant_name || ' (' || v_event_name || ') ha completado sus ' || v_max_capacity || ' cupos disponibles.'
+            );
+        END IF;
+
+    ELSIF (TG_OP = 'UPDATE') THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            v_admin_id, 
+            'Cancelación por el Usuario', 
+            'Atención: La reserva de ' || v_user_name || ' para ' || v_event_name || ' ha sido cancelada por el feligrés.'
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_parish_admin_new_reservation
+AFTER INSERT ON public.reservation
+FOR EACH ROW
+EXECUTE FUNCTION public.notify_parish_admin_reservation_ops();
+
+COMMENT ON TRIGGER trg_notify_parish_admin_new_reservation ON public.reservation 
+IS 'Notifica al párroco cuando ingresa una nueva reserva y verifica si el evento alcanzó su capacidad máxima.';
+
+CREATE OR REPLACE TRIGGER trg_notify_parish_admin_cancel_reservation
+AFTER UPDATE ON public.reservation
+FOR EACH ROW
+WHEN (OLD.status != 'CANCELLED' AND NEW.status = 'CANCELLED')
+EXECUTE FUNCTION public.notify_parish_admin_reservation_ops();
+
+COMMENT ON TRIGGER trg_notify_parish_admin_cancel_reservation ON public.reservation 
+IS 'Notifica al párroco cuando un usuario cancela su propia reserva.';
+
+CREATE OR REPLACE FUNCTION public.notify_parish_admin_schedule_ops() 
+RETURNS TRIGGER AS $$
+DECLARE
+    v_admin_id INTEGER;
+    v_chapel_name VARCHAR(255);
+BEGIN
+    SELECT p.admin_user_id, c.name 
+    INTO v_admin_id, v_chapel_name
+    FROM public.chapel c
+    JOIN public.parish p ON c.parish_id = p.id
+    WHERE c.id = NEW.chapel_id;
+
+    INSERT INTO public.notification (user_id, title, body)
+    VALUES (
+        v_admin_id, 
+        'Cierre Excepcional de Capilla', 
+        'Recordatorio: Se ha configurado el cierre de la capilla ' || v_chapel_name || ' para la fecha ' || NEW.date || '.'
+    );
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_parish_admin_chapel_closed
+AFTER INSERT ON public.specific_schedule
+FOR EACH ROW
+WHEN (NEW.exception_type = 'CLOSED')
+EXECUTE FUNCTION public.notify_parish_admin_schedule_ops();
+
+COMMENT ON TRIGGER trg_notify_parish_admin_chapel_closed ON public.specific_schedule 
+IS 'Notifica al párroco cuando se crea una excepción de horario tipo CERRADO en una de sus capillas.';
+
 -- ====================================================================
 -- FUNCIONES DE DEPURACIÓN Y CONSULTA
 -- ====================================================================
