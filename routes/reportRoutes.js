@@ -12,5 +12,6 @@ router.get('/chapel-events', authMiddleware, reportController.getChapelEvents);
 router.get('/cancelled-reservations', authMiddleware, reportController.getCancelledReservations);
 router.get('/completed-reservations', authMiddleware, reportController.getCompletedReservations);
 router.get('/role-frequency', authMiddleware, reportController.getRoleFrequency);
+router.get('/user-audit-log', authMiddleware, reportController.getUserAuditLog);
 
 module.exports = router;

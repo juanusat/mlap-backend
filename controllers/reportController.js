@@ -263,6 +263,25 @@ const getRoleFrequency = async (req, res) => {
   }
 };
 
+const getUserAuditLog = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const data = await reportService.getUserAuditLog(userId);
+
+    return res.status(200).json({
+      message: 'Datos obtenidos exitosamente',
+      data
+    });
+  } catch (error) {
+    console.error('Error en getUserAuditLog:', error);
+
+    return res.status(500).json({
+      message: 'Error al obtener bitácora de usuario',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getReservationsByChapel,
   getReservationsByDateRange,
@@ -272,5 +291,6 @@ module.exports = {
   getChapelEvents,
   getCancelledReservations,
   getCompletedReservations,
-  getRoleFrequency
+  getRoleFrequency,
+  getUserAuditLog
 };

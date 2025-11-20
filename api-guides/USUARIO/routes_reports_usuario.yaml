@@ -1,0 +1,102 @@
+openapi: 3.0.0
+info:
+  title: Usuario - Reports API
+  version: 1.0.0
+  description: |
+    API para reportes del módulo de Usuario.
+    
+    Todas las rutas requieren autenticación mediante cookie (session_token).
+
+tags:
+  - name: Reports - Usuario
+    description: Endpoints para reportes de usuario
+
+paths:
+  /api/reports/user-audit-log:
+    get:
+      tags:
+        - Reports - Usuario
+      summary: Obtener bitácora de cambios del usuario
+      description: |
+        Devuelve el historial de cambios registrados en la cuenta del usuario autenticado.
+        Utilizado en el reporte RP09 - Reporte 1: Cambios en la cuenta.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Datos de bitácora obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAuditLogResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
+
+  responses:
+    Unauthorized:
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje descriptivo para la operación
+          example: Operación exitosa
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de error general
+          example: Ocurrió un error
+        error:
+          type: string
+          description: Detalles específicos del error
+
+    AuditLogItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        action_type:
+          type: string
+          example: PASSWORD_CHANGE
+        description:
+          type: string
+          example: Cambio de contraseña
+        created_at:
+          type: string
+          format: date-time
+          example: "2025-10-23T14:30:00Z"
+
+    UserAuditLogResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 12
+                audit_logs:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/AuditLogItem'

@@ -326,6 +326,25 @@ class ReportService {
       roles: result.rows
     };
   }
+
+  async getUserAuditLog(userId) {
+    const result = await db.query(
+      `SELECT 
+        id,
+        action_type,
+        description,
+        created_at
+      FROM user_audit_log
+      WHERE user_id = $1
+      ORDER BY created_at DESC`,
+      [userId]
+    );
+
+    return {
+      total: result.rows.length,
+      audit_logs: result.rows
+    };
+  }
 }
 
 module.exports = new ReportService();
