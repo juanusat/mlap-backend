@@ -1,0 +1,147 @@
+openapi: 3.0.0
+info:
+  title: Reservas - Reports API
+  version: 1.0.0
+  description: |
+    API para reportes del módulo de Reservas.
+    
+    Todas las rutas requieren autenticación mediante cookie (session_token).
+
+tags:
+  - name: Reports - Reservas
+    description: Endpoints para reportes de reservas del usuario
+
+paths:
+  /api/reports/cancelled-reservations:
+    get:
+      tags:
+        - Reports - Reservas
+      summary: Obtener reservas canceladas del usuario
+      description: |
+        Devuelve todas las reservas canceladas del usuario autenticado.
+        Utilizado en el reporte RP06 - Reporte 1: Reservas canceladas.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Datos de reservas canceladas obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CancelledReservationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/reports/completed-reservations:
+    get:
+      tags:
+        - Reports - Reservas
+      summary: Obtener reservas completadas del usuario
+      description: |
+        Devuelve todas las reservas completadas del usuario autenticado.
+        Utilizado en el reporte RP07 - Reporte 2: Reservas completadas.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Datos de reservas completadas obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CompletedReservationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
+
+  responses:
+    Unauthorized:
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje descriptivo para la operación
+          example: Operación exitosa
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de error general
+          example: Ocurrió un error
+        error:
+          type: string
+          description: Detalles específicos del error
+
+    ReservationItem:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 123
+        event_name:
+          type: string
+          example: Bautismo
+        chapel_name:
+          type: string
+          example: Capilla San Francisco
+        parish_name:
+          type: string
+          example: Parroquia San Juan
+        event_date:
+          type: string
+          format: date
+          example: "2025-10-20"
+        event_time:
+          type: string
+          example: "10:00"
+        status:
+          type: string
+          example: CANCELLED
+
+    CancelledReservationsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 12
+                reservations:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ReservationItem'
+
+    CompletedReservationsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                total:
+                  type: integer
+                  example: 25
+                reservations:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ReservationItem'

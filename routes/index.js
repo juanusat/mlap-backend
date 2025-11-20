@@ -22,6 +22,7 @@ const mentionTypeRoutes = require('./mentionTypeRoutes');
 const mentionTypeDioceseRoutes = require('./mentionTypeDioceseRoutes');
 const publicScheduleRoutes = require('./publicScheduleRoutes');
 const notificationRoutes = require('./notificationRoutes');
+const reportRoutes = require('./reportRoutes');
 
 router.use('/auth', authRoutes);
 router.use('/chapels', chapelRoutes);
@@ -44,6 +45,7 @@ router.use('/', scheduleRoutes);
 router.use('/mention-types', mentionTypeRoutes);
 router.use('/diocese/mention-types', mentionTypeDioceseRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/reports', reportRoutes);
 
 router.get('/health', (req, res) => {
   res.status(200).json({ status: 'ok' });
