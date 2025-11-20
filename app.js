@@ -5,6 +5,7 @@ const cookieParser = require('cookie-parser');
 const path = require('path');
 const apiRouter = require('./routes');
 const errorMiddleware = require('./middleware/errorMiddleware');
+const requestLogger = require('./middleware/requestLogger');
 
 const app = express();
 
@@ -20,6 +21,8 @@ app.use(
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(requestLogger);
 
 app.use('/api/static/uploads', express.static(path.join(__dirname, 'uploads')));
 
