@@ -1,0 +1,215 @@
+const db = require('../db');
+
+class ReportService {
+  async getReservationsByChapel(chapelName) {
+    const chapelResult = await db.query(
+      'SELECT id, name FROM chapel WHERE name = $1',
+      [chapelName]
+    );
+
+    if (chapelResult.rows.length === 0) {
+      throw new Error(`Capilla "${chapelName}" no encontrada`);
+    }
+
+    const chapelId = chapelResult.rows[0].id;
+
+    const result = await db.query(
+      `SELECT 
+        r.status,
+        COUNT(r.id) as count
+      FROM reservation r
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      WHERE ce.chapel_id = $1
+      GROUP BY r.status
+      ORDER BY r.status`,
+      [chapelId]
+    );
+
+    return {
+      chapel_name: chapelName,
+      statistics: result.rows
+    };
+  }
+
+  async getOccupancyMap(chapelName, year, month) {
+    const chapelResult = await db.query(
+      'SELECT id, name FROM chapel WHERE name = $1',
+      [chapelName]
+    );
+
+    if (chapelResult.rows.length === 0) {
+      throw new Error(`Capilla "${chapelName}" no encontrada`);
+    }
+
+    const chapelId = chapelResult.rows[0].id;
+
+    const result = await db.query(
+      `SELECT 
+        r.event_time::TEXT as time,
+        EXTRACT(DOW FROM r.event_date) as day_of_week,
+        COUNT(r.id) as count
+      FROM reservation r
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      WHERE ce.chapel_id = $1
+        AND EXTRACT(YEAR FROM r.event_date) = $2
+        AND EXTRACT(MONTH FROM r.event_date) = $3
+        AND r.status IN ('RESERVED', 'IN_PROGRESS', 'COMPLETED')
+      GROUP BY r.event_time, EXTRACT(DOW FROM r.event_date)
+      ORDER BY r.event_time, day_of_week`,
+      [chapelId, year, month]
+    );
+
+    const timeSlots = {};
+    
+    result.rows.forEach(row => {
+      const time = row.time.substring(0, 5);
+      
+      if (!timeSlots[time]) {
+        timeSlots[time] = {
+          time,
+          monday: 0,
+          tuesday: 0,
+          wednesday: 0,
+          thursday: 0,
+          friday: 0,
+          saturday: 0,
+          sunday: 0
+        };
+      }
+
+      const dayMap = {
+        0: 'sunday',
+        1: 'monday',
+        2: 'tuesday',
+        3: 'wednesday',
+        4: 'thursday',
+        5: 'friday',
+        6: 'saturday'
+      };
+
+      const dayName = dayMap[row.day_of_week];
+      timeSlots[time][dayName] = parseInt(row.count);
+    });
+
+    return {
+      chapel_name: chapelName,
+      year,
+      month,
+      occupancy: Object.values(timeSlots).sort((a, b) => a.time.localeCompare(b.time))
+    };
+  }
+
+  async getEventsByChapel(chapelName) {
+    const chapelResult = await db.query(
+      'SELECT id, name FROM chapel WHERE name = $1',
+      [chapelName]
+    );
+
+    if (chapelResult.rows.length === 0) {
+      throw new Error(`Capilla "${chapelName}" no encontrada`);
+    }
+
+    const chapelId = chapelResult.rows[0].id;
+
+    const result = await db.query(
+      `SELECT 
+        e.name as event_name,
+        COUNT(r.id) as count
+      FROM reservation r
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN event e ON ce.event_id = e.id
+      WHERE ce.chapel_id = $1
+        AND r.status = 'COMPLETED'
+      GROUP BY e.name
+      ORDER BY count DESC, e.name`,
+      [chapelId]
+    );
+
+    return {
+      chapel_name: chapelName,
+      events: result.rows
+    };
+  }
+
+  async getParishHierarchy() {
+    const result = await db.query(
+      `SELECT 
+        p.id as parish_id,
+        p.name as parish_name,
+        c.id as chapel_id,
+        c.name as chapel_name
+      FROM parish p
+      LEFT JOIN chapel c ON c.parish_id = p.id
+      WHERE p.active = true
+        AND (c.active = true OR c.id IS NULL)
+      ORDER BY p.name, c.name`
+    );
+
+    const hierarchyMap = {};
+
+    result.rows.forEach(row => {
+      if (!hierarchyMap[row.parish_id]) {
+        hierarchyMap[row.parish_id] = {
+          parish_id: row.parish_id,
+          parish_name: row.parish_name,
+          chapels: []
+        };
+      }
+
+      if (row.chapel_id) {
+        hierarchyMap[row.parish_id].chapels.push({
+          chapel_id: row.chapel_id,
+          chapel_name: row.chapel_name
+        });
+      }
+    });
+
+    return Object.values(hierarchyMap);
+  }
+
+  async getChapelEvents(parishName, chapelName) {
+    const result = await db.query(
+      `SELECT 
+        p.id as parish_id,
+        p.name as parish_name,
+        c.id as chapel_id,
+        c.name as chapel_name
+      FROM parish p
+      INNER JOIN chapel c ON c.parish_id = p.id
+      WHERE p.name = $1 AND c.name = $2`,
+      [parishName, chapelName]
+    );
+
+    if (result.rows.length === 0) {
+      throw new Error(`Parroquia "${parishName}" o capilla "${chapelName}" no encontrada`);
+    }
+
+    const chapelId = result.rows[0].chapel_id;
+
+    const eventsResult = await db.query(
+      `SELECT 
+        e.name as event_name,
+        COUNT(r.id) as count
+      FROM reservation r
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN event e ON ce.event_id = e.id
+      WHERE ce.chapel_id = $1
+        AND r.status = 'COMPLETED'
+      GROUP BY e.name
+      ORDER BY count DESC, e.name`,
+      [chapelId]
+    );
+
+    return {
+      parish_name: parishName,
+      chapel_name: chapelName,
+      events: eventsResult.rows
+    };
+  }
+}
+
+module.exports = new ReportService();
