@@ -58,8 +58,6 @@ const findByEmail = async (email) => {
     JOIN public.person p ON u.person_id = p.id
     WHERE p.email = $1;
   `;
-  console.log('SQL findByEmail:', query.trim());
-  console.log('SQL findByEmail params:', [email]);
   const { rows } = await db.query(query, [email]);
   return rows[0];
 };
@@ -73,10 +71,7 @@ const findUserAssociations = async (userId) => {
     JOIN public.parish p ON a.parish_id = p.id
     WHERE a.user_id = $1 AND a.active = TRUE AND p.active = TRUE;
   `;
-  console.log('SQL findUserAssociations:', query.trim());
-  console.log('SQL findUserAssociations params:', [userId]);
   const { rows } = await db.query(query, [userId]);
-  console.log('SQL findUserAssociations result:', rows);
   return rows;
 };
 
