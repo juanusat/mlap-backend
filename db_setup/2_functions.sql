@@ -187,6 +187,9 @@ ORDER BY
     cs.hora_inicio;
 $$;
 
+COMMENT ON TRIGGER trg_after_insert_reservation ON public.reservation 
+IS 'Copia los requisitos base y de capilla a la tabla reservation_requirement cuando se crea una nueva reserva.';
+
 CREATE OR REPLACE FUNCTION public.notify_diocese_parish_activation() 
 RETURNS TRIGGER AS $$
 DECLARE
