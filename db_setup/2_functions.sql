@@ -598,6 +598,85 @@ EXECUTE FUNCTION public.notify_feligres_requirement_completed();
 COMMENT ON TRIGGER trg_notify_feligres_requirement_check ON public.reservation_requirement 
 IS 'Notifica al usuario cuando un trabajador marca un requisito como completado.';
 
+
+CREATE OR REPLACE FUNCTION public.log_user_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'UPDATE' THEN
+        IF OLD.password_hash IS DISTINCT FROM NEW.password_hash THEN
+            INSERT INTO public.user_audit_log (id, user_id, action_type, description, created_at)
+            VALUES (
+                nextval('user_audit_log_id_seq'),
+                NEW.id,
+                'PASSWORD_CHANGE',
+                'Cambio de contraseña',
+                CURRENT_TIMESTAMP
+            );
+        END IF;
+
+        IF OLD.active IS DISTINCT FROM NEW.active THEN
+            INSERT INTO public.user_audit_log (id, user_id, action_type, description, created_at)
+            VALUES (
+                nextval('user_audit_log_id_seq'),
+                NEW.id,
+                CASE WHEN NEW.active THEN 'ACCOUNT_ACTIVATED' ELSE 'ACCOUNT_DEACTIVATED' END,
+                CASE WHEN NEW.active THEN 'Cuenta activada' ELSE 'Cuenta desactivada' END,
+                CURRENT_TIMESTAMP
+            );
+        END IF;
+
+        IF OLD.username IS DISTINCT FROM NEW.username THEN
+            INSERT INTO public.user_audit_log (id, user_id, action_type, description, created_at)
+            VALUES (
+                nextval('user_audit_log_id_seq'),
+                NEW.id,
+                'USERNAME_CHANGE',
+                'Cambio de nombre de usuario de "' || OLD.username || '" a "' || NEW.username || '"',
+                CURRENT_TIMESTAMP
+            );
+        END IF;
+
+    ELSIF TG_OP = 'INSERT' THEN
+        INSERT INTO public.user_audit_log (id, user_id, action_type, description, created_at)
+        VALUES (
+            nextval('user_audit_log_id_seq'),
+            NEW.id,
+            'ACCOUNT_CREATED',
+            'Cuenta creada',
+            CURRENT_TIMESTAMP
+        );
+
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO public.user_audit_log (id, user_id, action_type, description, created_at)
+        VALUES (
+            nextval('user_audit_log_id_seq'),
+            OLD.id,
+            'ACCOUNT_DELETED',
+            'Cuenta eliminada',
+            CURRENT_TIMESTAMP
+        );
+    END IF;
+
+    RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE SEQUENCE IF NOT EXISTS public.user_audit_log_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+DROP TRIGGER IF EXISTS trg_user_audit ON public.user;
+CREATE TRIGGER trg_user_audit
+    AFTER INSERT OR UPDATE OR DELETE ON public.user
+    FOR EACH ROW
+    EXECUTE FUNCTION public.log_user_changes();
+
+COMMENT ON TRIGGER trg_user_audit ON public.user 
+IS 'Registra cambios importantes en las cuentas de usuario, como creación, eliminación, cambios de contraseña, activación/desactivación y cambios de nombre de usuario.';
+
 -- ====================================================================
 -- FUNCIONES DE DEPURACIÓN Y CONSULTA
 -- ====================================================================

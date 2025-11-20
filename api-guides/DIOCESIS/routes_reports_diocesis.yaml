@@ -1,0 +1,180 @@
+openapi: 3.0.0
+info:
+  title: Diócesis - Reports API
+  version: 1.0.0
+  description: |
+    API para reportes del módulo de Diócesis.
+    
+    Todas las rutas requieren autenticación mediante cookie (session_token).
+
+tags:
+  - name: Reports - Diócesis
+    description: Endpoints para reportes de diócesis
+
+paths:
+  /api/reports/parish-hierarchy:
+    get:
+      tags:
+        - Reports - Diócesis
+      summary: Obtener estructura jerárquica de parroquias y capillas
+      description: |
+        Devuelve la estructura completa de parroquias con sus capillas asociadas.
+        Utilizado en el reporte RP04 - Gráfico 1: Eventos generales más usados en capillas.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Estructura jerárquica obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ParishHierarchyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/reports/chapel-events:
+    get:
+      tags:
+        - Reports - Diócesis
+      summary: Obtener eventos por capilla
+      description: |
+        Devuelve la cantidad de reservas completadas agrupadas por tipo de evento para una capilla específica dentro de una parroquia.
+        Utilizado en el reporte RP04 - Gráfico 1: Eventos generales más usados en capillas.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: parish_name
+          in: query
+          description: Nombre de la parroquia
+          required: true
+          schema:
+            type: string
+            example: Parroquia San Juan
+        - name: chapel_name
+          in: query
+          description: Nombre de la capilla
+          required: true
+          schema:
+            type: string
+            example: Capilla San Francisco
+      responses:
+        '200':
+          description: Datos de eventos obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChapelEventsResponse'
+        '400':
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Parroquia o capilla no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
+
+  responses:
+    Unauthorized:
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje descriptivo para la operación
+          example: Operación exitosa
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de error general
+          example: Ocurrió un error
+        error:
+          type: string
+          description: Detalles específicos del error
+          example: Parámetro parish_name es requerido
+
+    ChapelInfo:
+      type: object
+      properties:
+        chapel_id:
+          type: integer
+          example: 1
+        chapel_name:
+          type: string
+          example: Capilla San Francisco
+
+    ParishWithChapels:
+      type: object
+      properties:
+        parish_id:
+          type: integer
+          example: 1
+        parish_name:
+          type: string
+          example: Parroquia San Juan
+        chapels:
+          type: array
+          items:
+            $ref: '#/components/schemas/ChapelInfo'
+
+    ParishHierarchyResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/ParishWithChapels'
+
+    EventCount:
+      type: object
+      properties:
+        event_name:
+          type: string
+          example: Bautismo
+        count:
+          type: integer
+          example: 15
+
+    ChapelEventsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                parish_name:
+                  type: string
+                  example: Parroquia San Juan
+                chapel_name:
+                  type: string
+                  example: Capilla San Francisco
+                events:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/EventCount'

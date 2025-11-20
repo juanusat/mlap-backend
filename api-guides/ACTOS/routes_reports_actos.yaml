@@ -1,0 +1,223 @@
+openapi: 3.0.0
+info:
+  title: Actos Litúrgicos - Reports API
+  version: 1.0.0
+  description: |
+    API para reportes del módulo de Actos Litúrgicos.
+    
+    Todas las rutas requieren autenticación mediante cookie (session_token).
+
+tags:
+  - name: Reports - Actos
+    description: Endpoints para reportes de actos litúrgicos
+
+paths:
+  /api/reports/reservations-by-chapel:
+    get:
+      tags:
+        - Reports - Actos
+      summary: Obtener reservas por capilla
+      description: |
+        Devuelve estadísticas de reservas agrupadas por estado para una capilla específica.
+        Utilizado en el reporte RP01 - Gráfico 1: Reservas realizadas por capilla.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: chapel_name
+          in: query
+          description: Nombre de la capilla
+          required: true
+          schema:
+            type: string
+            example: Capilla San Francisco
+      responses:
+        '200':
+          description: Datos de reservas obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationsByChapelResponse'
+        '400':
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Capilla no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/reports/occupancy-map:
+    get:
+      tags:
+        - Reports - Actos
+      summary: Obtener mapa de ocupación de horarios
+      description: |
+        Devuelve un mapa de calor con los niveles de ocupación por horario y día de la semana.
+        Utilizado en el reporte RP03 - Mapa 1: Horarios con más/menos ocupación.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: chapel_name
+          in: query
+          description: Nombre de la capilla
+          required: true
+          schema:
+            type: string
+            example: Capilla San Francisco
+        - name: year
+          in: query
+          description: Año a consultar
+          required: true
+          schema:
+            type: integer
+            example: 2025
+        - name: month
+          in: query
+          description: Mes a consultar (1-12)
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 12
+            example: 11
+      responses:
+        '200':
+          description: Datos de ocupación obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OccupancyMapResponse'
+        '400':
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Capilla no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
+
+  responses:
+    Unauthorized:
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje descriptivo para la operación
+          example: Operación exitosa
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de error general
+          example: Ocurrió un error
+        error:
+          type: string
+          description: Detalles específicos del error
+          example: Parámetro chapel_name es requerido
+
+    ReservationStatusCount:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [RESERVED, REJECTED, IN_PROGRESS, COMPLETED, FULFILLED, CANCELLED]
+          example: COMPLETED
+        count:
+          type: integer
+          example: 45
+
+    ReservationsByChapelResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                chapel_name:
+                  type: string
+                  example: Capilla San Francisco
+                statistics:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/ReservationStatusCount'
+
+    TimeSlotOccupancy:
+      type: object
+      properties:
+        time:
+          type: string
+          example: "09:00"
+        monday:
+          type: integer
+          example: 5
+        tuesday:
+          type: integer
+          example: 3
+        wednesday:
+          type: integer
+          example: 7
+        thursday:
+          type: integer
+          example: 2
+        friday:
+          type: integer
+          example: 4
+        saturday:
+          type: integer
+          example: 8
+        sunday:
+          type: integer
+          example: 12
+
+    OccupancyMapResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                chapel_name:
+                  type: string
+                  example: Capilla San Francisco
+                year:
+                  type: integer
+                  example: 2025
+                month:
+                  type: integer
+                  example: 11
+                occupancy:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/TimeSlotOccupancy'
