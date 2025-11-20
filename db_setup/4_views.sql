@@ -261,3 +261,59 @@ FROM
 ORDER BY
     p.name;
 COMMENT ON VIEW public.vw_parish_summary IS 'Proporciona un resumen por cada parroquia, mostrando el conteo total de capillas, el número de usuarios activamente asociados y la cantidad de roles activos que ha creado.';
+
+-- Creación de la vista para listar los triggers del sistema.
+CREATE OR REPLACE VIEW public.view_system_triggers AS
+SELECT 
+    n.nspname AS schema_name,
+    c.relname AS table_name,
+    t.tgname AS trigger_name,
+    pg_get_triggerdef(t.oid) AS trigger_definition,
+    CASE 
+        WHEN t.tgenabled = 'O' THEN 'Enabled'
+        WHEN t.tgenabled = 'D' THEN 'Disabled'
+        WHEN t.tgenabled = 'R' THEN 'Replica Only'
+        WHEN t.tgenabled = 'A' THEN 'Always'
+    END AS status,
+    d.description AS comment
+FROM pg_trigger t
+JOIN pg_class c ON t.tgrelid = c.oid
+JOIN pg_namespace n ON c.relnamespace = n.oid
+LEFT JOIN pg_description d ON t.oid = d.objoid
+WHERE NOT t.tgisinternal;
+COMMENT ON VIEW public.view_system_triggers IS 'Lista todos los triggers del sistema, incluyendo su definición, estado y comentarios asociados.';
+
+CREATE OR REPLACE VIEW public.view_user_notifications AS
+SELECT 
+    p.email AS user_email,
+    n.title,
+    n.body AS content,
+    n.read AS is_read,
+    n.created_at
+FROM public.notification n
+JOIN public.user u ON n.user_id = u.id
+JOIN public.person p ON u.person_id = p.id
+ORDER BY n.created_at DESC;
+
+COMMENT ON VIEW public.view_user_notifications 
+IS 'Vista consolidada de notificaciones mostrando el correo del usuario, contenido y estado de lectura.';
+
+CREATE OR REPLACE VIEW public.view_user_notification_summary AS
+SELECT 
+    p.email,
+    COUNT(n.id) AS total_notifications,
+    COUNT(n.id) FILTER (WHERE n.read = FALSE) AS unread_count,
+    MAX(n.created_at) AS last_notification_at
+FROM 
+    public."user" u
+JOIN 
+    public.person p ON u.person_id = p.id
+LEFT JOIN 
+    public.notification n ON u.id = n.user_id
+GROUP BY 
+    u.id, p.email
+ORDER BY 
+    unread_count DESC, last_notification_at DESC;
+
+COMMENT ON VIEW public.view_user_notification_summary 
+IS 'Resumen de notificaciones por usuario: email, total de notificaciones, pendientes de lectura y fecha de la última recibida.';

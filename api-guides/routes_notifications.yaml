@@ -1,0 +1,225 @@
+openapi: 3.0.0
+info:
+  title: Notifications API
+  version: 1.0.0
+  description: |
+    API para la gestión de notificaciones de usuarios.
+    
+    Todas las rutas requieren autenticación mediante cookie (session_token).
+
+tags:
+  - name: Notifications
+    description: Endpoints para gestión de notificaciones del usuario
+
+paths:
+  /api/notifications:
+    get:
+      tags:
+        - Notifications
+      summary: Obtener notificaciones del usuario
+      description: |
+        Devuelve todas las notificaciones del usuario autenticado.
+        Opcionalmente puede filtrar por notificaciones no leídas.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: unread
+          in: query
+          description: Si es true, solo devuelve notificaciones no leídas
+          required: false
+          schema:
+            type: boolean
+            default: false
+      responses:
+        '200':
+          description: Lista de notificaciones obtenida exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/notifications/{id}/read:
+    put:
+      tags:
+        - Notifications
+      summary: Marcar notificación como leída
+      description: Marca una notificación específica como leída
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la notificación
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Notificación marcada como leída exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Notificación no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/notifications/read-all:
+    put:
+      tags:
+        - Notifications
+      summary: Marcar todas las notificaciones como leídas
+      description: Marca todas las notificaciones del usuario como leídas
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Todas las notificaciones marcadas como leídas
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /api/notifications/{id}:
+    delete:
+      tags:
+        - Notifications
+      summary: Eliminar una notificación
+      description: Elimina una notificación específica del usuario
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID de la notificación
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Notificación eliminada exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BaseResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Notificación no encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/notifications/unread-count:
+    get:
+      tags:
+        - Notifications
+      summary: Obtener contador de notificaciones no leídas
+      description: Devuelve la cantidad de notificaciones no leídas del usuario
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Contador obtenido exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UnreadCountResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
+
+  responses:
+    Unauthorized:
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje descriptivo para la operación
+          example: Operación exitosa
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de error general
+          example: Ocurrió un error
+        error:
+          type: string
+          description: Detalles específicos del error
+          example: Notificación no encontrada
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        user_id:
+          type: integer
+          example: 5
+        title:
+          type: string
+          example: Nueva solicitud de documento pendiente
+        body:
+          type: string
+          example: Tienes una nueva solicitud de documento que requiere tu atención
+        read:
+          type: boolean
+          example: false
+        created_at:
+          type: string
+          format: date-time
+          example: 2025-11-19T10:30:00Z
+        updated_at:
+          type: string
+          format: date-time
+          example: 2025-11-19T10:30:00Z
+
+    NotificationsResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: array
+              items:
+                $ref: '#/components/schemas/Notification'
+
+    UnreadCountResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                unread_count:
+                  type: integer
+                  example: 5
