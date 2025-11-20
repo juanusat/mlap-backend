@@ -244,6 +244,25 @@ const getCompletedReservations = async (req, res) => {
   }
 };
 
+const getRoleFrequency = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const data = await reportService.getRoleFrequency(userId);
+
+    return res.status(200).json({
+      message: 'Datos obtenidos exitosamente',
+      data
+    });
+  } catch (error) {
+    console.error('Error en getRoleFrequency:', error);
+
+    return res.status(500).json({
+      message: 'Error al obtener frecuencia de roles',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getReservationsByChapel,
   getReservationsByDateRange,
@@ -252,5 +271,6 @@ module.exports = {
   getParishHierarchy,
   getChapelEvents,
   getCancelledReservations,
-  getCompletedReservations
+  getCompletedReservations,
+  getRoleFrequency
 };

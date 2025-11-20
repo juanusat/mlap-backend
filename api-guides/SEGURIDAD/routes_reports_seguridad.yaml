@@ -1,0 +1,98 @@
+openapi: 3.0.0
+info:
+  title: Seguridad - Reports API
+  version: 1.0.0
+  description: |
+    API para reportes del módulo de Seguridad.
+    
+    Todas las rutas requieren autenticación mediante cookie (session_token).
+
+tags:
+  - name: Reports - Seguridad
+    description: Endpoints para reportes de seguridad y roles
+
+paths:
+  /api/reports/role-frequency:
+    get:
+      tags:
+        - Reports - Seguridad
+      summary: Obtener frecuencia de roles asignados
+      description: |
+        Devuelve la cantidad de trabajadores asignados a cada rol en la parroquia.
+        Utilizado en el reporte RP08 - Reporte 1: Frecuencia de roles asignados.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Datos de frecuencia de roles obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleFrequencyResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: session_token
+      description: Token de sesión JWT almacenado en una cookie HttpOnly.
+
+  responses:
+    Unauthorized:
+      description: No autorizado. El token de sesión falta, es inválido o ha expirado.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+  schemas:
+    BaseResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje descriptivo para la operación
+          example: Operación exitosa
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Mensaje de error general
+          example: Ocurrió un error
+        error:
+          type: string
+          description: Detalles específicos del error
+
+    RoleFrequencyItem:
+      type: object
+      properties:
+        role_id:
+          type: integer
+          example: 1
+        role_name:
+          type: string
+          example: Párroco
+        worker_count:
+          type: integer
+          example: 50
+
+    RoleFrequencyResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                total_workers:
+                  type: integer
+                  example: 300
+                roles:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/RoleFrequencyItem'

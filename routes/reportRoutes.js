@@ -11,5 +11,6 @@ router.get('/parish-hierarchy', authMiddleware, reportController.getParishHierar
 router.get('/chapel-events', authMiddleware, reportController.getChapelEvents);
 router.get('/cancelled-reservations', authMiddleware, reportController.getCancelledReservations);
 router.get('/completed-reservations', authMiddleware, reportController.getCompletedReservations);
+router.get('/role-frequency', authMiddleware, reportController.getRoleFrequency);
 
 module.exports = router;

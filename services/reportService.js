@@ -288,6 +288,44 @@ class ReportService {
       reservations: result.rows
     };
   }
+
+  async getRoleFrequency(userId) {
+    const parishResult = await db.query(
+      `SELECT DISTINCT p.id as parish_id
+      FROM association a
+      INNER JOIN parish p ON a.parish_id = p.id
+      WHERE a.user_id = $1 AND a.active = true
+      LIMIT 1`,
+      [userId]
+    );
+
+    if (parishResult.rows.length === 0) {
+      throw new Error('Usuario no tiene asociación activa con ninguna parroquia');
+    }
+
+    const parishId = parishResult.rows[0].parish_id;
+
+    const result = await db.query(
+      `SELECT 
+        r.id as role_id,
+        r.name as role_name,
+        COUNT(DISTINCT ur.id) as worker_count
+      FROM role r
+      LEFT JOIN user_role ur ON ur.role_id = r.id AND ur.revocation_date IS NULL
+      LEFT JOIN association a ON ur.association_id = a.id AND a.active = true
+      WHERE r.parish_id = $1 AND r.active = true
+      GROUP BY r.id, r.name
+      ORDER BY worker_count DESC, r.name`,
+      [parishId]
+    );
+
+    const totalWorkers = result.rows.reduce((sum, row) => sum + parseInt(row.worker_count), 0);
+
+    return {
+      total_workers: totalWorkers,
+      roles: result.rows
+    };
+  }
 }
 
 module.exports = new ReportService();
