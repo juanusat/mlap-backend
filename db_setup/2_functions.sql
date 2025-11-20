@@ -453,6 +453,151 @@ EXECUTE FUNCTION public.notify_parish_admin_schedule_ops();
 COMMENT ON TRIGGER trg_notify_parish_admin_chapel_closed ON public.specific_schedule 
 IS 'Notifica al párroco cuando se crea una excepción de horario tipo CERRADO en una de sus capillas.';
 
+
+-- ====================================================================
+-- 1. Función Principal para Cambios de Estado en Reservas (Aprobación, Rechazo, Reprogramación, Pagos)
+-- ====================================================================
+CREATE OR REPLACE FUNCTION public.notify_feligres_reservation_update() 
+RETURNS TRIGGER AS $$
+DECLARE
+    v_event_name VARCHAR(255);
+    v_old_date TEXT;
+    v_new_date TEXT;
+BEGIN
+    -- Obtenemos el nombre del evento para el mensaje
+    SELECT e.name INTO v_event_name
+    FROM public.event_variant ev
+    JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+    JOIN public.event e ON ce.event_id = e.id
+    WHERE ev.id = NEW.event_variant_id;
+
+    -- CASO A: Reserva Aprobada (Cambio de status a CONFIRMED o IN_PROGRESS)
+    IF (OLD.status != NEW.status AND NEW.status IN ('CONFIRMED', 'IN_PROGRESS')) THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            NEW.user_id, 
+            'Reserva Aprobada', 
+            '¡Buenas noticias! Tu reserva para ' || v_event_name || ' ha sido aceptada. Por favor revisa si tienes pagos o requisitos pendientes.'
+        );
+    END IF;
+
+    -- CASO B: Reserva Rechazada
+    IF (OLD.status != NEW.status AND NEW.status = 'REJECTED') THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            NEW.user_id, 
+            'Reserva Rechazada', 
+            'Tu solicitud para ' || v_event_name || ' no ha podido ser aceptada en esta ocasión. Contacta con secretaría para más detalles.'
+        );
+    END IF;
+
+    -- CASO C: Cambio de Fecha (Reprogramación)
+    -- Detectamos si cambia event_date O reschedule_date
+    IF (OLD.event_date IS DISTINCT FROM NEW.event_date) OR (OLD.reschedule_date IS DISTINCT FROM NEW.reschedule_date) THEN
+        
+        -- Determinar la fecha efectiva nueva
+        v_new_date := COALESCE(TO_CHAR(NEW.reschedule_date, 'YYYY-MM-DD HH24:MI'), TO_CHAR(NEW.event_date, 'YYYY-MM-DD'));
+        
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            NEW.user_id, 
+            'Cambio de Fecha', 
+            'Actualización importante: La fecha de tu evento ' || v_event_name || ' ha sido modificada para el día ' || v_new_date || '.'
+        );
+    END IF;
+
+    -- CASO D: Pago Registrado (Incremento en paid_amount)
+    IF (NEW.paid_amount > OLD.paid_amount) THEN
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            NEW.user_id, 
+            'Pago Registrado', 
+            'Se ha registrado exitosamente un abono a tu reserva de ' || v_event_name || '. Monto actual pagado: ' || NEW.paid_amount || '.'
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger único que maneja todas las actualizaciones de la reserva
+CREATE OR REPLACE TRIGGER trg_notify_feligres_reservation_update
+AFTER UPDATE ON public.reservation
+FOR EACH ROW
+EXECUTE FUNCTION public.notify_feligres_reservation_update();
+
+COMMENT ON TRIGGER trg_notify_feligres_reservation_update ON public.reservation 
+IS 'Notifica al feligrés sobre Aprobaciones, Rechazos, Reprogramaciones y Pagos en su reserva.';
+
+
+-- ====================================================================
+-- 2. Notificación de Recepción de Solicitud (INSERT)
+-- ====================================================================
+CREATE OR REPLACE FUNCTION public.notify_feligres_reservation_received() 
+RETURNS TRIGGER AS $$
+DECLARE
+    v_event_name VARCHAR(255);
+BEGIN
+    SELECT e.name INTO v_event_name
+    FROM public.event_variant ev
+    JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+    JOIN public.event e ON ce.event_id = e.id
+    WHERE ev.id = NEW.event_variant_id;
+
+    INSERT INTO public.notification (user_id, title, body)
+    VALUES (
+        NEW.user_id, 
+        'Solicitud Recibida', 
+        'Hemos recibido tu solicitud de reserva para ' || v_event_name || '. Te notificaremos cuando sea revisada.'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_feligres_reservation_insert
+AFTER INSERT ON public.reservation
+FOR EACH ROW
+EXECUTE FUNCTION public.notify_feligres_reservation_received();
+
+COMMENT ON TRIGGER trg_notify_feligres_reservation_insert ON public.reservation 
+IS 'Envía un acuse de recibo inmediato al usuario cuando crea una solicitud de reserva.';
+
+
+-- ====================================================================
+-- 3. Notificación de Requisito Validado
+-- ====================================================================
+CREATE OR REPLACE FUNCTION public.notify_feligres_requirement_completed() 
+RETURNS TRIGGER AS $$
+DECLARE
+    v_user_id INTEGER;
+    v_req_name VARCHAR(255);
+BEGIN
+    -- Obtenemos el ID del usuario a través de la reserva vinculada
+    SELECT r.user_id INTO v_user_id
+    FROM public.reservation r
+    WHERE r.id = NEW.reservation_id;
+
+    v_req_name := NEW.name;
+
+    INSERT INTO public.notification (user_id, title, body)
+    VALUES (
+        v_user_id, 
+        'Requisito Validado', 
+        'El documento ''' || v_req_name || ''' ha sido revisado y aprobado correctamente por la parroquia.'
+    );
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_feligres_requirement_check
+AFTER UPDATE ON public.reservation_requirement
+FOR EACH ROW
+WHEN (OLD.completed = FALSE AND NEW.completed = TRUE)
+EXECUTE FUNCTION public.notify_feligres_requirement_completed();
+
+COMMENT ON TRIGGER trg_notify_feligres_requirement_check ON public.reservation_requirement 
+IS 'Notifica al usuario cuando un trabajador marca un requisito como completado.';
+
 -- ====================================================================
 -- FUNCIONES DE DEPURACIÓN Y CONSULTA
 -- ====================================================================
