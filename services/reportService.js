@@ -232,6 +232,62 @@ class ReportService {
       events: eventsResult.rows
     };
   }
+
+  async getCancelledReservations(userId) {
+    const result = await db.query(
+      `SELECT 
+        r.id,
+        e.name as event_name,
+        c.name as chapel_name,
+        p.name as parish_name,
+        r.event_date::TEXT as event_date,
+        r.event_time::TEXT as event_time,
+        r.status
+      FROM reservation r
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN event e ON ce.event_id = e.id
+      INNER JOIN chapel c ON ce.chapel_id = c.id
+      INNER JOIN parish p ON c.parish_id = p.id
+      WHERE r.user_id = $1
+        AND r.status = 'CANCELLED'
+      ORDER BY r.event_date DESC, r.event_time DESC`,
+      [userId]
+    );
+
+    return {
+      total: result.rows.length,
+      reservations: result.rows
+    };
+  }
+
+  async getCompletedReservations(userId) {
+    const result = await db.query(
+      `SELECT 
+        r.id,
+        e.name as event_name,
+        c.name as chapel_name,
+        p.name as parish_name,
+        r.event_date::TEXT as event_date,
+        r.event_time::TEXT as event_time,
+        r.status
+      FROM reservation r
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN event e ON ce.event_id = e.id
+      INNER JOIN chapel c ON ce.chapel_id = c.id
+      INNER JOIN parish p ON c.parish_id = p.id
+      WHERE r.user_id = $1
+        AND r.status = 'COMPLETED'
+      ORDER BY r.event_date DESC, r.event_time DESC`,
+      [userId]
+    );
+
+    return {
+      total: result.rows.length,
+      reservations: result.rows
+    };
+  }
 }
 
 module.exports = new ReportService();

@@ -206,11 +206,51 @@ const getChapelEvents = async (req, res) => {
   }
 };
 
+const getCancelledReservations = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const data = await reportService.getCancelledReservations(userId);
+
+    return res.status(200).json({
+      message: 'Datos obtenidos exitosamente',
+      data
+    });
+  } catch (error) {
+    console.error('Error en getCancelledReservations:', error);
+
+    return res.status(500).json({
+      message: 'Error al obtener reservas canceladas',
+      error: error.message
+    });
+  }
+};
+
+const getCompletedReservations = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+    const data = await reportService.getCompletedReservations(userId);
+
+    return res.status(200).json({
+      message: 'Datos obtenidos exitosamente',
+      data
+    });
+  } catch (error) {
+    console.error('Error en getCompletedReservations:', error);
+
+    return res.status(500).json({
+      message: 'Error al obtener reservas completadas',
+      error: error.message
+    });
+  }
+};
+
 module.exports = {
   getReservationsByChapel,
   getReservationsByDateRange,
   getOccupancyMap,
   getEventsByChapel,
   getParishHierarchy,
-  getChapelEvents
+  getChapelEvents,
+  getCancelledReservations,
+  getCompletedReservations
 };

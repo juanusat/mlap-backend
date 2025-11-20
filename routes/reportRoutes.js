@@ -9,5 +9,7 @@ router.get('/occupancy-map', authMiddleware, reportController.getOccupancyMap);
 router.get('/events-by-chapel', authMiddleware, reportController.getEventsByChapel);
 router.get('/parish-hierarchy', authMiddleware, reportController.getParishHierarchy);
 router.get('/chapel-events', authMiddleware, reportController.getChapelEvents);
+router.get('/cancelled-reservations', authMiddleware, reportController.getCancelledReservations);
+router.get('/completed-reservations', authMiddleware, reportController.getCompletedReservations);
 
 module.exports = router;
