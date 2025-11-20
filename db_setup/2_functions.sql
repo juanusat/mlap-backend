@@ -187,6 +187,69 @@ ORDER BY
     cs.hora_inicio;
 $$;
 
+CREATE OR REPLACE FUNCTION public.notify_diocese_parish_activation() 
+RETURNS TRIGGER AS $$
+DECLARE
+    rec_user RECORD;
+BEGIN
+    FOR rec_user IN 
+        SELECT id FROM public."user" WHERE is_diocese = TRUE AND active = TRUE 
+    LOOP
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            rec_user.id, 
+            'Nueva Parroquia Activada', 
+            'Sistema: La Parroquia ' || NEW.name || ' ha sido activada y ya puede operar en la plataforma.'
+        );
+    END LOOP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_diocese_parish_activation
+AFTER UPDATE OF active ON public.parish
+FOR EACH ROW
+WHEN (OLD.active = FALSE AND NEW.active = TRUE)
+EXECUTE FUNCTION public.notify_diocese_parish_activation();
+
+COMMENT ON TRIGGER trg_notify_diocese_parish_activation ON public.parish 
+IS 'Genera una notificación para usuarios de la diócesis cuando el estado de una parroquia cambia a activo.';
+
+CREATE OR REPLACE FUNCTION public.notify_diocese_new_chapel() 
+RETURNS TRIGGER AS $$
+DECLARE
+    rec_user RECORD;
+    v_parish_name VARCHAR(255);
+BEGIN
+    SELECT name INTO v_parish_name FROM public.parish WHERE id = NEW.parish_id;
+
+    FOR rec_user IN 
+        SELECT id FROM public."user" WHERE is_diocese = TRUE AND active = TRUE 
+    LOOP
+        INSERT INTO public.notification (user_id, title, body)
+        VALUES (
+            rec_user.id, 
+            'Nueva Capilla Registrada', 
+            'Infraestructura: La parroquia ' || COALESCE(v_parish_name, 'Desconocida') || ' ha agregado una nueva capilla: ' || NEW.name || '.'
+        );
+    END LOOP;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE TRIGGER trg_notify_diocese_new_chapel
+AFTER INSERT ON public.chapel
+FOR EACH ROW
+EXECUTE FUNCTION public.notify_diocese_new_chapel();
+
+COMMENT ON TRIGGER trg_notify_diocese_new_chapel ON public.chapel 
+IS 'Genera una notificación para usuarios de la diócesis cada vez que se inserta una nueva capilla en el sistema.';
+
+
+-- ====================================================================
+-- FUNCIONES DE DEPURACIÓN Y CONSULTA
+-- ====================================================================
+
 -- Función para obtener todas las reservas de una capilla específica (p_chapel_id), con formato de fecha y hora estándar.
 CREATE OR REPLACE FUNCTION public.get_chapel_reservations (p_chapel_id INTEGER)
 RETURNS TABLE (
