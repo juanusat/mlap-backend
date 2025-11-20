@@ -297,3 +297,23 @@ ORDER BY n.created_at DESC;
 
 COMMENT ON VIEW public.view_user_notifications 
 IS 'Vista consolidada de notificaciones mostrando el correo del usuario, contenido y estado de lectura.';
+
+CREATE OR REPLACE VIEW public.view_user_notification_summary AS
+SELECT 
+    p.email,
+    COUNT(n.id) AS total_notifications,
+    COUNT(n.id) FILTER (WHERE n.read = FALSE) AS unread_count,
+    MAX(n.created_at) AS last_notification_at
+FROM 
+    public."user" u
+JOIN 
+    public.person p ON u.person_id = p.id
+LEFT JOIN 
+    public.notification n ON u.id = n.user_id
+GROUP BY 
+    u.id, p.email
+ORDER BY 
+    unread_count DESC, last_notification_at DESC;
+
+COMMENT ON VIEW public.view_user_notification_summary 
+IS 'Resumen de notificaciones por usuario: email, total de notificaciones, pendientes de lectura y fecha de la última recibida.';
