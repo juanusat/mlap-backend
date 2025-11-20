@@ -32,6 +32,28 @@ class ReportService {
     };
   }
 
+  async getReservationsByDateRange(startDate, endDate) {
+    const result = await db.query(
+      `SELECT 
+        r.event_date::TEXT as date,
+        EXTRACT(DAY FROM r.event_date) as day_number,
+        COUNT(r.id) as count
+      FROM reservation r
+      WHERE r.event_date >= $1
+        AND r.event_date <= $2
+        AND r.status IN ('RESERVED', 'IN_PROGRESS', 'COMPLETED', 'FULFILLED')
+      GROUP BY r.event_date
+      ORDER BY r.event_date`,
+      [startDate, endDate]
+    );
+
+    return {
+      start_date: startDate,
+      end_date: endDate,
+      daily_reservations: result.rows
+    };
+  }
+
   async getOccupancyMap(chapelName, year, month) {
     const chapelResult = await db.query(
       'SELECT id, name FROM chapel WHERE name = $1',

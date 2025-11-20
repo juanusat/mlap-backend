@@ -34,6 +34,48 @@ const getReservationsByChapel = async (req, res) => {
   }
 };
 
+const getReservationsByDateRange = async (req, res) => {
+  try {
+    const { start_date, end_date } = req.query;
+
+    if (!start_date || !end_date) {
+      return res.status(400).json({
+        message: 'Parámetros faltantes',
+        error: 'start_date y end_date son requeridos'
+      });
+    }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+    if (!dateRegex.test(start_date) || !dateRegex.test(end_date)) {
+      return res.status(400).json({
+        message: 'Formato de fecha inválido',
+        error: 'Las fechas deben tener formato YYYY-MM-DD'
+      });
+    }
+
+    if (new Date(start_date) > new Date(end_date)) {
+      return res.status(400).json({
+        message: 'Rango de fechas inválido',
+        error: 'La fecha de inicio debe ser anterior a la fecha de fin'
+      });
+    }
+
+    const data = await reportService.getReservationsByDateRange(start_date, end_date);
+
+    return res.status(200).json({
+      message: 'Datos obtenidos exitosamente',
+      data
+    });
+  } catch (error) {
+    console.error('Error en getReservationsByDateRange:', error);
+
+    return res.status(500).json({
+      message: 'Error al obtener datos de reservas por fecha',
+      error: error.message
+    });
+  }
+};
+
 const getOccupancyMap = async (req, res) => {
   try {
     const { chapel_name, year, month } = req.query;
@@ -166,6 +208,7 @@ const getChapelEvents = async (req, res) => {
 
 module.exports = {
   getReservationsByChapel,
+  getReservationsByDateRange,
   getOccupancyMap,
   getEventsByChapel,
   getParishHierarchy,

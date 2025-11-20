@@ -52,6 +52,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/reports/reservations-by-date-range:
+    get:
+      tags:
+        - Reports - Actos
+      summary: Obtener reservas por rango de fechas
+      description: |
+        Devuelve la cantidad de reservas agrupadas por día dentro de un rango de fechas.
+        Utilizado en el reporte RP02 - Gráfico 2: Reservas por rango de fecha.
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: start_date
+          in: query
+          description: Fecha de inicio (YYYY-MM-DD)
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-11-01"
+        - name: end_date
+          in: query
+          description: Fecha de fin (YYYY-MM-DD)
+          required: true
+          schema:
+            type: string
+            format: date
+            example: "2025-11-30"
+      responses:
+        '200':
+          description: Datos de reservas obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ReservationsByDateRangeResponse'
+        '400':
+          description: Parámetros inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
   /api/reports/occupancy-map:
     get:
       tags:
@@ -171,6 +214,41 @@ components:
                   type: array
                   items:
                     $ref: '#/components/schemas/ReservationStatusCount'
+
+    DailyReservationCount:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+          example: "2025-11-15"
+        day_number:
+          type: integer
+          example: 15
+        count:
+          type: integer
+          example: 25
+
+    ReservationsByDateRangeResponse:
+      allOf:
+        - $ref: '#/components/schemas/BaseResponse'
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                start_date:
+                  type: string
+                  format: date
+                  example: "2025-11-01"
+                end_date:
+                  type: string
+                  format: date
+                  example: "2025-11-30"
+                daily_reservations:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/DailyReservationCount'
 
     TimeSlotOccupancy:
       type: object

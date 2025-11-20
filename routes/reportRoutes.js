@@ -4,6 +4,7 @@ const reportController = require('../controllers/reportController');
 const authMiddleware = require('../middleware/authMiddleware');
 
 router.get('/reservations-by-chapel', authMiddleware, reportController.getReservationsByChapel);
+router.get('/reservations-by-date-range', authMiddleware, reportController.getReservationsByDateRange);
 router.get('/occupancy-map', authMiddleware, reportController.getOccupancyMap);
 router.get('/events-by-chapel', authMiddleware, reportController.getEventsByChapel);
 router.get('/parish-hierarchy', authMiddleware, reportController.getParishHierarchy);
