@@ -282,3 +282,18 @@ JOIN pg_namespace n ON c.relnamespace = n.oid
 LEFT JOIN pg_description d ON t.oid = d.objoid
 WHERE NOT t.tgisinternal;
 COMMENT ON VIEW public.view_system_triggers IS 'Lista todos los triggers del sistema, incluyendo su definición, estado y comentarios asociados.';
+
+CREATE OR REPLACE VIEW public.view_user_notifications AS
+SELECT 
+    p.email AS user_email,
+    n.title,
+    n.body AS content,
+    n.read AS is_read,
+    n.created_at
+FROM public.notification n
+JOIN public.user u ON n.user_id = u.id
+JOIN public.person p ON u.person_id = p.id
+ORDER BY n.created_at DESC;
+
+COMMENT ON VIEW public.view_user_notifications 
+IS 'Vista consolidada de notificaciones mostrando el correo del usuario, contenido y estado de lectura.';
