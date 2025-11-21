@@ -15,42 +15,117 @@ class ReportService {
 
     const result = await db.query(
       `SELECT 
+        r.id as reservation_id,
         r.status,
-        COUNT(r.id) as count
+        r.user_id,
+        r.beneficiary_full_name,
+        e.name as event_base_name,
+        ev.name as event_variant_name
       FROM reservation r
       INNER JOIN event_variant ev ON r.event_variant_id = ev.id
       INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN event e ON ce.event_id = e.id
       WHERE ce.chapel_id = $1
-      GROUP BY r.status
-      ORDER BY r.status`,
+      ORDER BY r.status, e.name`,
       [chapelId]
     );
 
+    // Agrupar por status
+    const groupedByStatus = {};
+    result.rows.forEach(row => {
+      if (!groupedByStatus[row.status]) {
+        groupedByStatus[row.status] = {
+          status: row.status,
+          count: 0,
+          reservations: []
+        };
+      }
+      groupedByStatus[row.status].count++;
+      groupedByStatus[row.status].reservations.push({
+        reservation_id: row.reservation_id,
+        user_id: row.user_id,
+        beneficiary_full_name: row.beneficiary_full_name,
+        event_base_name: row.event_base_name,
+        event_variant_name: row.event_variant_name
+      });
+    });
+
     return {
       chapel_name: chapelName,
-      statistics: result.rows
+      statistics: Object.values(groupedByStatus)
     };
   }
 
-  async getReservationsByDateRange(startDate, endDate) {
+  async getReservationsByDateRange(startDate, endDate, parishId) {
+    // Obtener información de la parroquia
+    const parishInfo = await db.query(
+      `SELECT id, name FROM parish WHERE id = $1`,
+      [parishId]
+    );
+
     const result = await db.query(
       `SELECT 
         r.event_date::TEXT as date,
         EXTRACT(DAY FROM r.event_date) as day_number,
-        COUNT(r.id) as count
+        COUNT(r.id) as count,
+        c.name as chapel_name,
+        p.name as parish_name
       FROM reservation r
-      WHERE r.event_date >= $1
-        AND r.event_date <= $2
-        AND r.status IN ('RESERVED', 'IN_PROGRESS', 'COMPLETED', 'FULFILLED')
-      GROUP BY r.event_date
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN chapel c ON ce.chapel_id = c.id
+      INNER JOIN parish p ON c.parish_id = p.id
+      WHERE c.parish_id = $1
+        AND r.event_date >= $2
+        AND r.event_date <= $3
+      GROUP BY r.event_date, c.name, p.name
       ORDER BY r.event_date`,
-      [startDate, endDate]
+      [parishId, startDate, endDate]
     );
+
+    // Agrupar por fecha y sumar todas las reservas de todas las capillas
+    const dailyMap = {};
+    result.rows.forEach(row => {
+      if (!dailyMap[row.date]) {
+        dailyMap[row.date] = {
+          date: row.date,
+          day_number: row.day_number,
+          count: 0,
+          chapels: []
+        };
+      }
+      dailyMap[row.date].count += parseInt(row.count);
+      dailyMap[row.date].chapels.push({
+        chapel_name: row.chapel_name,
+        count: parseInt(row.count)
+      });
+    });
+
+    const dailyReservations = Object.values(dailyMap);
+    
+    // Calcular total
+    const totalReservations = dailyReservations.reduce((sum, day) => sum + day.count, 0);
+    
+    console.log(`\n=== REPORTE DE RESERVAS POR FECHA ===`);
+    console.log(`Parroquia: ${parishInfo.rows[0]?.name || 'N/A'}`);
+    console.log(`Rango: ${startDate} a ${endDate}`);
+    console.log(`Total de reservas: ${totalReservations}`);
+    console.log(`\nDetalle por fecha:`);
+    dailyReservations.forEach(day => {
+      console.log(`\nFecha: ${day.date} (Día ${day.day_number})`);
+      console.log(`  Total del día: ${day.count}`);
+      day.chapels.forEach(chapel => {
+        console.log(`    - ${chapel.chapel_name}: ${chapel.count} reservas`);
+      });
+    });
+    console.log(`\n=====================================\n`);
 
     return {
       start_date: startDate,
       end_date: endDate,
-      daily_reservations: result.rows
+      parish_name: parishInfo.rows[0]?.name || 'N/A',
+      total_reservations: totalReservations,
+      daily_reservations: dailyReservations
     };
   }
 
@@ -66,6 +141,46 @@ class ReportService {
 
     const chapelId = chapelResult.rows[0].id;
 
+    console.log(`\n=== MAPA DE OCUPACIÓN ===`);
+    console.log(`Capilla: ${chapelName} (ID: ${chapelId})`);
+    console.log(`Año: ${year}, Mes: ${month}`);
+
+    // Primero obtener TODAS las reservas individuales para mostrar detalle
+    const detailResult = await db.query(
+      `SELECT 
+        r.id as reservation_id,
+        r.event_date::TEXT as event_date,
+        r.event_time::TEXT as event_time,
+        r.status,
+        EXTRACT(DOW FROM r.event_date) as day_of_week,
+        EXTRACT(DAY FROM r.event_date) as day_number,
+        EXTRACT(MONTH FROM r.event_date) as month_number,
+        EXTRACT(YEAR FROM r.event_date) as year_number,
+        TO_CHAR(r.event_date, 'Day') as day_name
+      FROM reservation r
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      WHERE ce.chapel_id = $1
+        AND EXTRACT(YEAR FROM r.event_date) = $2
+        AND EXTRACT(MONTH FROM r.event_date) = $3
+        AND r.status IN ('RESERVED', 'IN_PROGRESS')
+      ORDER BY r.event_date, r.event_time`,
+      [chapelId, year, month]
+    );
+
+    console.log(`\nTotal de reservas encontradas: ${detailResult.rows.length}`);
+    console.log(`\nDetalle de reservas:`);
+    detailResult.rows.forEach((row, index) => {
+      console.log(`\n${index + 1}. Reserva ID: ${row.reservation_id}`);
+      console.log(`   Fecha: ${row.event_date} (${row.day_name.trim()})`);
+      console.log(`   Hora: ${row.event_time}`);
+      console.log(`   Estado: ${row.status}`);
+      console.log(`   Día del mes: ${row.day_number}`);
+      console.log(`   Día de la semana (0=Dom, 6=Sab): ${row.day_of_week}`);
+    });
+
+    // Contar todas las reservas del mes agrupadas por hora y día de la semana
+    // Solo considera RESERVED e IN_PROGRESS (excluye COMPLETED, CANCELLED, etc.)
     const result = await db.query(
       `SELECT 
         r.event_time::TEXT as time,
@@ -77,11 +192,17 @@ class ReportService {
       WHERE ce.chapel_id = $1
         AND EXTRACT(YEAR FROM r.event_date) = $2
         AND EXTRACT(MONTH FROM r.event_date) = $3
-        AND r.status IN ('RESERVED', 'IN_PROGRESS', 'COMPLETED')
+        AND r.status IN ('RESERVED', 'IN_PROGRESS')
       GROUP BY r.event_time, EXTRACT(DOW FROM r.event_date)
       ORDER BY r.event_time, day_of_week`,
       [chapelId, year, month]
     );
+
+    console.log(`\n=== AGRUPACIÓN POR DÍA DE SEMANA Y HORA ===`);
+    result.rows.forEach(row => {
+      const dayNames = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
+      console.log(`${dayNames[row.day_of_week]} a las ${row.time}: ${row.count} reserva(s)`);
+    });
 
     const timeSlots = {};
     
@@ -112,14 +233,22 @@ class ReportService {
       };
 
       const dayName = dayMap[row.day_of_week];
+      // Acumula el conteo de todas las semanas del mes
       timeSlots[time][dayName] = parseInt(row.count);
     });
+
+    const occupancyResult = Object.values(timeSlots).sort((a, b) => a.time.localeCompare(b.time));
+    
+    console.log(`\n=== RESULTADO FINAL ===`);
+    console.log(`Total de franjas horarias: ${occupancyResult.length}`);
+    console.log(JSON.stringify(occupancyResult, null, 2));
+    console.log(`========================\n`);
 
     return {
       chapel_name: chapelName,
       year,
       month,
-      occupancy: Object.values(timeSlots).sort((a, b) => a.time.localeCompare(b.time))
+      occupancy: occupancyResult
     };
   }
 
