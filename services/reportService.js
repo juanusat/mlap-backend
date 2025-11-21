@@ -56,25 +56,76 @@ class ReportService {
     };
   }
 
-  async getReservationsByDateRange(startDate, endDate) {
+  async getReservationsByDateRange(startDate, endDate, parishId) {
+    // Obtener información de la parroquia
+    const parishInfo = await db.query(
+      `SELECT id, name FROM parish WHERE id = $1`,
+      [parishId]
+    );
+
     const result = await db.query(
       `SELECT 
         r.event_date::TEXT as date,
         EXTRACT(DAY FROM r.event_date) as day_number,
-        COUNT(r.id) as count
+        COUNT(r.id) as count,
+        c.name as chapel_name,
+        p.name as parish_name
       FROM reservation r
-      WHERE r.event_date >= $1
-        AND r.event_date <= $2
-        AND r.status IN ('RESERVED', 'IN_PROGRESS', 'COMPLETED', 'FULFILLED')
-      GROUP BY r.event_date
+      INNER JOIN event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN chapel c ON ce.chapel_id = c.id
+      INNER JOIN parish p ON c.parish_id = p.id
+      WHERE c.parish_id = $1
+        AND r.event_date >= $2
+        AND r.event_date <= $3
+      GROUP BY r.event_date, c.name, p.name
       ORDER BY r.event_date`,
-      [startDate, endDate]
+      [parishId, startDate, endDate]
     );
+
+    // Agrupar por fecha y sumar todas las reservas de todas las capillas
+    const dailyMap = {};
+    result.rows.forEach(row => {
+      if (!dailyMap[row.date]) {
+        dailyMap[row.date] = {
+          date: row.date,
+          day_number: row.day_number,
+          count: 0,
+          chapels: []
+        };
+      }
+      dailyMap[row.date].count += parseInt(row.count);
+      dailyMap[row.date].chapels.push({
+        chapel_name: row.chapel_name,
+        count: parseInt(row.count)
+      });
+    });
+
+    const dailyReservations = Object.values(dailyMap);
+    
+    // Calcular total
+    const totalReservations = dailyReservations.reduce((sum, day) => sum + day.count, 0);
+    
+    console.log(`\n=== REPORTE DE RESERVAS POR FECHA ===`);
+    console.log(`Parroquia: ${parishInfo.rows[0]?.name || 'N/A'}`);
+    console.log(`Rango: ${startDate} a ${endDate}`);
+    console.log(`Total de reservas: ${totalReservations}`);
+    console.log(`\nDetalle por fecha:`);
+    dailyReservations.forEach(day => {
+      console.log(`\nFecha: ${day.date} (Día ${day.day_number})`);
+      console.log(`  Total del día: ${day.count}`);
+      day.chapels.forEach(chapel => {
+        console.log(`    - ${chapel.chapel_name}: ${chapel.count} reservas`);
+      });
+    });
+    console.log(`\n=====================================\n`);
 
     return {
       start_date: startDate,
       end_date: endDate,
-      daily_reservations: result.rows
+      parish_name: parishInfo.rows[0]?.name || 'N/A',
+      total_reservations: totalReservations,
+      daily_reservations: dailyReservations
     };
   }
 

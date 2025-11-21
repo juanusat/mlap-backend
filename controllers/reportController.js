@@ -37,6 +37,7 @@ const getReservationsByChapel = async (req, res) => {
 const getReservationsByDateRange = async (req, res) => {
   try {
     const { start_date, end_date } = req.query;
+    const userId = req.user.userId;
 
     if (!start_date || !end_date) {
       return res.status(400).json({
@@ -44,6 +45,27 @@ const getReservationsByDateRange = async (req, res) => {
         error: 'start_date y end_date son requeridos'
       });
     }
+
+    // Obtener parish_id del usuario desde la base de datos
+    const db = require('../db');
+    const userParishResult = await db.query(
+      `SELECT DISTINCT c.parish_id 
+       FROM association a
+       INNER JOIN parish p ON a.parish_id = p.id
+       INNER JOIN chapel c ON c.parish_id = p.id
+       WHERE a.user_id = $1 AND a.active = true
+       LIMIT 1`,
+      [userId]
+    );
+
+    if (userParishResult.rows.length === 0) {
+      return res.status(400).json({
+        message: 'Usuario sin parroquia asignada',
+        error: 'El usuario no tiene una parroquia asociada'
+      });
+    }
+
+    const parishId = userParishResult.rows[0].parish_id;
 
     const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
     if (!dateRegex.test(start_date) || !dateRegex.test(end_date)) {
@@ -60,7 +82,7 @@ const getReservationsByDateRange = async (req, res) => {
       });
     }
 
-    const data = await reportService.getReservationsByDateRange(start_date, end_date);
+    const data = await reportService.getReservationsByDateRange(start_date, end_date, parishId);
 
     return res.status(200).json({
       message: 'Datos obtenidos exitosamente',
