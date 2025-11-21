@@ -15,20 +15,44 @@ class ReportService {
 
     const result = await db.query(
       `SELECT 
+        r.id as reservation_id,
         r.status,
-        COUNT(r.id) as count
+        r.user_id,
+        r.beneficiary_full_name,
+        e.name as event_base_name,
+        ev.name as event_variant_name
       FROM reservation r
       INNER JOIN event_variant ev ON r.event_variant_id = ev.id
       INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN event e ON ce.event_id = e.id
       WHERE ce.chapel_id = $1
-      GROUP BY r.status
-      ORDER BY r.status`,
+      ORDER BY r.status, e.name`,
       [chapelId]
     );
 
+    // Agrupar por status
+    const groupedByStatus = {};
+    result.rows.forEach(row => {
+      if (!groupedByStatus[row.status]) {
+        groupedByStatus[row.status] = {
+          status: row.status,
+          count: 0,
+          reservations: []
+        };
+      }
+      groupedByStatus[row.status].count++;
+      groupedByStatus[row.status].reservations.push({
+        reservation_id: row.reservation_id,
+        user_id: row.user_id,
+        beneficiary_full_name: row.beneficiary_full_name,
+        event_base_name: row.event_base_name,
+        event_variant_name: row.event_variant_name
+      });
+    });
+
     return {
       chapel_name: chapelName,
-      statistics: result.rows
+      statistics: Object.values(groupedByStatus)
     };
   }
 
