@@ -407,7 +407,7 @@ class ReportService {
       INNER JOIN chapel c ON ce.chapel_id = c.id
       INNER JOIN parish p ON c.parish_id = p.id
       WHERE r.user_id = $1
-        AND r.status = 'COMPLETED'
+        AND r.status = 'FULFILLED'
       ORDER BY r.event_date DESC, r.event_time DESC`,
       [userId]
     );
