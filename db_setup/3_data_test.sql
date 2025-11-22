@@ -409,13 +409,13 @@ INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event
 -- Pagos realizados para las reservas
 INSERT INTO public.payment (reservation_id, amount, registered_by_worker_id, payment_date) VALUES
 -- Pago de María para el bautismo (pago por feligrés)
-(1, 50.00, NULL, '2025-10-20 15:00:00'),
+(1, 40.00, NULL, '2025-10-20 15:00:00'),
 -- Pago de María para primera comunión (pago por feligrés)
-(2, 75.00, NULL, '2025-10-22 10:30:00'),
+(2, 70.00, NULL, '2025-10-22 10:30:00'),
 -- Pago de Carlos para matrimonio (pago por feligrés)
-(3, 280.00, NULL, '2025-10-25 12:15:00'),
+(3, 260.00, NULL, '2025-10-25 12:15:00'),
 -- Pago de Carlos para bendición (registrado por trabajador)
-(4, 40.00, 3, '2025-10-26 16:45:00');
+(4, 30.00, 3, '2025-10-26 16:45:00');
 
 -------------------------------------------------------------------
 -- HORARIOS GENERALES DE LAS CAPILLAS
@@ -671,17 +671,17 @@ INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event
 
 -- Pagos para reservas de María Gonzales
 INSERT INTO public.payment (reservation_id, amount, registered_by_worker_id, payment_date) VALUES
-(5, 50.00, NULL, '2025-10-15 15:00:00'),
-(6, 80.00, NULL, '2025-10-18 10:30:00'),
-(7, 25.00, NULL, '2025-10-20 17:00:00'),
-(8, 60.00, 2, '2025-10-25 12:00:00'),
-(9, 75.00, NULL, '2025-10-27 14:30:00'),
-(10, 30.00, 2, '2025-04-10 11:00:00'),
-(11, 55.00, NULL, '2025-05-15 15:00:00'),
+(5, 40.00, NULL, '2025-10-15 15:00:00'),
+(6, 70.00, NULL, '2025-10-18 10:30:00'),
+(7, 15.00, NULL, '2025-10-20 17:00:00'),
+(8, 50.00, 2, '2025-10-25 12:00:00'),
+(9, 65.00, NULL, '2025-10-27 14:30:00'),
+(10, 20.00, 2, '2025-04-10 11:00:00'),
+(11, 45.00, NULL, '2025-05-15 15:00:00'),
 (12, 40.00, 3, '2025-06-05 17:30:00'),
-(14, 28.00, NULL, '2025-07-20 12:00:00'),
-(16, 52.00, 2, '2025-09-15 15:00:00'),
-(17, 52.00, NULL, '2025-09-15 15:00:00');
+(14, 18.00, NULL, '2025-07-20 12:00:00'),
+(16, 42.00, 2, '2025-09-15 15:00:00'),
+(17, 42.00, NULL, '2025-09-15 15:00:00');
 
 
 -- ====================================================================
