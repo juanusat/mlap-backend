@@ -273,7 +273,7 @@ class ReportService {
       INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
       INNER JOIN event e ON ce.event_id = e.id
       WHERE ce.chapel_id = $1
-        AND r.status = 'COMPLETED'
+        AND r.status = 'FULFILLED'
       GROUP BY e.name
       ORDER BY count DESC, e.name`,
       [chapelId]
@@ -349,7 +349,7 @@ class ReportService {
       INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
       INNER JOIN event e ON ce.event_id = e.id
       WHERE ce.chapel_id = $1
-        AND r.status = 'COMPLETED'
+        AND r.status NOT IN ('REJECTED', 'CANCELLED')
       GROUP BY e.name
       ORDER BY count DESC, e.name`,
       [chapelId]
@@ -379,7 +379,7 @@ class ReportService {
       INNER JOIN chapel c ON ce.chapel_id = c.id
       INNER JOIN parish p ON c.parish_id = p.id
       WHERE r.user_id = $1
-        AND r.status = 'CANCELLED'
+        AND r.status IN ('CANCELLED', 'REJECTED')
       ORDER BY r.event_date DESC, r.event_time DESC`,
       [userId]
     );
@@ -407,7 +407,7 @@ class ReportService {
       INNER JOIN chapel c ON ce.chapel_id = c.id
       INNER JOIN parish p ON c.parish_id = p.id
       WHERE r.user_id = $1
-        AND r.status = 'COMPLETED'
+        AND r.status = 'FULFILLED'
       ORDER BY r.event_date DESC, r.event_time DESC`,
       [userId]
     );
