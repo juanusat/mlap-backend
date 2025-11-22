@@ -1126,6 +1126,48 @@ class ReservationModel {
     const result = await db.query(updateQuery, values);
     return result.rows[0];
   }
+
+  static async getReservationPayments(reservationId) {
+    const query = `
+      SELECT 
+        p.id,
+        p.reservation_id,
+        p.amount,
+        p.payment_date,
+        p.registered_by_worker_id,
+        CASE 
+          WHEN p.registered_by_worker_id IS NOT NULL THEN 
+            (per.first_names || ' ' || per.paternal_surname || ' ' || COALESCE(per.maternal_surname, ''))
+          ELSE NULL
+        END as registered_by_worker_name,
+        p.created_at
+      FROM public.payment p
+      LEFT JOIN public.user u ON p.registered_by_worker_id = u.id
+      LEFT JOIN public.person per ON u.person_id = per.id
+      WHERE p.reservation_id = $1
+      ORDER BY p.payment_date DESC, p.created_at DESC
+    `;
+    const result = await db.query(query, [reservationId]);
+    return result.rows;
+  }
+
+  static async createPayment(reservationId, amount, registeredByWorkerId) {
+    const query = `
+      INSERT INTO public.payment (reservation_id, amount, registered_by_worker_id, payment_date)
+      VALUES ($1, $2, $3, CURRENT_TIMESTAMP)
+      RETURNING *
+    `;
+    const result = await db.query(query, [reservationId, amount, registeredByWorkerId]);
+    return result.rows[0];
+  }
+
+  static async getReservationById(reservationId) {
+    const query = `
+      SELECT * FROM public.reservation WHERE id = $1
+    `;
+    const result = await db.query(query, [reservationId]);
+    return result.rows[0];
+  }
 }
 
 module.exports = ReservationModel;

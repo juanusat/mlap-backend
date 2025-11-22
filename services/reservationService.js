@@ -252,6 +252,74 @@ class ReservationService {
 
     return await ReservationModel.updateReservation(reservationId, parishId, updateData);
   }
+
+  async getReservationPayments(reservationId, parishId) {
+    if (!reservationId || !parishId) {
+      throw new Error('El ID de la reserva y el ID de la parroquia son requeridos');
+    }
+
+    const reservation = await ReservationModel.getReservationDetailsForManagement(reservationId, parishId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada o no pertenece a esta parroquia');
+    }
+
+    return await ReservationModel.getReservationPayments(reservationId);
+  }
+
+  async createPayment(reservationId, parishId, amount, workerId) {
+    if (!reservationId || !parishId || !amount) {
+      throw new Error('Todos los campos son requeridos');
+    }
+
+    const reservation = await ReservationModel.getReservationDetailsForManagement(reservationId, parishId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada o no pertenece a esta parroquia');
+    }
+
+    const currentPrice = parseFloat(reservation.current_price || 0);
+    const paidAmount = parseFloat(reservation.paid_amount || 0);
+    const remaining = currentPrice - paidAmount;
+
+    if (amount > remaining) {
+      throw new Error(`El monto del pago (${amount}) excede el saldo pendiente (${remaining.toFixed(2)})`);
+    }
+
+    return await ReservationModel.createPayment(reservationId, amount, workerId);
+  }
+
+  async getReservationPaymentsForParishioner(reservationId, userId) {
+    if (!reservationId || !userId) {
+      throw new Error('El ID de la reserva y el ID del usuario son requeridos');
+    }
+
+    const reservation = await ReservationModel.getReservationDetails(reservationId, userId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada o no pertenece a este usuario');
+    }
+
+    return await ReservationModel.getReservationPayments(reservationId);
+  }
+
+  async createPaymentForParishioner(reservationId, userId, amount, cardData) {
+    if (!reservationId || !userId || !amount || !cardData) {
+      throw new Error('Todos los campos son requeridos');
+    }
+
+    const reservation = await ReservationModel.getReservationDetails(reservationId, userId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada o no pertenece a este usuario');
+    }
+
+    const currentPrice = parseFloat(reservation.current_price || 0);
+    const paidAmount = parseFloat(reservation.paid_amount || 0);
+    const remaining = currentPrice - paidAmount;
+
+    if (amount > remaining) {
+      throw new Error(`El monto del pago (${amount}) excede el saldo pendiente (${remaining.toFixed(2)})`);
+    }
+
+    return await ReservationModel.createPayment(reservationId, amount, null);
+  }
 }
 
 module.exports = new ReservationService();

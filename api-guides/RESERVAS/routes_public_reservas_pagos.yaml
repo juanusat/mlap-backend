@@ -1,0 +1,162 @@
+openapi: 3.0.0
+info:
+  title: API Reservas - Feligreses
+  version: 1.0.0
+  description: APIs para gestión de reservas y pagos desde el lado del feligrés
+
+paths:
+  /api/client/reservation/{id}/payments:
+    get:
+      summary: Obtener historial de pagos de una reserva (Feligrés)
+      description: Retorna todos los pagos realizados para una reserva específica del feligrés autenticado
+      tags:
+        - Reservas - Feligrés
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID de la reserva
+      responses:
+        '200':
+          description: Pagos obtenidos exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Pagos obtenidos exitosamente"
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: integer
+                          example: 1
+                        reservation_id:
+                          type: integer
+                          example: 5
+                        amount:
+                          type: number
+                          format: decimal
+                          example: 50.00
+                        payment_date:
+                          type: string
+                          format: date-time
+                          example: "2024-01-15T10:30:00Z"
+                        registered_by:
+                          type: string
+                          nullable: true
+                          example: "Juan Pérez"
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '401':
+          description: Usuario no autenticado
+        '404':
+          description: Reserva no encontrada o no pertenece al usuario
+    
+    post:
+      summary: Registrar pago de reserva (Feligrés)
+      description: Permite al feligrés realizar un pago con tarjeta para su reserva
+      tags:
+        - Reservas - Feligrés
+      security:
+        - cookieAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+          description: ID de la reserva
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+                - card_number
+                - card_holder
+                - expiry_date
+                - cvv
+              properties:
+                amount:
+                  type: number
+                  format: decimal
+                  example: 100.00
+                  description: Monto del pago (debe ser mayor a 0 y no exceder el saldo pendiente)
+                card_number:
+                  type: string
+                  example: "1234567890123456"
+                  description: Número de tarjeta (16 dígitos)
+                card_holder:
+                  type: string
+                  example: "JUAN PEREZ"
+                  description: Nombre del titular de la tarjeta
+                expiry_date:
+                  type: string
+                  example: "12/25"
+                  description: Fecha de expiración (MM/AA)
+                cvv:
+                  type: string
+                  example: "123"
+                  description: Código de seguridad (3 dígitos)
+      responses:
+        '201':
+          description: Pago procesado exitosamente
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Pago procesado exitosamente"
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: integer
+                        example: 10
+                      reservation_id:
+                        type: integer
+                        example: 5
+                      amount:
+                        type: number
+                        format: decimal
+                        example: 100.00
+                      payment_date:
+                        type: string
+                        format: date-time
+                        example: "2024-01-15T10:30:00Z"
+                  error:
+                    type: string
+                    example: ""
+                  traceback:
+                    type: string
+                    example: ""
+        '400':
+          description: Datos inválidos o monto excede saldo pendiente
+        '401':
+          description: Usuario no autenticado
+        '404':
+          description: Reserva no encontrada
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: token

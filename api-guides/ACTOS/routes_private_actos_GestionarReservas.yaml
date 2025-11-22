@@ -420,4 +420,88 @@ paths:
                   status: "REJECTED"
                 error: ""
                 traceback: ""
+
+  /api/acts/reservations/{id}/payments:
+    get:
+      tags:
+        - Gestión de Pagos
+      summary: Listar Pagos de una Reserva
+      description: Obtiene el historial de pagos realizados para una reserva específica.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID de la reserva.
+          required: true
+          example: 1
+      responses:
+        '200':
+          description: Lista de pagos obtenida exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Pagos obtenidos exitosamente"
+                data:
+                  - id: 1
+                    reservation_id: 1
+                    amount: 50.00
+                    payment_date: "2025-10-20T15:00:00Z"
+                    registered_by_worker_id: null
+                    registered_by_worker_name: null
+                  - id: 2
+                    reservation_id: 1
+                    amount: 30.00
+                    payment_date: "2025-10-25T10:00:00Z"
+                    registered_by_worker_id: 3
+                    registered_by_worker_name: "Pamela Saavedra Sanchez"
+                error: ""
+                traceback: ""
+    
+    post:
+      tags:
+        - Gestión de Pagos
+      summary: Registrar un Pago
+      description: Crea un nuevo registro de pago para una reserva. El trabajador que lo registra se toma del token JWT.
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: integer
+          description: ID de la reserva.
+          required: true
+          example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - amount
+              properties:
+                amount:
+                  type: number
+                  format: float
+                  description: Monto del pago a registrar.
+                  example: 50.00
+      responses:
+        '201':
+          description: Pago registrado exitosamente.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/StandardResponse'
+              example:
+                message: "Pago registrado exitosamente"
+                data:
+                  id: 3
+                  reservation_id: 1
+                  amount: 50.00
+                  payment_date: "2025-11-21T10:30:00Z"
+                  registered_by_worker_id: 2
+                error: ""
+                traceback: ""
         

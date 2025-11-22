@@ -865,3 +865,25 @@ WHERE
 ORDER BY
     c.name, e.name, ev.name;
 $$;
+
+-- ====================================================================
+-- TRIGGER PARA ACTUALIZAR PAID_AMOUNT EN RESERVATION
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.update_reservation_paid_amount()
+RETURNS TRIGGER AS $$
+BEGIN
+    UPDATE public.reservation
+    SET 
+        paid_amount = paid_amount + NEW.amount,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = NEW.reservation_id;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_update_paid_amount_on_payment
+AFTER INSERT ON public.payment
+FOR EACH ROW
+EXECUTE FUNCTION public.update_reservation_paid_amount();

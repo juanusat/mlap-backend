@@ -396,15 +396,26 @@ INSERT INTO public.chapel_event_requirement (id, chapel_event_id, name, descript
 -- María Gonzales hace varias reservas
 INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
 -- María reserva un bautismo individual en San José Obrero
-(1, 5, 1, '2025-11-15', '10:00:00', '2025-10-20 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
+(1, 5, 1, '2025-11-15', '10:00:00', '2025-10-20 14:30:00', 'RESERVED', 0.00, 'María Gonzales Ramos'),
 -- María reserva una primera comunión en Sagrado Corazón
-(2, 5, 21, '2025-12-08', '11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 75.00, 'María Gonzales Ramos'),
+(2, 5, 21, '2025-12-08', '11:00:00', '2025-10-22 09:15:00', 'IN_PROGRESS', 0.00, 'María Gonzales Ramos'),
 
 -- Carlos Mendoza hace sus reservas
 -- Carlos reserva un matrimonio en Nuestra Señora de Fátima
-(3, 6, 11, '2025-12-20', '16:00:00', '2025-10-25 11:45:00', 'RESERVED', 280.00, 'Carlos Mendoza Lopez'),
+(3, 6, 11, '2025-12-20', '16:00:00', '2025-10-25 11:45:00', 'RESERVED', 0.00, 'Carlos Mendoza Lopez'),
 -- Carlos reserva una bendición de casa en San Pedro Apóstol
-(4, 6, 17, '2025-11-05', '15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 40.00, 'Carlos Mendoza Lopez');
+(4, 6, 17, '2025-11-05', '15:00:00', '2025-10-26 16:20:00', 'COMPLETED', 0.00, 'Carlos Mendoza Lopez');
+
+-- Pagos realizados para las reservas
+INSERT INTO public.payment (reservation_id, amount, registered_by_worker_id, payment_date) VALUES
+-- Pago de María para el bautismo (pago por feligrés)
+(1, 40.00, NULL, '2025-10-20 15:00:00'),
+-- Pago de María para primera comunión (pago por feligrés)
+(2, 70.00, NULL, '2025-10-22 10:30:00'),
+-- Pago de Carlos para matrimonio (pago por feligrés)
+(3, 260.00, NULL, '2025-10-25 12:15:00'),
+-- Pago de Carlos para bendición (registrado por trabajador)
+(4, 30.00, 3, '2025-10-26 16:45:00');
 
 -------------------------------------------------------------------
 -- HORARIOS GENERALES DE LAS CAPILLAS
@@ -642,21 +653,35 @@ INSERT INTO public.specific_schedule (id, chapel_id, date, start_time, end_time,
 -- ====================================================================
 
 INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
-(5, 5, 1, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 50.00, 'María Gonzales Ramos'),
-(6, 5, 3, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 80.00, 'María Gonzales Ramos'),
-(7, 5, 7, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 25.00, 'María Gonzales Ramos'),
-(8, 5, 15, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 60.00, 'María Gonzales Ramos'),
-(9, 5, 21, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 75.00, 'María Gonzales Ramos');
+(5, 5, 1, '2025-11-20', '10:00:00', '2025-10-15 14:30:00', 'RESERVED', 0.00, 'María Gonzales Ramos'),
+(6, 5, 3, '2025-12-10', '11:00:00', '2025-10-18 09:45:00', 'IN_PROGRESS', 0.00, 'María Gonzales Ramos'),
+(7, 5, 7, '2026-01-15', '15:00:00', '2025-10-20 16:20:00', 'RESERVED', 0.00, 'María Gonzales Ramos'),
+(8, 5, 15, '2026-02-08', '10:30:00', '2025-10-25 11:10:00', 'IN_PROGRESS', 0.00, 'María Gonzales Ramos'),
+(9, 5, 21, '2026-03-20', '12:00:00', '2025-10-27 13:45:00', 'RESERVED', 0.00, 'María Gonzales Ramos');
 
 INSERT INTO public.reservation (id, user_id, event_variant_id, event_date, event_time, registration_date, status, paid_amount, beneficiary_full_name) VALUES
-(10, 5, 2, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 30.00, 'María Gonzales Ramos'),
-(11, 5, 9, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 55.00, 'María Gonzales Ramos'),
-(12, 5, 17, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 40.00, 'María Gonzales Ramos'),
+(10, 5, 2, '2025-05-15', '09:00:00', '2025-04-10 10:30:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
+(11, 5, 9, '2025-06-20', '11:00:00', '2025-05-15 14:20:00', 'FULFILLED', 0.00, 'María Gonzales Ramos'),
+(12, 5, 17, '2025-07-10', '15:00:00', '2025-06-05 16:45:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
 (13, 5, 13, '2025-08-05', '10:00:00', '2025-07-01 09:15:00', 'CANCELLED', 0.00, 'María Gonzales Ramos'),
-(14, 5, 18, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 28.00, 'María Gonzales Ramos'),
+(14, 5, 18, '2025-08-25', '14:00:00', '2025-07-20 11:30:00', 'FULFILLED', 0.00, 'María Gonzales Ramos'),
 (15, 5, 19, '2025-09-12', '16:00:00', '2025-08-10 15:50:00', 'REJECTED', 0.00, 'María Gonzales Ramos'),
 (16, 5, 23, '2025-10-01', '18:00:00', '2025-09-05 10:25:00', 'COMPLETED', 0.00, 'María Gonzales Ramos'),
-(17, 5, 20, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 52.00, 'María Gonzales Ramos');
+(17, 5, 20, '2025-10-18', '11:30:00', '2025-09-15 14:10:00', 'FULFILLED', 0.00, 'María Gonzales Ramos');
+
+-- Pagos para reservas de María Gonzales
+INSERT INTO public.payment (reservation_id, amount, registered_by_worker_id, payment_date) VALUES
+(5, 40.00, NULL, '2025-10-15 15:00:00'),
+(6, 70.00, NULL, '2025-10-18 10:30:00'),
+(7, 15.00, NULL, '2025-10-20 17:00:00'),
+(8, 50.00, 2, '2025-10-25 12:00:00'),
+(9, 65.00, NULL, '2025-10-27 14:30:00'),
+(10, 20.00, 2, '2025-04-10 11:00:00'),
+(11, 45.00, NULL, '2025-05-15 15:00:00'),
+(12, 40.00, 3, '2025-06-05 17:30:00'),
+(14, 18.00, NULL, '2025-07-20 12:00:00'),
+(16, 42.00, 2, '2025-09-15 15:00:00'),
+(17, 42.00, NULL, '2025-09-15 15:00:00');
 
 
 -- ====================================================================
