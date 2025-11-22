@@ -784,7 +784,7 @@ INSERT INTO public.event_variant (id, chapel_event_id, name, description, curren
 (36, 32, 'Reserva de Salón Pastoral', 'Uso del salón de reuniones para grupos pastorales (Máx 2h).', 0.00, 30, 120, TRUE),
 
 -- Hora Santa / Adoración (Asociado a chapel_event_id 20)
-(37, 33, 'Intención Hora Santa', 'Registro de intenciones para la adoración eucarística del Jueves.', 5.00, 1, 60, TRUE);
+(37, 33, 'Intención Hora Santa', 'Registro de intenciones para la adoración eucarística del Jueves.', 5.00, 1, 60, TRUE),
 
 --- Bautismo para pruebas de concurrencia alta para solicitudes de reservas
 (38, 24, 'Bautismo-PRUEBA', 'BAUTISMO DE PRUEBAS', 50.00, 1000, 60, TRUE);
