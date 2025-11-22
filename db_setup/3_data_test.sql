@@ -57,7 +57,22 @@ INSERT INTO public.permission (id, category, code, name, description) VALUES
 (40, 'PARROQUIA', 'ESTADO_CAPILLA_U', 'Actualizar estado capilla', 'Permite cambiar el estado de una capilla (habilitar/deshabilitar).'),
 (41, 'PARROQUIA', 'PARROQUIA_CAPILLA_R', 'Leer capilla', 'Permite visualizar el listado y detalles de las capillas.'),
 (42, 'PARROQUIA', 'PARROQUIA_CAPILLA_U', 'Actualizar capilla', 'Permite modificar la información de una capilla.'),
-(43, 'PARROQUIA', 'PARROQUIA_CAPILLA_D', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.');
+(43, 'PARROQUIA', 'PARROQUIA_CAPILLA_D', 'Eliminar capilla', 'Permite eliminar o inhabilitar una capilla.'),
+
+-- Actos Litúrgicos: Gestionar Pagos
+(44, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_PAY_R', 'Leer pagos de reserva', 'Permite visualizar los pagos registrados para una reserva.'),
+(45, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_PAY_C', 'Registrar pago de reserva', 'Permite registrar nuevos pagos para una reserva.'),
+
+-- Reportes: Actos Litúrgicos
+(46, 'REPORTES', 'ACTOS_LITURGICOS_REP01', 'Ver Reporte 01 - Actos Litúrgicos', 'Permite visualizar el reporte de reservas por capilla.'),
+(47, 'REPORTES', 'ACTOS_LITURGICOS_REP02', 'Ver Reporte 02 - Actos Litúrgicos', 'Permite visualizar el reporte de reservas por rango de fechas.'),
+(48, 'REPORTES', 'ACTOS_LITURGICOS_REP03', 'Ver Reporte 03 - Actos Litúrgicos', 'Permite visualizar el mapa de ocupación de horarios.'),
+
+-- Reportes: Parroquia
+(49, 'REPORTES', 'PARROQUIA_REP01', 'Ver Reporte 01 - Parroquia', 'Permite visualizar el reporte de eventos generales realizados.'),
+
+-- Reportes: Seguridad
+(50, 'REPORTES', 'SEGURIDAD_REP01', 'Ver Reporte 01 - Seguridad', 'Permite visualizar el reporte de frecuencia de roles asignados.');
 
 -- document_type: Tipos de documento de identidad
 INSERT INTO public.document_type (id, code, name, active, description, created_at, updated_at) VALUES
@@ -738,7 +753,28 @@ INSERT INTO public.role_permission (id, role_id, permission_id, granted) VALUES
 (24, 7, 3, TRUE),  -- Leer acto litúrgico
 (25, 7, 19, TRUE), -- Leer reservas
 (26, 7, 38, TRUE), -- Leer capilla
-(27, 7, 32, TRUE); -- Leer información de la parroquia
+(27, 7, 32, TRUE), -- Leer información de la parroquia
+(28, 7, 46, TRUE), -- Reporte 01 Actos
+(29, 7, 47, TRUE), -- Reporte 02 Actos
+(30, 7, 49, TRUE), -- Reporte 01 Parroquia
+
+-- Permisos adicionales para Gestor de Eventos (Rol 4)
+(31, 4, 44, TRUE), -- Leer pagos
+(32, 4, 45, TRUE), -- Registrar pagos
+(33, 4, 46, TRUE), -- Reporte 01 Actos
+(34, 4, 47, TRUE), -- Reporte 02 Actos
+(35, 4, 48, TRUE), -- Reporte 03 Actos
+
+-- Permisos adicionales para Tesorero (Rol 5)
+(36, 5, 44, TRUE), -- Leer pagos
+(37, 5, 45, TRUE), -- Registrar pagos
+(38, 5, 46, TRUE), -- Reporte 01 Actos
+(39, 5, 47, TRUE), -- Reporte 02 Actos
+(40, 5, 48, TRUE), -- Reporte 03 Actos
+(41, 5, 49, TRUE), -- Reporte 01 Parroquia
+
+-- Permisos adicionales para Catequista Principal (Rol 3)
+(42, 3, 46, TRUE); -- Reporte 01 Actos
 
 ---
 
