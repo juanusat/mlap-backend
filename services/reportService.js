@@ -273,7 +273,7 @@ class ReportService {
       INNER JOIN chapel_event ce ON ev.chapel_event_id = ce.id
       INNER JOIN event e ON ce.event_id = e.id
       WHERE ce.chapel_id = $1
-        AND r.status = 'COMPLETED'
+        AND r.status = 'FULFILLED'
       GROUP BY e.name
       ORDER BY count DESC, e.name`,
       [chapelId]
