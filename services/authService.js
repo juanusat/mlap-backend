@@ -38,9 +38,7 @@ const login = async (email, password) => {
     throw new Error('Credenciales inválidas');
   }
 
-  console.log('Login - user.id:', user.id);
   const associations = await userModel.findUserAssociations(user.id);
-  console.log('Login - associations:', associations);
   const isDioceseUser = await userModel.isDioceseUser(user.id);
 
   const tokenPayload = { userId: user.id };
@@ -50,7 +48,6 @@ const login = async (email, password) => {
     id: assoc.parish_id,
     name: assoc.parish_name
   }));
-  console.log('Login - parish_associations:', parish_associations);
 
   return {
     token,

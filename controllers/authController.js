@@ -52,22 +52,26 @@ const login = async (req, res, next) => {
     
     res.cookie('session_token', newToken, cookieOptions);
 
-    const responseData = {
-      message: 'Operación exitosa',
-      data: {
-        user_info: {
-          full_name: result.user.user_name_full,
-          email: result.user.email
-        },
-        is_diocese_user: result.is_diocese_user,
-        parish_associations: result.parish_associations
-      }
-    };
-    console.log('Login response:', JSON.stringify(responseData, null, 2));
-
-    res.status(200).json(responseData);
+        const responseData = {
+            message: 'Operación exitosa',
+            data: {
+                user_info: {
+                    full_name: result.user.user_name_full,
+                    email: result.user.email
+                },
+                is_diocese_user: result.is_diocese_user,
+                parish_associations: result.parish_associations
+            }
+        };
+        // Log de acceso: solo email y resultado OK
+        console.log(`Login intento: ${email} (OK)`);
+        res.status(200).json(responseData);
   } catch (error) {
-    next(error);
+        // Log de acceso: solo email y resultado FAIL
+        if (req.body && req.body.email) {
+            console.log(`Login intento: ${req.body.email} (FAIL)`);
+        }
+        next(error);
   }
 };
 
