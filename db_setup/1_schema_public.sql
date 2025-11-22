@@ -435,3 +435,18 @@ CREATE TABLE IF NOT EXISTS public.notification (
     CONSTRAINT notification_pkey PRIMARY KEY (id),
     CONSTRAINT fk_notification_user FOREIGN KEY (user_id) REFERENCES public.user(id) ON DELETE CASCADE
 );
+
+-- Tabla Payment: Pagos realizados hacia reservas (por feligreses o trabajadores)
+CREATE TABLE IF NOT EXISTS public.payment (
+    id BIGSERIAL NOT NULL,
+    reservation_id INTEGER NOT NULL,
+    amount DECIMAL(10,2) NOT NULL CHECK (amount > 0),
+    registered_by_worker_id INTEGER,
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    CONSTRAINT payment_pkey PRIMARY KEY (id),
+    CONSTRAINT fk_payment_reservation FOREIGN KEY (reservation_id) REFERENCES public.reservation(id) ON DELETE CASCADE,
+    CONSTRAINT fk_payment_registered_by_worker FOREIGN KEY (registered_by_worker_id) REFERENCES public.user(id)
+);
