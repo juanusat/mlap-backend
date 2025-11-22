@@ -17,7 +17,9 @@ router.post('/history/list', authMiddleware, reservationController.listHistoryRe
 router.post('/history/search', authMiddleware, reservationController.searchHistoryReservations);
 router.get('/:id', authMiddleware, reservationController.getReservationDetails);
 
-// Rutas para gestión administrativa (requieren contexto de parroquia)
+router.get('/:id/payments', authMiddleware, reservationController.getReservationPaymentsForParishioner);
+router.post('/:id/payments', authMiddleware, reservationController.createPaymentForParishioner);
+
 router.post('/management/list', authMiddleware, reservationController.listReservationsForManagement);
 router.post('/management/search', authMiddleware, reservationController.searchReservationsForManagement);
 router.get('/management/:id', authMiddleware, reservationController.getReservationDetailsForManagement);

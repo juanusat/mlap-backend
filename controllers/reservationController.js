@@ -581,6 +581,84 @@ class ReservationController {
       next(error);
     }
   }
+
+  async getReservationPaymentsForParishioner(req, res, next) {
+    try {
+      const { userId } = req.user;
+      const { id } = req.params;
+
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: null,
+          error: 'UNAUTHORIZED',
+          traceback: null
+        });
+      }
+
+      const payments = await reservationService.getReservationPaymentsForParishioner(Number(id), userId);
+
+      res.status(200).json({
+        message: 'Pagos obtenidos exitosamente',
+        data: payments,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async createPaymentForParishioner(req, res, next) {
+    try {
+      const { userId } = req.user;
+      const { id } = req.params;
+      const { amount, card_number, card_holder, expiry_date, cvv } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({
+          message: 'Usuario no autenticado',
+          data: null,
+          error: 'UNAUTHORIZED',
+          traceback: null
+        });
+      }
+
+      if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+        return res.status(400).json({
+          message: 'El monto del pago es requerido y debe ser mayor a 0',
+          data: null,
+          error: 'BAD_REQUEST',
+          traceback: null
+        });
+      }
+
+      if (!card_number || !card_holder || !expiry_date || !cvv) {
+        return res.status(400).json({
+          message: 'Todos los datos de la tarjeta son requeridos',
+          data: null,
+          error: 'BAD_REQUEST',
+          traceback: null
+        });
+      }
+
+      const payment = await reservationService.createPaymentForParishioner(
+        Number(id),
+        userId,
+        parseFloat(amount),
+        { card_number, card_holder, expiry_date, cvv }
+      );
+
+      res.status(201).json({
+        message: 'Pago procesado exitosamente',
+        data: payment,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 module.exports = new ReservationController();
