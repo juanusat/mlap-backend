@@ -202,3 +202,96 @@ module.exports = {
   findParishionerPermissions,
   checkUserAssociationStatus
 };
+
+/**
+ * Actualiza el token de restablecimiento de contraseña
+ * @param {number} userId - ID del usuario
+ * @param {string} token - Código de 6 dígitos
+ * @param {Date} expiresAt - Fecha de expiración
+ */
+const updateResetToken = async (userId, token, expiresAt) => {
+  const query = `
+    UPDATE public.user
+    SET reset_token = $1,
+        reset_token_expires_at = $2,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $3;
+  `;
+  await db.query(query, [token, expiresAt, userId]);
+};
+
+/**
+ * Busca un usuario por email y token de restablecimiento
+ * @param {string} email - Email del usuario
+ * @param {string} token - Código de verificación
+ * @returns {Object|null} Usuario si el token es válido y no ha expirado
+ */
+const findByResetToken = async (email, token) => {
+  const query = `
+    SELECT 
+      u.id,
+      u.username,
+      u.reset_token,
+      u.reset_token_expires_at,
+      p.email,
+      p.first_names,
+      p.paternal_surname
+    FROM public.user u
+    JOIN public.person p ON u.person_id = p.id
+    WHERE p.email = $1 
+      AND u.reset_token = $2
+      AND u.reset_token_expires_at > CURRENT_TIMESTAMP
+      AND u.active = TRUE;
+  `;
+  const { rows } = await db.query(query, [email, token]);
+  return rows[0];
+};
+
+/**
+ * Limpia el token de restablecimiento
+ * @param {number} userId - ID del usuario
+ */
+const clearResetToken = async (userId) => {
+  const query = `
+    UPDATE public.user
+    SET reset_token = NULL,
+        reset_token_expires_at = NULL,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $1;
+  `;
+  await db.query(query, [userId]);
+};
+
+/**
+ * Actualiza la contraseña del usuario
+ * @param {number} userId - ID del usuario
+ * @param {string} passwordHash - Hash de la nueva contraseña
+ */
+const updatePassword = async (userId, passwordHash) => {
+  const query = `
+    UPDATE public.user
+    SET password_hash = $1,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE id = $2;
+  `;
+  await db.query(query, [passwordHash, userId]);
+};
+
+module.exports = {
+  create,
+  findByEmail,
+  findUserAssociations,
+  findUserRolesInParish,
+  isDioceseUser,
+  findUserSessionInfo,
+  findParishById,
+  findRoleById,
+  isParishAdmin,
+  findRolePermissions,
+  findParishionerPermissions,
+  checkUserAssociationStatus,
+  updateResetToken,
+  findByResetToken,
+  clearResetToken,
+  updatePassword,
+};

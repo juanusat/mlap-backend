@@ -270,6 +270,143 @@ const getSession = async (req, res, next) => {
     }
 };
 
+/**
+ * Solicita el restablecimiento de contraseña
+ */
+const requestPasswordReset = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // Validar que se proporcione el email
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        message: 'El correo electrónico es requerido'
+      });
+    }
+
+    // Validar formato del correo
+    const emailRegex = /^[a-zA-Z0-9._-]{4,50}@[a-zA-Z0-9-]{2,8}\.[a-zA-Z]{2,8}(\.[a-zA-Z]{2,8})?$/;
+    if (!emailRegex.test(email.trim())) {
+      return res.status(400).json({
+        message: 'El formato del correo no es válido'
+      });
+    }
+
+    // Procesar la solicitud
+    await authService.requestPasswordReset(email.trim());
+
+    // Respuesta genérica por seguridad (no revelamos si el email existe)
+    res.status(200).json({
+      message: 'Si el correo existe, recibirás un código de verificación en tu bandeja de entrada'
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Verifica el código de restablecimiento
+ */
+const verifyResetCode = async (req, res, next) => {
+  try {
+    const { email, code } = req.body;
+
+    // Validaciones
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        message: 'El correo electrónico es requerido'
+      });
+    }
+
+    if (!code || !code.trim()) {
+      return res.status(400).json({
+        message: 'El código de verificación es requerido'
+      });
+    }
+
+    // Validar que el código sea de 6 dígitos
+    if (!/^\d{6}$/.test(code.trim())) {
+      return res.status(400).json({
+        message: 'El código debe ser de 6 dígitos'
+      });
+    }
+
+    // Verificar el código
+    const result = await authService.verifyResetCode(email.trim(), code.trim());
+
+    res.status(200).json({
+      message: result.message,
+      data: { verified: true }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Restablece la contraseña del usuario
+ */
+const resetPassword = async (req, res, next) => {
+  try {
+    const { email, code, newPassword, confirmPassword } = req.body;
+
+    // Validaciones
+    if (!email || !email.trim()) {
+      return res.status(400).json({
+        message: 'El correo electrónico es requerido'
+      });
+    }
+
+    if (!code || !code.trim()) {
+      return res.status(400).json({
+        message: 'El código de verificación es requerido'
+      });
+    }
+
+    if (!newPassword || !newPassword.trim()) {
+      return res.status(400).json({
+        message: 'La nueva contraseña es requerida'
+      });
+    }
+
+    if (!confirmPassword || !confirmPassword.trim()) {
+      return res.status(400).json({
+        message: 'La confirmación de contraseña es requerida'
+      });
+    }
+
+    // Validar que las contraseñas coincidan
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: 'Las contraseñas no coinciden'
+      });
+    }
+
+    // Validar longitud mínima de contraseña
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        message: 'La contraseña debe tener al menos 8 caracteres'
+      });
+    }
+
+    // Validar que el código sea de 6 dígitos
+    if (!/^\d{6}$/.test(code.trim())) {
+      return res.status(400).json({
+        message: 'El código debe ser de 6 dígitos'
+      });
+    }
+
+    // Restablecer la contraseña
+    const result = await authService.resetPassword(email.trim(), code.trim(), newPassword);
+
+    res.status(200).json({
+      message: result.message
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   register,
   login,
@@ -277,5 +414,8 @@ module.exports = {
   selectRole,
   logout,
   getRolesForCurrentParish,
-  getSession
+  getSession,
+  requestPasswordReset,
+  verifyResetCode,
+  resetPassword,
 };
