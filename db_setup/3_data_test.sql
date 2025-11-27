@@ -72,7 +72,12 @@ INSERT INTO public.permission (id, category, code, name, description) VALUES
 (49, 'REPORTES', 'PARROQUIA_REP01', 'Ver Reporte 01 - Parroquia', 'Permite visualizar el reporte de eventos generales realizados.'),
 
 -- Reportes: Seguridad
-(50, 'REPORTES', 'SEGURIDAD_REP01', 'Ver Reporte 01 - Seguridad', 'Permite visualizar el reporte de frecuencia de roles asignados.');
+(50, 'REPORTES', 'SEGURIDAD_REP01', 'Ver Reporte 01 - Seguridad', 'Permite visualizar el reporte de frecuencia de roles asignados.'),
+
+-- Actos Litúrgicos: Gestionar Reservas (Vista TDP)
+(51, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_REQ_R', 'Leer requisitos de una reserva', 'Permite visualizar los requisitos de las reservas gestionadas.'),
+(52, 'ACTOS LITÚRGICOS', 'ACTOS_LITURGICOS_RESER_REQ_U', 'Actualizar requisitos de una reserva', 'Permite modificar o cambiar el estado de los requisitos de una reserva.');
+
 
 -- document_type: Tipos de documento de identidad
 INSERT INTO public.document_type (id, code, name, active, description, created_at, updated_at) VALUES
