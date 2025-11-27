@@ -5,6 +5,29 @@ const config = require('../config');
  * Configuración del transporte de correo electrónico
  */
 const createTransporter = () => {
+  // Validar que las credenciales estén configuradas
+  if (!config.emailUser || !config.emailPassword) {
+    throw new Error(
+      'Las credenciales de correo electrónico no están configuradas.\n' +
+      'EMAIL_USER es la cuenta DESDE la cual se ENVÍAN los códigos (cuenta de sistema).\n' +
+      'Por favor, configura EMAIL_USER y EMAIL_PASSWORD en el archivo .env\n' +
+      'Consulta: GUIA-RAPIDA-EMAIL.md'
+    );
+  }
+
+  if (config.emailUser === 'tu-correo@gmail.com' || 
+      config.emailUser === 'sistema.mlap@gmail.com' || 
+      config.emailPassword === 'tu-contraseña-de-aplicacion' ||
+      config.emailPassword === 'tu-contraseña-de-aplicacion-16-caracteres') {
+    throw new Error(
+      'Debes configurar una cuenta de Gmail real en el archivo .env\n' +
+      'EMAIL_USER = Cuenta que ENVÍA los correos (puede ser cualquier Gmail tuyo)\n' +
+      'EMAIL_PASSWORD = Contraseña de aplicación de 16 caracteres\n' +
+      'Los USUARIOS pueden tener cualquier correo (Gmail, Outlook, Yahoo, etc.)\n' +
+      'Consulta la guía completa en: GUIA-RAPIDA-EMAIL.md'
+    );
+  }
+
   return nodemailer.createTransport({
     service: config.emailService,
     auth: {
@@ -157,11 +180,25 @@ const sendPasswordResetEmail = async (email, code, userName) => {
     };
 
     const info = await transporter.sendMail(mailOptions);
-    console.log('Email enviado:', info.messageId);
+    console.log('✅ Email enviado exitosamente:', info.messageId);
+    console.log('   Destinatario:', email);
+    console.log('   Código enviado:', code);
     return true;
   } catch (error) {
-    console.error('Error al enviar email:', error);
-    throw new Error('No se pudo enviar el correo electrónico');
+    console.error('❌ Error al enviar email:', error.message);
+    console.error('   Código del error:', error.code);
+    console.error('   Detalles completos:', error);
+    
+    // Proporcionar mensajes de error más específicos
+    if (error.code === 'EAUTH' || error.responseCode === 535) {
+      throw new Error('Credenciales de correo inválidas. Verifica que EMAIL_USER y EMAIL_PASSWORD sean correctos. Para Gmail, necesitas una contraseña de aplicación.');
+    } else if (error.code === 'ESOCKET' || error.code === 'ETIMEDOUT') {
+      throw new Error('No se pudo conectar con el servidor de correo. Verifica tu conexión a internet.');
+    } else if (error.code === 'EENVELOPE') {
+      throw new Error('Dirección de correo electrónico inválida.');
+    } else {
+      throw new Error(`No se pudo enviar el correo electrónico: ${error.message}`);
+    }
   }
 };
 
