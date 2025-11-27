@@ -146,8 +146,7 @@ class MentionTypeDioceseModel {
       SET 
         code = $1,
         name = $2,
-        description = $3,
-        updated_at = CURRENT_TIMESTAMP
+        description = $3
       WHERE id = $4
       RETURNING id, code, name, description, active, created_at
     `;
@@ -176,8 +175,7 @@ class MentionTypeDioceseModel {
     const query = `
       UPDATE public.mention_type
       SET 
-        active = $1,
-        updated_at = CURRENT_TIMESTAMP
+        active = $1
       WHERE id = $2
       RETURNING id, code, name, description, active, created_at
     `;
