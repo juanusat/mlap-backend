@@ -1168,6 +1168,69 @@ class ReservationModel {
     const result = await db.query(query, [reservationId]);
     return result.rows[0];
   }
+
+
+  /**
+   * Obtener requisitos de una reserva
+   * @param {number} reservationId - ID de la reserva
+   * @returns {Array} Lista de requisitos
+   */
+  static async getRequirements(reservationId) {
+    const query = `
+      SELECT 
+        id,
+        reservation_id,
+        base_requirement_id,
+        chapel_requirement_id,
+        name,
+        description,
+        completed,
+        updated_at
+      FROM public.reservation_requirement
+      WHERE reservation_id = $1
+      ORDER BY name
+    `;
+    const result = await db.query(query, [reservationId]);
+    return result.rows;
+  }
+
+  /**
+   * Actualizar estado de requisitos de una reserva
+   * @param {number} reservationId - ID de la reserva
+   * @param {Array} requirements - Lista de requisitos a actualizar [{id, completed}]
+   * @returns {Array} Lista de requisitos actualizados
+   */
+  static async updateRequirements(reservationId, requirements) {
+    const client = await db.getClient();
+
+    try {
+      await client.query('BEGIN');
+
+      const updatedRequirements = [];
+
+      for (const req of requirements) {
+        const query = `
+          UPDATE public.reservation_requirement
+          SET completed = $1, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2 AND reservation_id = $3
+          RETURNING id, completed, updated_at
+        `;
+        const result = await client.query(query, [req.completed, req.id, reservationId]);
+        if (result.rows.length > 0) {
+          updatedRequirements.push(result.rows[0]);
+        }
+      }
+
+      await client.query('COMMIT');
+      return updatedRequirements;
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
 }
 
 module.exports = ReservationModel;
