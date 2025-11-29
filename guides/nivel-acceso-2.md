@@ -27,9 +27,9 @@ Este sistema de permisos granulares permite que cada parroquia defina roles pers
 
 Los permisos de Nivel 2 se aplican a los tres módulos administrativos de parroquia:
 
-1. **Actos Litúrgicos**
-2. **Seguridad**
-3. **Parroquia**
+1. **Actos Litúrgicos** (incluye reportes específicos)
+2. **Seguridad** (incluye reportes específicos)
+3. **Parroquia** (incluye reportes específicos)
 
 ## Estructura de Permisos
 
@@ -37,7 +37,7 @@ Los permisos de Nivel 2 se aplican a los tres módulos administrativos de parroq
 
 Todos los permisos están organizados en la tabla `permission` con las siguientes categorías:
 
-#### 1. ACTOS LITÚRGICOS (23 permisos)
+#### 1. ACTOS LITÚRGICOS (27 permisos)
 
 **Gestionar actos litúrgicos (5 permisos):**
 - `ACTOS_LITURGICOS_ACTOS_C` - Crear acto litúrgico
@@ -66,11 +66,18 @@ Todos los permisos están organizados en la tabla `permission` con las siguiente
 - `EXCEP_NO_DISP_U` - Actualizar excepción de NO disponibilidad
 - `EXCEP_NO_DISP_D` - Eliminar excepción de NO disponibilidad
 
-**Gestionar reservas (2 permisos):**
+**Gestionar reservas (4 permisos):**
 - `ACTOS_LITURGICOS_RESER_R` - Leer reservas
 - `ACTOS_LITURGICOS_RESER_U` - Actualizar reservas
+- `ACTOS_LITURGICOS_RESER_PAY_R` - Leer pagos de reserva
+- `ACTOS_LITURGICOS_RESER_PAY_C` - Registrar pago de reserva
 
-#### 2. SEGURIDAD (11 permisos)
+**Reportes (2 permisos):**
+- `ACTOS_LITURGICOS_REP01` - Ver Reporte 01 (Reservas por capilla)
+- `ACTOS_LITURGICOS_REP02` - Ver Reporte 02 (Reservas por rango de fechas)
+- `ACTOS_LITURGICOS_REP03` - Ver Reporte 03 (Mapa de ocupación de horarios)
+
+#### 2. SEGURIDAD (12 permisos)
 
 **Gestionar cuentas (5 permisos):**
 - `SEGURIDAD_ASOC_USER_C` - Crear asociación usuario
@@ -87,7 +94,10 @@ Todos los permisos están organizados en la tabla `permission` con las siguiente
 - `SEGURIDAD_ROL_DATA_U` - Actualizar datos de rol
 - `SEGURIDAD_ROL_D` - Eliminar rol
 
-#### 3. PARROQUIA (9 permisos)
+**Reportes (1 permiso):**
+- `SEGURIDAD_REP01` - Ver Reporte 01 (Frecuencia de roles asignados)
+
+#### 3. PARROQUIA (10 permisos)
 
 **Gestionar cuenta de parroquia (4 permisos):**
 - `PARROQUIA_INFO_R` - Leer información de la parroquia
@@ -101,6 +111,9 @@ Todos los permisos están organizados en la tabla `permission` con las siguiente
 - `PARROQUIA_CAPILLA_R` - Leer capilla
 - `PARROQUIA_CAPILLA_U` - Actualizar capilla
 - `PARROQUIA_CAPILLA_D` - Eliminar capilla
+
+**Reportes (1 permiso):**
+- `PARROQUIA_REP01` - Ver Reporte 01 (Eventos generales realizados)
 
 ## Implementación Técnica
 
@@ -417,8 +430,26 @@ Algunos módulos tienen permisos de lectura separados:
 
 - `ACTOS_LITURGICOS_HORA_R` - Ver horarios (distinto de crear/editar)
 - `EXCEP_DISP_R` / `EXCEP_NO_DISP_R` - Ver excepciones
+- `ACTOS_LITURGICOS_RESER_PAY_R` - Ver pagos de reserva (separado del registro de pagos)
 
 Esto permite asignar acceso de solo lectura sin permisos de modificación.
+
+### Permisos de Reportes
+
+Los reportes tienen permisos independientes organizados por categoría `REPORTES`:
+
+**Actos Litúrgicos:**
+- `ACTOS_LITURGICOS_REP01` - Reporte de reservas por capilla
+- `ACTOS_LITURGICOS_REP02` - Reporte de reservas por rango de fechas
+- `ACTOS_LITURGICOS_REP03` - Mapa de ocupación de horarios
+
+**Parroquia:**
+- `PARROQUIA_REP01` - Reporte de eventos generales realizados
+
+**Seguridad:**
+- `SEGURIDAD_REP01` - Reporte de frecuencia de roles asignados
+
+Cada reporte puede ser asignado individualmente, permitiendo control granular sobre qué información puede visualizar cada rol.
 
 ### Requisitos Base vs. Adicionales
 

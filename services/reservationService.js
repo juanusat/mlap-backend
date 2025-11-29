@@ -7,7 +7,7 @@ class ReservationService {
     }
 
     const formInfo = await ReservationModel.getFormInfo(eventVariantId);
-    
+
     if (!formInfo) {
       throw new Error('No se encontró información para este evento');
     }
@@ -42,7 +42,7 @@ class ReservationService {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const requestedDate = new Date(eventDate);
-    
+
     if (requestedDate < today) {
       return {
         available: false,
@@ -53,8 +53,8 @@ class ReservationService {
     }
 
     const availability = await ReservationModel.checkAvailability(
-      eventVariantId, 
-      eventDate, 
+      eventVariantId,
+      eventDate,
       eventTime
     );
 
@@ -63,8 +63,8 @@ class ReservationService {
       available: availability.available,
       event_date: eventDate,
       event_time: eventTime,
-      reason: availability.available 
-        ? 'Horario disponible' 
+      reason: availability.available
+        ? 'Horario disponible'
         : (availability.reason || 'El horario no está disponible')
     };
   }
@@ -126,7 +126,7 @@ class ReservationService {
 
     const diffTime = Math.abs(new Date(endDate) - new Date(startDate));
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays > 90) {
       throw new Error('El rango de fechas no puede ser mayor a 90 días');
     }
@@ -319,6 +319,35 @@ class ReservationService {
     }
 
     return await ReservationModel.createPayment(reservationId, amount, null);
+  }
+  async getReservationRequirements(reservationId, parishId) {
+    if (!reservationId || !parishId) {
+      throw new Error('El ID de la reserva y el ID de la parroquia son requeridos');
+    }
+
+    const reservation = await ReservationModel.getReservationDetailsForManagement(reservationId, parishId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada o no pertenece a esta parroquia');
+    }
+
+    return await ReservationModel.getRequirements(reservationId);
+  }
+
+  async updateReservationRequirements(reservationId, parishId, requirements) {
+    if (!reservationId || !parishId || !requirements) {
+      throw new Error('Todos los campos son requeridos');
+    }
+
+    const reservation = await ReservationModel.getReservationDetailsForManagement(reservationId, parishId);
+    if (!reservation) {
+      throw new Error('Reserva no encontrada o no pertenece a esta parroquia');
+    }
+
+    if (!Array.isArray(requirements)) {
+      throw new Error('Los requisitos deben ser una lista');
+    }
+
+    return await ReservationModel.updateRequirements(reservationId, requirements);
   }
 }
 
