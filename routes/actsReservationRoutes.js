@@ -14,4 +14,7 @@ router.patch('/reservations/:id', authMiddleware, reservationController.updateRe
 router.get('/reservations/:id/payments', authMiddleware, checkPermissions('ACTOS_LITURGICOS_RESER_PAY_R'), reservationController.getReservationPayments);
 router.post('/reservations/:id/payments', authMiddleware, checkPermissions('ACTOS_LITURGICOS_RESER_PAY_C'), reservationController.createPayment);
 
+router.get('/reservations/:id/requirements', authMiddleware, checkPermissions('ACTOS_LITURGICOS_RESER_REQ_R'), reservationController.getReservationRequirements);
+router.put('/reservations/:id/requirements', authMiddleware, checkPermissions('ACTOS_LITURGICOS_RESER_REQ_U'), reservationController.updateReservationRequirements);
+
 module.exports = router;

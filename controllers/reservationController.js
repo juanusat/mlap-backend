@@ -5,7 +5,7 @@ class ReservationController {
     try {
       const { event_id } = req.params;
       const data = await reservationService.getFormInfo(Number(event_id));
-      
+
       res.status(200).json({
         message: 'Información del formulario obtenida exitosamente',
         data,
@@ -20,7 +20,7 @@ class ReservationController {
   async checkAvailability(req, res, next) {
     try {
       const { event_variant_id, event_date, event_time } = req.body;
-      
+
       const result = await reservationService.checkAvailability(
         event_variant_id,
         event_date,
@@ -28,8 +28,8 @@ class ReservationController {
       );
 
       // Usar el reason del servicio que ya incluye el mensaje apropiado
-      const message = result.reason || (result.available 
-        ? 'El horario está disponible' 
+      const message = result.reason || (result.available
+        ? 'El horario está disponible'
         : 'El horario no está disponible');
 
       res.status(200).json({
@@ -46,7 +46,7 @@ class ReservationController {
   async createReservation(req, res, next) {
     try {
       const userId = req.user?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({
           message: 'Usuario no autenticado',
@@ -57,7 +57,7 @@ class ReservationController {
       }
 
       const data = await reservationService.createReservation(userId, req.body);
-      
+
       res.status(201).json({
         message: 'Reserva creada exitosamente',
         data,
@@ -72,7 +72,7 @@ class ReservationController {
   async getAvailableSlots(req, res, next) {
     try {
       const { event_variant_id, start_date, end_date } = req.body;
-      
+
       const data = await reservationService.getAvailableSlots(
         event_variant_id,
         start_date,
@@ -93,7 +93,7 @@ class ReservationController {
   async listPendingReservations(req, res, next) {
     try {
       const userId = req.user?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({
           message: 'Usuario no autenticado',
@@ -126,7 +126,7 @@ class ReservationController {
   async searchPendingReservations(req, res, next) {
     try {
       const userId = req.user?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({
           message: 'Usuario no autenticado',
@@ -160,7 +160,7 @@ class ReservationController {
   async cancelReservation(req, res, next) {
     try {
       const userId = req.user?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({
           message: 'Usuario no autenticado',
@@ -191,7 +191,7 @@ class ReservationController {
   async listHistoryReservations(req, res, next) {
     try {
       const userId = req.user?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({
           message: 'Usuario no autenticado',
@@ -224,7 +224,7 @@ class ReservationController {
   async searchHistoryReservations(req, res, next) {
     try {
       const userId = req.user?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({
           message: 'Usuario no autenticado',
@@ -258,7 +258,7 @@ class ReservationController {
   async getReservationDetails(req, res, next) {
     try {
       const userId = req.user?.userId;
-      
+
       if (!userId) {
         return res.status(401).json({
           message: 'Usuario no autenticado',
@@ -652,6 +652,64 @@ class ReservationController {
       res.status(201).json({
         message: 'Pago procesado exitosamente',
         data: payment,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+  async getReservationRequirements(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { id } = req.params;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      const requirements = await reservationService.getReservationRequirements(Number(id), parishId);
+
+      res.status(200).json({
+        message: 'Requisitos obtenidos exitosamente',
+        data: requirements,
+        error: '',
+        traceback: ''
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  async updateReservationRequirements(req, res, next) {
+    try {
+      const { parishId, context_type } = req.user;
+      const { id } = req.params;
+      const { requirements } = req.body;
+
+      if (!parishId || context_type !== 'PARISH') {
+        return res.status(403).json({
+          message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.',
+          data: null,
+          error: 'FORBIDDEN',
+          traceback: null
+        });
+      }
+
+      const updatedRequirements = await reservationService.updateReservationRequirements(
+        Number(id),
+        parishId,
+        requirements
+      );
+
+      res.status(200).json({
+        message: 'Requisitos actualizados exitosamente',
+        data: updatedRequirements,
         error: '',
         traceback: ''
       });

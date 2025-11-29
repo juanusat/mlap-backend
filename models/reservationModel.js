@@ -48,7 +48,7 @@ class ReservationModel {
       WHERE chapel_id = $1
       ORDER BY day_of_week, start_time
     `;
-    
+
     // Obtener excepciones específicas
     const specificQuery = `
       SELECT 
@@ -62,12 +62,12 @@ class ReservationModel {
         AND date BETWEEN $2 AND $3
       ORDER BY date, start_time
     `;
-    
+
     const [generalResult, specificResult] = await Promise.all([
       db.query(generalQuery, [chapelId]),
       db.query(specificQuery, [chapelId, startDate, endDate])
     ]);
-    
+
     return {
       general_schedules: generalResult.rows,
       specific_schedules: specificResult.rows
@@ -227,9 +227,9 @@ class ReservationModel {
           ELSE NULL
         END as reason
     `;
-    
+
     const result = await db.query(query, [eventVariantId, eventDate, eventTime]);
-    
+
     return result.rows[0];
   }
 
@@ -251,16 +251,16 @@ class ReservationModel {
    */
   static async create(userId, eventVariantId, eventDate, eventTime, beneficiaryFullName = null, mentions = []) {
     const client = await db.getClient();
-    
+
     try {
       await client.query('BEGIN');
-      
+
       // Verificar disponibilidad dentro de la transacción para evitar race conditions
       const availabilityCheck = await this.checkAvailability(eventVariantId, eventDate, eventTime);
       if (!availabilityCheck.available) {
         throw new Error(availabilityCheck.reason || 'El horario seleccionado no está disponible');
       }
-      
+
       // Si no se proporciona beneficiaryFullName, obtenerlo del usuario
       let finalBeneficiaryName = beneficiaryFullName;
       if (!finalBeneficiaryName || finalBeneficiaryName.trim() === '') {
@@ -271,11 +271,11 @@ class ReservationModel {
           WHERE u.id = $1
         `;
         const userResult = await client.query(userQuery, [userId]);
-        
+
         if (!userResult.rows.length) {
           throw new Error('Usuario no encontrado');
         }
-        
+
         const personRow = userResult.rows[0];
         finalBeneficiaryName = `${personRow.first_names || ''} ${personRow.paternal_surname || ''}${personRow.maternal_surname ? ' ' + personRow.maternal_surname : ''}`.trim();
       }
@@ -361,7 +361,7 @@ class ReservationModel {
 
       await client.query('COMMIT');
       return reservation;
-      
+
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -509,7 +509,7 @@ class ReservationModel {
       FROM available_slots
       ORDER BY date, time_slot
     `;
-    
+
     const result = await db.query(query, [eventVariantId, startDate, endDate]);
     return result.rows;
   }
@@ -641,7 +641,7 @@ class ReservationModel {
       WHERE id = $1 AND user_id = $2
     `;
     const checkResult = await db.query(checkQuery, [reservationId, userId]);
-    
+
     if (!checkResult.rows.length) {
       throw new Error('Reserva no encontrada o no pertenece al usuario');
     }
@@ -795,7 +795,7 @@ class ReservationModel {
       WHERE r.id = $1 AND r.user_id = $2
     `;
     const result = await db.query(query, [reservationId, userId]);
-    
+
     if (!result.rows.length) {
       throw new Error('Reserva no encontrada o no pertenece al usuario');
     }
@@ -839,7 +839,7 @@ class ReservationModel {
    */
   static async listReservationsForManagement(parishId, page = 1, limit = 10) {
     const offset = (page - 1) * limit;
-    
+
     const query = `
       SELECT 
         r.id,
@@ -864,7 +864,7 @@ class ReservationModel {
       ORDER BY r.event_date DESC, r.event_time DESC
       LIMIT $2 OFFSET $3
     `;
-    
+
     const countQuery = `
       SELECT COUNT(*) as total
       FROM public.reservation r
@@ -873,12 +873,12 @@ class ReservationModel {
       INNER JOIN public.chapel c ON ce.chapel_id = c.id
       WHERE c.parish_id = $1
     `;
-    
+
     const [dataResult, countResult] = await Promise.all([
       db.query(query, [parishId, limit, offset]),
       db.query(countQuery, [parishId])
     ]);
-    
+
     return {
       data: dataResult.rows,
       total: parseInt(countResult.rows[0].total),
@@ -898,7 +898,7 @@ class ReservationModel {
    */
   static async searchReservationsForManagement(parishId, searchTerm, page = 1, limit = 10) {
     const offset = (page - 1) * limit;
-    
+
     const query = `
       SELECT 
         r.id,
@@ -929,7 +929,7 @@ class ReservationModel {
       ORDER BY r.event_date DESC, r.event_time DESC
       LIMIT $3 OFFSET $4
     `;
-    
+
     const countQuery = `
       SELECT COUNT(*) as total
       FROM public.reservation r
@@ -946,14 +946,14 @@ class ReservationModel {
           OR LOWER(CONCAT(per.first_names, ' ', per.paternal_surname)) LIKE LOWER($2)
         )
     `;
-    
+
     const searchPattern = `%${searchTerm}%`;
-    
+
     const [dataResult, countResult] = await Promise.all([
       db.query(query, [parishId, searchPattern, limit, offset]),
       db.query(countQuery, [parishId, searchPattern])
     ]);
-    
+
     return {
       data: dataResult.rows,
       total: parseInt(countResult.rows[0].total),
@@ -997,15 +997,15 @@ class ReservationModel {
       INNER JOIN public.person per ON u.person_id = per.id
       WHERE r.id = $1 AND c.parish_id = $2
     `;
-    
+
     const result = await db.query(query, [reservationId, parishId]);
-    
+
     if (!result.rows.length) {
       throw new Error('Reserva no encontrada');
     }
-    
+
     const reservation = result.rows[0];
-    
+
     // Obtener menciones de la reserva
     const mentionsQuery = `
       SELECT 
@@ -1019,10 +1019,10 @@ class ReservationModel {
       WHERE rm.reservation_id = $1
       ORDER BY rm.id
     `;
-    
+
     const mentionsResult = await db.query(mentionsQuery, [reservationId]);
     reservation.mentions = mentionsResult.rows || [];
-    
+
     return reservation;
   }
 
@@ -1043,20 +1043,20 @@ class ReservationModel {
       INNER JOIN public.chapel c ON ce.chapel_id = c.id
       WHERE r.id = $1 AND c.parish_id = $2
     `;
-    
+
     const checkResult = await db.query(checkQuery, [reservationId, parishId]);
-    
+
     if (!checkResult.rows.length) {
       throw new Error('Reserva no encontrada');
     }
-    
+
     const updateQuery = `
       UPDATE public.reservation
       SET status = $1, updated_at = CURRENT_TIMESTAMP
       WHERE id = $2
       RETURNING id, status
     `;
-    
+
     const result = await db.query(updateQuery, [newStatus, reservationId]);
     return result.rows[0];
   }
@@ -1078,51 +1078,51 @@ class ReservationModel {
       INNER JOIN public.chapel c ON ce.chapel_id = c.id
       WHERE r.id = $1 AND c.parish_id = $2
     `;
-    
+
     const checkResult = await db.query(checkQuery, [reservationId, parishId]);
-    
+
     if (!checkResult.rows.length) {
       throw new Error('Reserva no encontrada');
     }
-    
+
     const updates = [];
     const values = [];
     let paramIndex = 1;
-    
+
     if (updateData.event_date) {
       updates.push(`event_date = $${paramIndex++}`);
       values.push(updateData.event_date);
     }
-    
+
     if (updateData.event_time) {
       updates.push(`event_time = $${paramIndex++}`);
       values.push(updateData.event_time);
     }
-    
+
     if (updateData.paid_amount !== undefined) {
       updates.push(`paid_amount = $${paramIndex++}`);
       values.push(updateData.paid_amount);
     }
-    
+
     if (updateData.reschedule_date !== undefined) {
       updates.push(`reschedule_date = $${paramIndex++}`);
       values.push(updateData.reschedule_date);
     }
-    
+
     if (updates.length === 0) {
       throw new Error('No hay datos para actualizar');
     }
-    
+
     updates.push(`updated_at = CURRENT_TIMESTAMP`);
     values.push(reservationId);
-    
+
     const updateQuery = `
       UPDATE public.reservation
       SET ${updates.join(', ')}
       WHERE id = $${paramIndex}
       RETURNING *
     `;
-    
+
     const result = await db.query(updateQuery, values);
     return result.rows[0];
   }
@@ -1167,6 +1167,67 @@ class ReservationModel {
     `;
     const result = await db.query(query, [reservationId]);
     return result.rows[0];
+  }
+  /**
+   * Obtener requisitos de una reserva
+   * @param {number} reservationId - ID de la reserva
+   * @returns {Array} Lista de requisitos
+   */
+  static async getRequirements(reservationId) {
+    const query = `
+      SELECT 
+        id,
+        reservation_id,
+        base_requirement_id,
+        chapel_requirement_id,
+        name,
+        description,
+        completed,
+        updated_at
+      FROM public.reservation_requirement
+      WHERE reservation_id = $1
+      ORDER BY name
+    `;
+    const result = await db.query(query, [reservationId]);
+    return result.rows;
+  }
+
+  /**
+   * Actualizar estado de requisitos de una reserva
+   * @param {number} reservationId - ID de la reserva
+   * @param {Array} requirements - Lista de requisitos a actualizar [{id, completed}]
+   * @returns {Array} Lista de requisitos actualizados
+   */
+  static async updateRequirements(reservationId, requirements) {
+    const client = await db.getClient();
+
+    try {
+      await client.query('BEGIN');
+
+      const updatedRequirements = [];
+
+      for (const req of requirements) {
+        const query = `
+          UPDATE public.reservation_requirement
+          SET completed = $1, updated_at = CURRENT_TIMESTAMP
+          WHERE id = $2 AND reservation_id = $3
+          RETURNING id, completed, updated_at
+        `;
+        const result = await client.query(query, [req.completed, req.id, reservationId]);
+        if (result.rows.length > 0) {
+          updatedRequirements.push(result.rows[0]);
+        }
+      }
+
+      await client.query('COMMIT');
+      return updatedRequirements;
+
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 }
 
