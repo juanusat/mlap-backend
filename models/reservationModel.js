@@ -312,53 +312,53 @@ class ReservationModel {
           ]);
         }
       }
+      if (1 == 0) {
+        // Copiar requisitos base del evento
+        const baseRequirementsQuery = `
+          INSERT INTO public.reservation_requirement (
+            id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
+          )
+          SELECT 
+            nextval('public.reservation_requirement_id_seq'),
+            $1,
+            br.id,
+            NULL,
+            br.name,
+            br.description,
+            false,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+          FROM public.base_requirement br
+          INNER JOIN public.event_variant ev ON br.event_id = (
+            SELECT e.id FROM public.event e
+            INNER JOIN public.chapel_event ce ON e.id = ce.event_id
+            WHERE ce.id = ev.chapel_event_id
+          )
+          WHERE ev.id = $2 AND br.active = true
+        `;
+        await client.query(baseRequirementsQuery, [reservation.id, eventVariantId]);
 
-      // Copiar requisitos base del evento
-      const baseRequirementsQuery = `
-        INSERT INTO public.reservation_requirement (
-          id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
-        )
-        SELECT 
-          nextval('public.reservation_requirement_id_seq'),
-          $1,
-          br.id,
-          NULL,
-          br.name,
-          br.description,
-          false,
-          CURRENT_TIMESTAMP,
-          CURRENT_TIMESTAMP
-        FROM public.base_requirement br
-        INNER JOIN public.event_variant ev ON br.event_id = (
-          SELECT e.id FROM public.event e
-          INNER JOIN public.chapel_event ce ON e.id = ce.event_id
-          WHERE ce.id = ev.chapel_event_id
-        )
-        WHERE ev.id = $2 AND br.active = true
-      `;
-      await client.query(baseRequirementsQuery, [reservation.id, eventVariantId]);
-
-      // Copiar requisitos adicionales de la capilla
-      const chapelRequirementsQuery = `
-        INSERT INTO public.reservation_requirement (
-          id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
-        )
-        SELECT 
-          nextval('public.reservation_requirement_id_seq'),
-          $1,
-          NULL,
-          cer.id,
-          cer.name,
-          cer.description,
-          false,
-          CURRENT_TIMESTAMP,
-          CURRENT_TIMESTAMP
-        FROM public.chapel_event_requirement cer
-        INNER JOIN public.event_variant ev ON cer.chapel_event_id = ev.chapel_event_id
-        WHERE ev.id = $2 AND cer.active = true
-      `;
-      await client.query(chapelRequirementsQuery, [reservation.id, eventVariantId]);
-
+        // Copiar requisitos adicionales de la capilla
+        const chapelRequirementsQuery = `
+          INSERT INTO public.reservation_requirement (
+            id, reservation_id, base_requirement_id, chapel_requirement_id, name, description, completed, created_at, updated_at
+          )
+          SELECT 
+            nextval('public.reservation_requirement_id_seq'),
+            $1,
+            NULL,
+            cer.id,
+            cer.name,
+            cer.description,
+            false,
+            CURRENT_TIMESTAMP,
+            CURRENT_TIMESTAMP
+          FROM public.chapel_event_requirement cer
+          INNER JOIN public.event_variant ev ON cer.chapel_event_id = ev.chapel_event_id
+          WHERE ev.id = $2 AND cer.active = true
+        `;
+        await client.query(chapelRequirementsQuery, [reservation.id, eventVariantId]);
+      }
       await client.query('COMMIT');
       return reservation;
 
@@ -1167,67 +1167,6 @@ class ReservationModel {
     `;
     const result = await db.query(query, [reservationId]);
     return result.rows[0];
-  }
-  /**
-   * Obtener requisitos de una reserva
-   * @param {number} reservationId - ID de la reserva
-   * @returns {Array} Lista de requisitos
-   */
-  static async getRequirements(reservationId) {
-    const query = `
-      SELECT 
-        id,
-        reservation_id,
-        base_requirement_id,
-        chapel_requirement_id,
-        name,
-        description,
-        completed,
-        updated_at
-      FROM public.reservation_requirement
-      WHERE reservation_id = $1
-      ORDER BY name
-    `;
-    const result = await db.query(query, [reservationId]);
-    return result.rows;
-  }
-
-  /**
-   * Actualizar estado de requisitos de una reserva
-   * @param {number} reservationId - ID de la reserva
-   * @param {Array} requirements - Lista de requisitos a actualizar [{id, completed}]
-   * @returns {Array} Lista de requisitos actualizados
-   */
-  static async updateRequirements(reservationId, requirements) {
-    const client = await db.getClient();
-
-    try {
-      await client.query('BEGIN');
-
-      const updatedRequirements = [];
-
-      for (const req of requirements) {
-        const query = `
-          UPDATE public.reservation_requirement
-          SET completed = $1, updated_at = CURRENT_TIMESTAMP
-          WHERE id = $2 AND reservation_id = $3
-          RETURNING id, completed, updated_at
-        `;
-        const result = await client.query(query, [req.completed, req.id, reservationId]);
-        if (result.rows.length > 0) {
-          updatedRequirements.push(result.rows[0]);
-        }
-      }
-
-      await client.query('COMMIT');
-      return updatedRequirements;
-
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
   }
 }
 
