@@ -1231,6 +1231,119 @@ class ReservationModel {
       client.release();
     }
   }
+
+  /**
+   * Obtener historial de reservas del usuario (paginado)
+   * @param {number} userId - ID del usuario
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros por página
+   * @returns {Object} Reservas y metadatos de paginación
+   */
+  static async getHistoryReservations(userId, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      WHERE r.user_id = $1 
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+    `;
+    const countResult = await db.query(countQuery, [userId]);
+    const totalRecords = parseInt(countResult.rows[0].total);
+
+    const query = `
+      SELECT 
+        r.id,
+        r.beneficiary_full_name,
+        ev.name as event_name,
+        r.event_date,
+        r.event_time,
+        COALESCE(r.paid_amount, 0) as paid_amount,
+        r.status,
+        c.name as chapel_name,
+        p.name as parish_name,
+        ev.current_price
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public.parish p ON c.parish_id = p.id
+      WHERE r.user_id = $1 
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+      ORDER BY r.event_date DESC, r.created_at DESC
+      LIMIT $2 OFFSET $3
+    `;
+    const result = await db.query(query, [userId, limit, offset]);
+
+    return {
+      data: result.rows,
+      meta: {
+        total_records: totalRecords,
+        total_pages: Math.ceil(totalRecords / limit),
+        current_page: page,
+        per_page: limit
+      }
+    };
+  }
+
+  /**
+   * Buscar historial de reservas del usuario por nombre de evento (paginado)
+   * @param {number} userId - ID del usuario
+   * @param {string} searchTerm - Término de búsqueda
+   * @param {number} page - Número de página
+   * @param {number} limit - Límite de registros por página
+   * @returns {Object} Reservas y metadatos de paginación
+   */
+  static async searchHistoryReservations(userId, searchTerm, page = 1, limit = 10) {
+    const offset = (page - 1) * limit;
+    const searchPattern = `%${searchTerm}%`;
+
+    const countQuery = `
+      SELECT COUNT(*) as total
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      WHERE r.user_id = $1 
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+        AND LOWER(ev.name) LIKE LOWER($2)
+    `;
+    const countResult = await db.query(countQuery, [userId, searchPattern]);
+    const totalRecords = parseInt(countResult.rows[0].total);
+
+    const query = `
+      SELECT 
+        r.id,
+        r.beneficiary_full_name,
+        ev.name as event_name,
+        r.event_date,
+        r.event_time,
+        COALESCE(r.paid_amount, 0) as paid_amount,
+        r.status,
+        c.name as chapel_name,
+        p.name as parish_name,
+        ev.current_price
+      FROM public.reservation r
+      INNER JOIN public.event_variant ev ON r.event_variant_id = ev.id
+      INNER JOIN public.chapel_event ce ON ev.chapel_event_id = ce.id
+      INNER JOIN public.chapel c ON ce.chapel_id = c.id
+      INNER JOIN public.parish p ON c.parish_id = p.id
+      WHERE r.user_id = $1 
+        AND r.status IN ('COMPLETED', 'FULFILLED', 'CANCELLED', 'REJECTED')
+        AND LOWER(ev.name) LIKE LOWER($2)
+      ORDER BY r.event_date DESC, r.created_at DESC
+      LIMIT $3 OFFSET $4
+    `;
+    const result = await db.query(query, [userId, searchPattern, limit, offset]);
+
+    return {
+      data: result.rows,
+      meta: {
+        total_records: totalRecords,
+        total_pages: Math.ceil(totalRecords / limit),
+        current_page: page,
+        per_page: limit
+      }
+    };
+  }
 }
 
 module.exports = ReservationModel;
