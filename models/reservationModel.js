@@ -812,6 +812,19 @@ class ReservationModel {
     `;
     const requirementsResult = await db.query(requirementsQuery, [reservationId]);
 
+    const mentionsQuery = `
+      SELECT 
+        rm.id,
+        rm.mention_name,
+        mt.name as mention_type_name,
+        mt.code as mention_type_code
+      FROM public.reservation_mention rm
+      INNER JOIN public.mention_type mt ON rm.mention_type_id = mt.id
+      WHERE rm.reservation_id = $1
+      ORDER BY mt.name, rm.mention_name
+    `;
+    const mentionsResult = await db.query(mentionsQuery, [reservationId]);
+
     return {
       id: reservation.id,
       beneficiary_full_name: reservation.beneficiary_full_name,
@@ -826,7 +839,8 @@ class ReservationModel {
         name: reservation.chapel_name,
         parish_name: reservation.parish_name
       },
-      requirements: requirementsResult.rows
+      requirements: requirementsResult.rows,
+      mentions: mentionsResult.rows
     };
   }
 
