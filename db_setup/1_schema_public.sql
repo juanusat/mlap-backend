@@ -399,7 +399,7 @@ CREATE TABLE IF NOT EXISTS public.event_audit_log (
 CREATE TABLE IF NOT EXISTS public.mention_type (
     id INTEGER NOT NULL,
     code VARCHAR(10) UNIQUE NOT NULL, -- Código corto (ej: 'DIF', 'SAL')
-    name VARCHAR(100) NOT NULL,       -- Nombre (ej: 'Difunto', 'Salud')
+    name VARCHAR(100) UNIQUE NOT NULL,       -- Nombre (ej: 'Difunto', 'Salud')
     description VARCHAR(255),
     active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
