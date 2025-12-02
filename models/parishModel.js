@@ -17,7 +17,7 @@ class ParishModel {
         )
         RETURNING id
       `;
-      const personResult = await client.query(personQuery, ['Admin', 'Parish', '', email, '00000000']);
+      const personResult = await client.query(personQuery, ['Administrador', 'Parroquia', '', email, '00000000']);
       const personId = personResult.rows[0].id;
 
       const userQuery = `

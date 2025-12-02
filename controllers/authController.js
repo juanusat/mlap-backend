@@ -285,7 +285,7 @@ const requestPasswordReset = async (req, res, next) => {
     }
 
     // Validar formato del correo
-    const emailRegex = /^[a-zA-Z0-9._-]{4,50}@[a-zA-Z0-9-]{2,8}\.[a-zA-Z]{2,8}(\.[a-zA-Z]{2,8})?$/;
+    const emailRegex = /^[a-zA-Z0-9._-]{1,50}@[a-zA-Z0-9-]{2,8}\.[a-zA-Z]{2,8}(\.[a-zA-Z]{2,8})?$/;
     if (!emailRegex.test(email.trim())) {
       return res.status(400).json({
         message: 'El formato del correo no es válido'
