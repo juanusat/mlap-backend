@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS public.user (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reset_token VARCHAR(6),
     reset_token_expires_at TIMESTAMP,
+    change_session TIMESTAMP,
     
     CONSTRAINT user_pkey PRIMARY KEY (id),
     CONSTRAINT fk_user_person FOREIGN KEY (person_id) REFERENCES person(id) ON DELETE CASCADE
