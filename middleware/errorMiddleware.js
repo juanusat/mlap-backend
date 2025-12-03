@@ -27,7 +27,7 @@ const errorMiddleware = (err, req, res, next) => {
           'role_pkey': 'Ya existe un rol con ese ID',
           'uk_role_parish_name': 'Ya existe un rol con ese nombre en esta parroquia',
           'uk_role_permission_active': 'Este permiso ya está asignado a este rol',
-          'uk_user_role_active': 'Este rol ya está asignado a este usuario',
+          'uk_user_role_active': 'Este rol ya está asignado a este usuario o ya fue revocado anteriormente',
           'event_pkey': 'Ya existe un evento con ese ID',
           'uk_event_name': 'Ya existe un evento con ese nombre',
           'uk_chapel_event': 'Este evento ya está asignado a esta capilla',
