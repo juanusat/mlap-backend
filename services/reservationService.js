@@ -280,7 +280,8 @@ class ReservationService {
     const paidAmount = parseFloat(reservation.paid_amount || 0);
     const remaining = currentPrice - paidAmount;
 
-    if (amount > remaining) {
+    // Usar tolerancia para comparación de punto flotante (0.001 = 1 centavo de tolerancia)
+    if (amount > remaining + 0.001) {
       throw new Error(`El monto del pago (${amount}) excede el saldo pendiente (${remaining.toFixed(2)})`);
     }
 
@@ -314,7 +315,8 @@ class ReservationService {
     const paidAmount = parseFloat(reservation.paid_amount || 0);
     const remaining = currentPrice - paidAmount;
 
-    if (amount > remaining) {
+    // Usar tolerancia para comparación de punto flotante (0.001 = 1 centavo de tolerancia)
+    if (amount > remaining + 0.001) {
       throw new Error(`El monto del pago (${amount}) excede el saldo pendiente (${remaining.toFixed(2)})`);
     }
 
