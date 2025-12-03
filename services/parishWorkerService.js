@@ -111,16 +111,37 @@ const inviteWorker = async (parishId, email) => {
     };
   }
   
+  // Verificar si existe alguna asociación (activa o inactiva)
   const existingAssociation = await pool.query(
-    `SELECT id FROM association 
-     WHERE user_id = $1 AND parish_id = $2 AND end_date IS NULL`,
+    `SELECT id, active, end_date FROM association 
+     WHERE user_id = $1 AND parish_id = $2`,
     [person.user_id, parishId]
   );
   
-  if (existingAssociation.rows.length > 0) {
+  // Si existe una asociación activa
+  if (existingAssociation.rows.length > 0 && 
+      existingAssociation.rows[0].active && 
+      existingAssociation.rows[0].end_date === null) {
     throw new Error('El usuario ya está asociado a esta parroquia');
   }
   
+  // Si existe una asociación inactiva o finalizada, reactivarla
+  if (existingAssociation.rows.length > 0) {
+    const associationId = existingAssociation.rows[0].id;
+    await pool.query(
+      `UPDATE association 
+       SET active = true, end_date = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1`,
+      [associationId]
+    );
+    
+    return {
+      message: 'Asociación reactivada exitosamente.',
+      data: { association_id: associationId }
+    };
+  }
+  
+  // Si no existe ninguna asociación, crear una nueva
   const result = await pool.query(
     `INSERT INTO association (id, user_id, parish_id, start_date, active)
      VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM association), $1, $2, CURRENT_DATE, true)
