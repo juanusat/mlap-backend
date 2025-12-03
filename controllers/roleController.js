@@ -79,8 +79,12 @@ const createRole = async (req, res) => {
     });
   } catch (error) {
     console.error('Error al crear rol:', error);
+    let messageDefault = 'Error al crear el rol';
+    if (error.constraint == 'uk_role_parish_name') {
+      messageDefault = 'Ya existe un rol con ese nombre en esta parroquia';
+    }
     res.status(500).json({
-      message: 'Error al crear el rol',
+      message: messageDefault,
       data: null,
       error: error.message
     });
