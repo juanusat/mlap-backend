@@ -14,6 +14,7 @@ class ReservationModel {
         ev.description as event_description,
         ev.current_price,
         ev.duration_minutes,
+        ev.current_price as price,
         c.id as chapel_id,
         c.name as chapel_name,
         p.id as parish_id,
