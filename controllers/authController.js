@@ -3,39 +3,40 @@ const userModel = require('../models/userModel');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const config = require('../config');
+const socket = require('../socket');
 
 const cookieOptions = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    path: '/',
+  httpOnly: true,
+  secure: process.env.NODE_ENV === 'production',
+  sameSite: 'strict',
+  path: '/',
 };
 
 const hashUserAgent = (userAgent) => {
-    return crypto.createHash('sha256').update(userAgent || '').digest('hex');
+  return crypto.createHash('sha256').update(userAgent || '').digest('hex');
 };
 
 const register = async (req, res, next) => {
-    try {
-        const { first_names, paternal_surname, maternal_surname, email, document_type_id, document, username, password } = req.body;
-        
-        await authService.register({
-            first_names,
-            paternal_surname,
-            maternal_surname,
-            email,
-            document_type_id,
-            document,
-            username,
-            password
-        });
+  try {
+    const { first_names, paternal_surname, maternal_surname, email, document_type_id, document, username, password } = req.body;
 
-        res.status(201).json({
-            message: 'Usuario creado exitosamente'
-        });
-    } catch (error) {
-        next(error);
-    }
+    await authService.register({
+      first_names,
+      paternal_surname,
+      maternal_surname,
+      email,
+      document_type_id,
+      document,
+      username,
+      password
+    });
+
+    res.status(201).json({
+      message: 'Usuario creado exitosamente'
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const login = async (req, res, next) => {
@@ -44,230 +45,242 @@ const login = async (req, res, next) => {
     const result = await authService.login(email, password);
     const userAgent = req.headers['user-agent'];
     const uaHash = hashUserAgent(userAgent);
-    
+
     const decoded = jwt.verify(result.token, config.jwtSecret);
     const { exp, iat, ...payload } = decoded;
     const tokenPayload = { ...payload, uaHash };
     const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
-    
+
     res.cookie('session_token', newToken, cookieOptions);
 
-        const responseData = {
-            message: 'Operación exitosa',
-            data: {
-                user_info: {
-                    full_name: result.user.user_name_full,
-                    email: result.user.email
-                },
-                is_diocese_user: result.is_diocese_user,
-                parish_associations: result.parish_associations
-            }
-        };
-        // Log de acceso: solo email y resultado OK
-        console.log(`Login intento: ${email} (OK)`);
-        res.status(200).json(responseData);
+    const responseData = {
+      message: 'Operación exitosa',
+      data: {
+        user_info: {
+          full_name: result.user.user_name_full,
+          email: result.user.email
+        },
+        is_diocese_user: result.is_diocese_user,
+        parish_associations: result.parish_associations
+      }
+    };
+    // Log de acceso: solo email y resultado OK
+    console.log(`Login intento: ${email} (OK)`);
+    res.status(200).json(responseData);
   } catch (error) {
-        // Log de acceso: solo email y resultado FAIL
-        if (req.body && req.body.email) {
-            console.log(`Login intento: ${req.body.email} (FAIL)`);
-        }
-        next(error);
+    // Log de acceso: solo email y resultado FAIL
+    if (req.body && req.body.email) {
+      console.log(`Login intento: ${req.body.email} (FAIL)`);
+    }
+    next(error);
   }
 };
 
 const selectContext = async (req, res, next) => {
-    try {
-        const { context_type, parishId } = req.body;
-        const { userId } = req.user;
+  try {
+    const { context_type, parishId } = req.body;
+    const { userId } = req.user;
 
-        let tokenPayload;
-        let permissions = [];
-        
-        const userAgent = req.headers['user-agent'];
-        const uaHash = hashUserAgent(userAgent);
+    let tokenPayload;
+    let permissions = [];
 
-        if (context_type === 'DIOCESE') {
-            tokenPayload = { userId, context_type: 'DIOCESE', parishId: null, permissions, uaHash };
-        } else if (context_type === 'PARISH') {
-            if (!parishId) {
-                return res.status(400).json({
-                    message: 'Solicitud incorrecta',
-                    error: 'parishId es requerido cuando context_type es PARISH'
-                });
-            }
-            tokenPayload = { userId, context_type: 'PARISH', parishId, permissions, uaHash };
-        } else if (context_type === 'PARISHIONER') {
-            permissions = await userModel.findParishionerPermissions();
-            tokenPayload = { userId, context_type: 'PARISHIONER', parishId: null, permissions, uaHash };
-        } else {
-            return res.status(400).json({
-                message: 'Solicitud incorrecta',
-                error: 'context_type debe ser PARISH, PARISHIONER o DIOCESE'
-            });
-        }
+    const userAgent = req.headers['user-agent'];
+    const uaHash = hashUserAgent(userAgent);
 
-        const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
-        res.cookie('session_token', newToken, cookieOptions);
-
-        res.status(200).json({
-            message: 'Operación exitosa'
+    if (context_type === 'DIOCESE') {
+      tokenPayload = { userId, context_type: 'DIOCESE', parishId: null, permissions, uaHash };
+    } else if (context_type === 'PARISH') {
+      if (!parishId) {
+        return res.status(400).json({
+          message: 'Solicitud incorrecta',
+          error: 'parishId es requerido cuando context_type es PARISH'
         });
-    } catch (error) {
-        next(error);
+      }
+      tokenPayload = { userId, context_type: 'PARISH', parishId, permissions, uaHash };
+    } else if (context_type === 'PARISHIONER') {
+      permissions = await userModel.findParishionerPermissions();
+      tokenPayload = { userId, context_type: 'PARISHIONER', parishId: null, permissions, uaHash };
+    } else {
+      return res.status(400).json({
+        message: 'Solicitud incorrecta',
+        error: 'context_type debe ser PARISH, PARISHIONER o DIOCESE'
+      });
     }
+
+    const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
+    res.cookie('session_token', newToken, cookieOptions);
+
+    res.status(200).json({
+      message: 'Operación exitosa'
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const selectRole = async (req, res, next) => {
-    try {
-        const { roleId } = req.body;
-        const { userId, parishId, context_type } = req.user;
+  try {
+    const { roleId } = req.body;
+    const { userId, parishId, context_type } = req.user;
 
-        if (!parishId || context_type !== 'PARISH') {
-            return res.status(403).json({ 
-                message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.'
-            });
-        }
-
-        const permissions = await userModel.findRolePermissions(roleId);
-
-        const userAgent = req.headers['user-agent'];
-        const uaHash = hashUserAgent(userAgent);
-
-        const tokenPayload = { userId, context_type, parishId, roleId, permissions, uaHash };
-        const finalToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
-
-        res.cookie('session_token', finalToken, cookieOptions);
-
-        res.status(200).json({
-            message: 'Operación exitosa'
-        });
-    } catch (error) {
-        next(error);
+    if (!parishId || context_type !== 'PARISH') {
+      return res.status(403).json({
+        message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.'
+      });
     }
+
+    const permissions = await userModel.findRolePermissions(roleId);
+
+    const userAgent = req.headers['user-agent'];
+    const uaHash = hashUserAgent(userAgent);
+
+    const tokenPayload = { userId, context_type, parishId, roleId, permissions, uaHash };
+    const finalToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
+
+    res.cookie('session_token', finalToken, cookieOptions);
+
+    // Update session timestamp and emit event
+    await userModel.updateSessionTimestamp(userId);
+    try {
+      socket.getIO().emit(`session_update_${userId}`, {
+        change_session: new Date(),
+        reason: 'ROLE_CHANGE'
+      });
+    } catch (socketError) {
+      console.error('Socket emission failed:', socketError);
+    }
+
+    res.status(200).json({
+      message: 'Operación exitosa'
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const logout = (req, res) => {
-    res.clearCookie('session_token', cookieOptions);
-    res.status(200).json({ 
-        message: 'Operación exitosa'
-    });
+  res.clearCookie('session_token', cookieOptions);
+  res.status(200).json({
+    message: 'Operación exitosa'
+  });
 };
 
 const getRolesForCurrentParish = async (req, res, next) => {
-    try {
-        const { userId, parishId, context_type } = req.user;
+  try {
+    const { userId, parishId, context_type } = req.user;
 
-        if (!parishId || context_type !== 'PARISH') {
-            return res.status(403).json({ 
-                message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.'
-            });
-        }
-
-        const roles = await userModel.findUserRolesInParish(userId, parishId);
-        
-        res.status(200).json({
-            message: 'Operación exitosa',
-            data: roles
-        });
-    } catch (error) {
-        next(error);
+    if (!parishId || context_type !== 'PARISH') {
+      return res.status(403).json({
+        message: 'Prohibido. No se ha establecido un contexto de parroquia válido para la sesión.'
+      });
     }
+
+    const roles = await userModel.findUserRolesInParish(userId, parishId);
+
+    res.status(200).json({
+      message: 'Operación exitosa',
+      data: roles
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 const getSession = async (req, res, next) => {
-    try {
-        const { userId, parishId, context_type, roleId, permissions } = req.user;
+  try {
+    const { userId, parishId, context_type, roleId, permissions } = req.user;
 
-        const userInfo = await userModel.findUserSessionInfo(userId);
-        if (!userInfo) {
-            return res.status(401).json({
-                message: 'No autorizado. El token de sesión falta, es inválido o ha expirado.'
-            });
-        }
+    const userInfo = await userModel.findUserSessionInfo(userId);
+    if (!userInfo) {
+      return res.status(401).json({
+        message: 'No autorizado. El token de sesión falta, es inválido o ha expirado.'
+      });
+    }
 
-        const fullName = `${userInfo.first_names} ${userInfo.paternal_surname}${userInfo.maternal_surname ? ' ' + userInfo.maternal_surname : ''}`.trim();
-        
-        const profilePhoto = userInfo.profile_photo || null;
-        
-        let parishInfo = null;
-        let availableRoles = null;
-        let currentRole = null;
-        let isParishAdmin = false;
-        let currentPermissions = permissions || [];
-        let forceLogout = false;
+    const fullName = `${userInfo.first_names} ${userInfo.paternal_surname}${userInfo.maternal_surname ? ' ' + userInfo.maternal_surname : ''}`.trim();
 
-        if (context_type === 'PARISH' && parishId) {
-            const associationStatus = await userModel.checkUserAssociationStatus(userId, parishId);
-            
-            if (!associationStatus || !associationStatus.active) {
-                forceLogout = true;
-                return res.status(200).json({
-                    message: 'Operación exitosa',
-                    data: {
-                        force_logout: true,
-                        logout_reason: 'Tu acceso a esta parroquia ha sido revocado. Por favor, inicia sesión nuevamente.'
-                    }
-                });
-            }
+    const profilePhoto = userInfo.profile_photo || null;
 
-            parishInfo = await userModel.findParishById(parishId);
-            availableRoles = await userModel.findUserRolesInParish(userId, parishId);
-            isParishAdmin = await userModel.isParishAdmin(userId, parishId);
-            
-            if (roleId) {
-                const roleStillValid = availableRoles.some(r => r.id === roleId);
-                if (!roleStillValid && !isParishAdmin) {
-                    forceLogout = true;
-                    return res.status(200).json({
-                        message: 'Operación exitosa',
-                        data: {
-                            force_logout: true,
-                            logout_reason: 'El rol que tenías asignado ha sido revocado. Por favor, inicia sesión nuevamente.'
-                        }
-                    });
-                }
+    let parishInfo = null;
+    let availableRoles = null;
+    let currentRole = null;
+    let isParishAdmin = false;
+    let currentPermissions = permissions || [];
+    let forceLogout = false;
 
-                currentRole = await userModel.findRoleById(roleId);
-                if (isParishAdmin) {
-                    const allPermsQuery = `SELECT code FROM public.permission WHERE category IN ('ACTOS LITÚRGICOS', 'SEGURIDAD', 'PARROQUIA')`;
-                    const { rows } = await require('../db').query(allPermsQuery);
-                    currentPermissions = rows.map(r => r.code);
-                } else {
-                    currentPermissions = await userModel.findRolePermissions(roleId);
-                }
-            }
-        }
+    if (context_type === 'PARISH' && parishId) {
+      const associationStatus = await userModel.checkUserAssociationStatus(userId, parishId);
 
-        const userAgent = req.headers['user-agent'];
-        const uaHash = hashUserAgent(userAgent);
+      if (!associationStatus || !associationStatus.active) {
+        forceLogout = true;
+        return res.status(200).json({
+          message: 'Operación exitosa',
+          data: {
+            force_logout: true,
+            logout_reason: 'Tu acceso a esta parroquia ha sido revocado. Por favor, inicia sesión nuevamente.'
+          }
+        });
+      }
 
-        const tokenPayload = { userId, context_type, parishId, roleId, permissions: currentPermissions, uaHash };
-        const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
-        res.cookie('session_token', newToken, cookieOptions);
+      parishInfo = await userModel.findParishById(parishId);
+      availableRoles = await userModel.findUserRolesInParish(userId, parishId);
+      isParishAdmin = await userModel.isParishAdmin(userId, parishId);
 
-        res.status(200).json({
+      if (roleId) {
+        const roleStillValid = availableRoles.some(r => r.id === roleId);
+        if (!roleStillValid && !isParishAdmin) {
+          forceLogout = true;
+          return res.status(200).json({
             message: 'Operación exitosa',
             data: {
-                context_type: context_type,
-                person: {
-                    full_name: fullName,
-                    profile_photo: profilePhoto
-                },
-                is_diocese_user: userInfo.is_diocese,
-                is_parish_admin: isParishAdmin,
-                parish: parishInfo ? {
-                    id: parishInfo.id,
-                    name: parishInfo.name
-                } : null,
-                available_roles: availableRoles,
-                current_role: currentRole,
-                permissions: currentPermissions,
-                force_logout: forceLogout
+              force_logout: true,
+              logout_reason: 'El rol que tenías asignado ha sido revocado. Por favor, inicia sesión nuevamente.'
             }
-        });
-    } catch (error) {
-        next(error);
+          });
+        }
+
+        currentRole = await userModel.findRoleById(roleId);
+        if (isParishAdmin) {
+          const allPermsQuery = `SELECT code FROM public.permission WHERE category IN ('ACTOS LITÚRGICOS', 'SEGURIDAD', 'PARROQUIA')`;
+          const { rows } = await require('../db').query(allPermsQuery);
+          currentPermissions = rows.map(r => r.code);
+        } else {
+          currentPermissions = await userModel.findRolePermissions(roleId);
+        }
+      }
     }
+
+    const userAgent = req.headers['user-agent'];
+    const uaHash = hashUserAgent(userAgent);
+
+    const tokenPayload = { userId, context_type, parishId, roleId, permissions: currentPermissions, uaHash };
+    const newToken = jwt.sign(tokenPayload, config.jwtSecret, { expiresIn: '24h' });
+    res.cookie('session_token', newToken, cookieOptions);
+
+    res.status(200).json({
+      message: 'Operación exitosa',
+      data: {
+        id: userId,
+        context_type: context_type,
+        person: {
+          full_name: fullName,
+          profile_photo: profilePhoto
+        },
+        is_diocese_user: userInfo.is_diocese,
+        is_parish_admin: isParishAdmin,
+        parish: parishInfo ? {
+          id: parishInfo.id,
+          name: parishInfo.name
+        } : null,
+        available_roles: availableRoles,
+        current_role: currentRole,
+        permissions: currentPermissions,
+        force_logout: forceLogout
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
 /**

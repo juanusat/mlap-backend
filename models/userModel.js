@@ -2,10 +2,10 @@ const db = require('../db');
 
 const create = async (userData) => {
   const client = await db.getClient();
-  
+
   try {
     await client.query('BEGIN');
-    
+
     const personQuery = `
       INSERT INTO public.person (id, first_names, paternal_surname, maternal_surname, email, document_type_id, document)
       VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM person), $1, $2, $3, $4, $5, $6)
@@ -19,9 +19,9 @@ const create = async (userData) => {
       userData.document_type_id || null,
       userData.document || null
     ]);
-    
+
     const personId = personResult.rows[0].id;
-    
+
     const userQuery = `
       INSERT INTO public.user (id, person_id, username, password_hash, active)
       VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM "user"), $1, $2, $3, TRUE)
@@ -32,10 +32,10 @@ const create = async (userData) => {
       userData.username,
       userData.password_hash
     ]);
-    
+
     await client.query('COMMIT');
     return userResult.rows[0];
-    
+
   } catch (error) {
     await client.query('ROLLBACK');
     throw error;
@@ -87,7 +87,7 @@ const isDioceseUser = async (userId) => {
 };
 
 const findUserRolesInParish = async (userId, parishId) => {
-    const query = `
+  const query = `
       SELECT 
           r.id, 
           r.name
@@ -100,8 +100,8 @@ const findUserRolesInParish = async (userId, parishId) => {
         AND r.active = TRUE
         AND ur.revocation_date IS NULL;
   `;
-    const { rows } = await db.query(query, [userId, parishId]);
-    return rows;
+  const { rows } = await db.query(query, [userId, parishId]);
+  return rows;
 };
 
 const findUserSessionInfo = async (userId) => {
@@ -188,21 +188,6 @@ const checkUserAssociationStatus = async (userId, parishId) => {
   return rows[0];
 };
 
-module.exports = {
-  create,
-  findByEmail,
-  findUserAssociations,
-  findUserRolesInParish,
-  isDioceseUser,
-  findUserSessionInfo,
-  findParishById,
-  findRoleById,
-  isParishAdmin,
-  findRolePermissions,
-  findParishionerPermissions,
-  checkUserAssociationStatus
-};
-
 /**
  * Actualiza el token de restablecimiento de contraseña
  * @param {number} userId - ID del usuario
@@ -277,6 +262,15 @@ const updatePassword = async (userId, passwordHash) => {
   await db.query(query, [passwordHash, userId]);
 };
 
+const updateSessionTimestamp = async (userId) => {
+  const query = `
+    UPDATE public.user
+    SET change_session = CURRENT_TIMESTAMP
+    WHERE id = $1;
+  `;
+  await db.query(query, [userId]);
+};
+
 module.exports = {
   create,
   findByEmail,
@@ -294,4 +288,5 @@ module.exports = {
   findByResetToken,
   clearResetToken,
   updatePassword,
+  updateSessionTimestamp,
 };
