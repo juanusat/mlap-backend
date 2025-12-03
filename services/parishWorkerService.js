@@ -1,8 +1,10 @@
 const pool = require('../db');
+const userModel = require('../models/userModel');
+const socket = require('../socket');
 
 const listWorkers = async (parishId, page, limit) => {
   const offset = (page - 1) * limit;
-  
+
   const countResult = await pool.query(
     `SELECT COUNT(*) 
      FROM association a
@@ -10,10 +12,10 @@ const listWorkers = async (parishId, page, limit) => {
      WHERE a.parish_id = $1 AND a.end_date IS NULL`,
     [parishId]
   );
-  
+
   const totalRecords = parseInt(countResult.rows[0].count);
   const totalPages = Math.ceil(totalRecords / limit);
-  
+
   const result = await pool.query(
     `SELECT 
       a.id as association_id,
@@ -32,7 +34,7 @@ const listWorkers = async (parishId, page, limit) => {
      LIMIT $2 OFFSET $3`,
     [parishId, limit, offset]
   );
-  
+
   return {
     total_records: totalRecords,
     total_pages: totalPages,
@@ -44,7 +46,7 @@ const listWorkers = async (parishId, page, limit) => {
 const searchWorkers = async (parishId, page, limit, search) => {
   const offset = (page - 1) * limit;
   const searchPattern = `%${search}%`;
-  
+
   const countResult = await pool.query(
     `SELECT COUNT(*) 
      FROM association a
@@ -54,10 +56,10 @@ const searchWorkers = async (parishId, page, limit, search) => {
      AND (p.first_names ILIKE $2 OR p.paternal_surname ILIKE $2 OR p.email ILIKE $2)`,
     [parishId, searchPattern]
   );
-  
+
   const totalRecords = parseInt(countResult.rows[0].count);
   const totalPages = Math.ceil(totalRecords / limit);
-  
+
   const result = await pool.query(
     `SELECT 
       a.id as association_id,
@@ -77,7 +79,7 @@ const searchWorkers = async (parishId, page, limit, search) => {
      LIMIT $3 OFFSET $4`,
     [parishId, searchPattern, limit, offset]
   );
-  
+
   return {
     total_records: totalRecords,
     total_pages: totalPages,
@@ -94,37 +96,37 @@ const inviteWorker = async (parishId, email) => {
      WHERE p.email = $1`,
     [email]
   );
-  
+
   if (personResult.rows.length === 0) {
     return {
       message: 'Usuario no encontrado. Se ha enviado una invitación por correo electrónico para que se registre y se asocie a la parroquia.',
       data: null
     };
   }
-  
+
   const person = personResult.rows[0];
-  
+
   if (!person.user_id) {
     return {
       message: 'Usuario no encontrado. Se ha enviado una invitación por correo electrónico para que se registre y se asocie a la parroquia.',
       data: null
     };
   }
-  
+
   // Verificar si existe alguna asociación (activa o inactiva)
   const existingAssociation = await pool.query(
     `SELECT id, active, end_date FROM association 
      WHERE user_id = $1 AND parish_id = $2`,
     [person.user_id, parishId]
   );
-  
+
   // Si existe una asociación activa
-  if (existingAssociation.rows.length > 0 && 
-      existingAssociation.rows[0].active && 
-      existingAssociation.rows[0].end_date === null) {
+  if (existingAssociation.rows.length > 0 &&
+    existingAssociation.rows[0].active &&
+    existingAssociation.rows[0].end_date === null) {
     throw new Error('El usuario ya está asociado a esta parroquia');
   }
-  
+
   // Si existe una asociación inactiva o finalizada, reactivarla
   if (existingAssociation.rows.length > 0) {
     const associationId = existingAssociation.rows[0].id;
@@ -134,13 +136,13 @@ const inviteWorker = async (parishId, email) => {
        WHERE id = $1`,
       [associationId]
     );
-    
+
     return {
       message: 'Asociación reactivada exitosamente.',
       data: { association_id: associationId }
     };
   }
-  
+
   // Si no existe ninguna asociación, crear una nueva
   const result = await pool.query(
     `INSERT INTO association (id, user_id, parish_id, start_date, active)
@@ -148,7 +150,7 @@ const inviteWorker = async (parishId, email) => {
      RETURNING id`,
     [person.user_id, parishId]
   );
-  
+
   return {
     message: 'Usuario asociado exitosamente a la parroquia.',
     data: { association_id: result.rows[0].id }
@@ -157,7 +159,7 @@ const inviteWorker = async (parishId, email) => {
 
 const listWorkerRoles = async (associationId, page, limit) => {
   const offset = (page - 1) * limit;
-  
+
   const workerResult = await pool.query(
     `SELECT 
       a.id as association_id,
@@ -170,21 +172,21 @@ const listWorkerRoles = async (associationId, page, limit) => {
      WHERE a.id = $1`,
     [associationId]
   );
-  
+
   if (workerResult.rows.length === 0) {
     throw new Error('Asociación no encontrada');
   }
-  
+
   const countResult = await pool.query(
     `SELECT COUNT(*) 
      FROM user_role ur
      WHERE ur.association_id = $1 AND ur.revocation_date IS NULL`,
     [associationId]
   );
-  
+
   const totalRecords = parseInt(countResult.rows[0].count);
   const totalPages = Math.ceil(totalRecords / limit);
-  
+
   const rolesResult = await pool.query(
     `SELECT 
       ur.id as user_role_id,
@@ -198,7 +200,7 @@ const listWorkerRoles = async (associationId, page, limit) => {
      LIMIT $2 OFFSET $3`,
     [associationId, limit, offset]
   );
-  
+
   return {
     worker_details: workerResult.rows[0],
     total_records: totalRecords,
@@ -214,25 +216,66 @@ const assignRole = async (associationId, roleId) => {
      WHERE association_id = $1 AND role_id = $2 AND revocation_date IS NULL`,
     [associationId, roleId]
   );
-  
+
   if (existingRole.rows.length > 0) {
     throw new Error('El usuario ya tiene este rol asignado');
   }
-  
+
   await pool.query(
     `INSERT INTO user_role (id, association_id, role_id, assignment_date)
      VALUES ((SELECT COALESCE(MAX(id), 0) + 1 FROM user_role), $1, $2, CURRENT_DATE)`,
     [associationId, roleId]
   );
+
+  // Get userId from associationId
+  const userResult = await pool.query(
+    `SELECT user_id FROM association WHERE id = $1`,
+    [associationId]
+  );
+
+  if (userResult.rows.length > 0) {
+    const userId = userResult.rows[0].user_id;
+    await userModel.updateSessionTimestamp(userId);
+    try {
+      socket.getIO().emit(`session_update_${userId}`, {
+        change_session: new Date(),
+        reason: 'ROLE_ASSIGNED'
+      });
+    } catch (socketError) {
+      console.error('Socket emission failed:', socketError);
+    }
+  }
 };
 
 const revokeRole = async (userRoleId) => {
+  // Get userId before revoking
+  const userResult = await pool.query(
+    `SELECT a.user_id 
+     FROM user_role ur
+     JOIN association a ON ur.association_id = a.id
+     WHERE ur.id = $1`,
+    [userRoleId]
+  );
+
   await pool.query(
     `UPDATE user_role 
      SET revocation_date = CURRENT_DATE
      WHERE id = $1`,
     [userRoleId]
   );
+
+  if (userResult.rows.length > 0) {
+    const userId = userResult.rows[0].user_id;
+    await userModel.updateSessionTimestamp(userId);
+    try {
+      socket.getIO().emit(`session_update_${userId}`, {
+        change_session: new Date(),
+        reason: 'ROLE_REVOKED'
+      });
+    } catch (socketError) {
+      console.error('Socket emission failed:', socketError);
+    }
+  }
 };
 
 const updateAssociationStatus = async (associationId, active) => {
@@ -242,6 +285,25 @@ const updateAssociationStatus = async (associationId, active) => {
      WHERE id = $2`,
     [active, associationId]
   );
+
+  // Get userId
+  const userResult = await pool.query(
+    `SELECT user_id FROM association WHERE id = $1`,
+    [associationId]
+  );
+
+  if (userResult.rows.length > 0) {
+    const userId = userResult.rows[0].user_id;
+    await userModel.updateSessionTimestamp(userId);
+    try {
+      socket.getIO().emit(`session_update_${userId}`, {
+        change_session: new Date(),
+        reason: 'ASSOCIATION_STATUS_CHANGED'
+      });
+    } catch (socketError) {
+      console.error('Socket emission failed:', socketError);
+    }
+  }
 };
 
 const deleteAssociation = async (associationId) => {
@@ -251,6 +313,25 @@ const deleteAssociation = async (associationId) => {
      WHERE id = $1`,
     [associationId]
   );
+
+  // Get userId
+  const userResult = await pool.query(
+    `SELECT user_id FROM association WHERE id = $1`,
+    [associationId]
+  );
+
+  if (userResult.rows.length > 0) {
+    const userId = userResult.rows[0].user_id;
+    await userModel.updateSessionTimestamp(userId);
+    try {
+      socket.getIO().emit(`session_update_${userId}`, {
+        change_session: new Date(),
+        reason: 'ASSOCIATION_DELETED'
+      });
+    } catch (socketError) {
+      console.error('Socket emission failed:', socketError);
+    }
+  }
 };
 
 module.exports = {
