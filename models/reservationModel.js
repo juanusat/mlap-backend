@@ -855,6 +855,9 @@ class ReservationModel {
   static async listReservationsForManagement(parishId, page = 1, limit = 10) {
     const offset = (page - 1) * limit;
 
+    // Ejecutar función de actualización automática de estados
+    await db.query('SELECT public.check_and_update_reservation_states()');
+
     const query = `
       SELECT 
         r.id,
@@ -985,6 +988,9 @@ class ReservationModel {
    * @returns {Object} Detalles completos de la reserva
    */
   static async getReservationDetailsForManagement(reservationId, parishId) {
+    // Ejecutar función de actualización automática de estados
+    await db.query('SELECT public.check_and_update_reservation_states()');
+
     const query = `
       SELECT 
         r.id,

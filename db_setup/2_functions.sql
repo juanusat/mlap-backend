@@ -887,3 +887,220 @@ CREATE TRIGGER trg_update_paid_amount_on_payment
 AFTER INSERT ON public.payment
 FOR EACH ROW
 EXECUTE FUNCTION public.update_reservation_paid_amount();
+
+
+-- ====================================================================
+-- FUNCIÓN PARA ACTUALIZAR AUTOMÁTICAMENTE LOS ESTADOS DE RESERVAS
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.auto_update_reservation_states()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_reservation RECORD;
+    v_all_requirements_completed BOOLEAN;
+    v_event_datetime TIMESTAMP;
+    v_current_datetime TIMESTAMP;
+BEGIN
+    -- Obtener la hora actual
+    v_current_datetime := CURRENT_TIMESTAMP;
+
+    -- ========================================
+    -- PASO 1: Actualizar IN_PROGRESS -> COMPLETED
+    -- ========================================
+    -- Buscar reservas en estado IN_PROGRESS que tengan todos sus requisitos completados
+    FOR v_reservation IN 
+        SELECT DISTINCT r.id
+        FROM public.reservation r
+        WHERE r.status = 'IN_PROGRESS'
+    LOOP
+        -- Verificar si todos los requisitos de esta reserva están completados
+        SELECT COALESCE(
+            BOOL_AND(rr.completed), 
+            TRUE  -- Si no hay requisitos, se considera completado
+        ) INTO v_all_requirements_completed
+        FROM public.reservation_requirement rr
+        WHERE rr.reservation_id = v_reservation.id;
+
+        -- Si todos los requisitos están completados, cambiar estado a COMPLETED
+        IF v_all_requirements_completed THEN
+            UPDATE public.reservation
+            SET 
+                status = 'COMPLETED',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = v_reservation.id;
+        END IF;
+    END LOOP;
+
+    -- ========================================
+    -- PASO 2: Actualizar COMPLETED -> FULFILLED
+    -- ========================================
+    -- Buscar reservas en estado COMPLETED cuya fecha/hora del evento ya pasó
+    FOR v_reservation IN 
+        SELECT 
+            r.id,
+            r.event_date,
+            r.event_time,
+            ev.duration_minutes
+        FROM public.reservation r
+        JOIN public.event_variant ev ON r.event_variant_id = ev.id
+        WHERE r.status = 'COMPLETED'
+    LOOP
+        -- Combinar fecha y hora del evento, añadiendo la duración
+        v_event_datetime := (v_reservation.event_date + v_reservation.event_time)::TIMESTAMP 
+                          + (v_reservation.duration_minutes || ' minutes')::INTERVAL;
+
+        -- Si el evento ya terminó, cambiar estado a FULFILLED
+        IF v_event_datetime < v_current_datetime THEN
+            UPDATE public.reservation
+            SET 
+                status = 'FULFILLED',
+                updated_at = CURRENT_TIMESTAMP
+            WHERE id = v_reservation.id;
+        END IF;
+    END LOOP;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- ====================================================================
+-- FUNCIÓN PRINCIPAL: Actualización bajo demanda
+-- ====================================================================
+-- Esta función se llama desde el backend antes de consultas a reservas
+-- para mantener los estados actualizados
+
+CREATE OR REPLACE FUNCTION public.check_and_update_reservation_states()
+RETURNS void AS $$
+DECLARE
+    v_reservation RECORD;
+    v_all_requirements_completed BOOLEAN;
+    v_event_datetime TIMESTAMP;
+    v_current_datetime TIMESTAMP;
+    v_updated_count INTEGER := 0;
+BEGIN
+    v_current_datetime := CURRENT_TIMESTAMP;
+
+    -- PASO 1: IN_PROGRESS -> COMPLETED (requisitos completados)
+    FOR v_reservation IN 
+        SELECT DISTINCT r.id
+        FROM public.reservation r
+        WHERE r.status = 'IN_PROGRESS'
+    LOOP
+        SELECT COALESCE(BOOL_AND(rr.completed), TRUE) 
+        INTO v_all_requirements_completed
+        FROM public.reservation_requirement rr
+        WHERE rr.reservation_id = v_reservation.id;
+
+        IF v_all_requirements_completed THEN
+            UPDATE public.reservation
+            SET status = 'COMPLETED', updated_at = CURRENT_TIMESTAMP
+            WHERE id = v_reservation.id;
+            v_updated_count := v_updated_count + 1;
+        END IF;
+    END LOOP;
+
+    -- PASO 2: COMPLETED -> FULFILLED (evento pasado)
+    FOR v_reservation IN 
+        SELECT r.id, r.event_date, r.event_time, ev.duration_minutes
+        FROM public.reservation r
+        JOIN public.event_variant ev ON r.event_variant_id = ev.id
+        WHERE r.status = 'COMPLETED'
+    LOOP
+        v_event_datetime := (v_reservation.event_date + v_reservation.event_time)::TIMESTAMP 
+                          + (v_reservation.duration_minutes || ' minutes')::INTERVAL;
+
+        IF v_event_datetime < v_current_datetime THEN
+            UPDATE public.reservation
+            SET status = 'FULFILLED', updated_at = CURRENT_TIMESTAMP
+            WHERE id = v_reservation.id;
+            v_updated_count := v_updated_count + 1;
+        END IF;
+    END LOOP;
+
+    RAISE NOTICE 'Estados actualizados: % reservas', v_updated_count;
+END;
+$$ LANGUAGE plpgsql;
+
+COMMENT ON FUNCTION public.check_and_update_reservation_states() 
+IS 'Función que actualiza los estados de las reservas según reglas de negocio. Puede ser llamada manualmente o por un trigger.';
+
+
+-- ====================================================================
+-- TRIGGER EN RESERVATION_REQUIREMENT PARA AUTO-ACTUALIZACIÓN
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.trigger_check_reservation_completion()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_all_requirements_completed BOOLEAN;
+BEGIN
+    -- Solo proceder si el requisito fue marcado como completado
+    IF NEW.completed = TRUE AND (OLD.completed = FALSE OR OLD.completed IS NULL) THEN
+        -- Verificar si todos los requisitos de esta reserva están completados
+        SELECT COALESCE(BOOL_AND(rr.completed), TRUE) 
+        INTO v_all_requirements_completed
+        FROM public.reservation_requirement rr
+        WHERE rr.reservation_id = NEW.reservation_id;
+
+        -- Si todos están completados y la reserva está IN_PROGRESS, cambiar a COMPLETED
+        IF v_all_requirements_completed THEN
+            UPDATE public.reservation
+            SET status = 'COMPLETED', updated_at = CURRENT_TIMESTAMP
+            WHERE id = NEW.reservation_id 
+              AND status = 'IN_PROGRESS';
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_reservation_completion
+AFTER UPDATE ON public.reservation_requirement
+FOR EACH ROW
+EXECUTE FUNCTION public.trigger_check_reservation_completion();
+
+COMMENT ON TRIGGER trg_check_reservation_completion ON public.reservation_requirement 
+IS 'Actualiza automáticamente el estado de la reserva a COMPLETED cuando todos los requisitos están completados.';
+
+
+-- ====================================================================
+-- TRIGGER PARA ACTUALIZAR A FULFILLED CUANDO PASA EL TIEMPO
+-- ====================================================================
+
+CREATE OR REPLACE FUNCTION public.trigger_check_reservation_fulfillment()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_event_datetime TIMESTAMP;
+    v_duration_minutes INTEGER;
+BEGIN
+    -- Solo proceder si la reserva está en estado COMPLETED
+    IF NEW.status = 'COMPLETED' THEN
+        -- Obtener la duración del evento
+        SELECT ev.duration_minutes INTO v_duration_minutes
+        FROM public.event_variant ev
+        WHERE ev.id = NEW.event_variant_id;
+
+        -- Calcular el momento en que termina el evento
+        v_event_datetime := (NEW.event_date + NEW.event_time)::TIMESTAMP 
+                          + (COALESCE(v_duration_minutes, 60) || ' minutes')::INTERVAL;
+
+        -- Si el evento ya terminó, actualizar a FULFILLED
+        IF v_event_datetime < CURRENT_TIMESTAMP THEN
+            NEW.status := 'FULFILLED';
+            NEW.updated_at := CURRENT_TIMESTAMP;
+        END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_check_reservation_fulfillment
+BEFORE UPDATE ON public.reservation
+FOR EACH ROW
+WHEN (NEW.status = 'COMPLETED')
+EXECUTE FUNCTION public.trigger_check_reservation_fulfillment();
+
+COMMENT ON TRIGGER trg_check_reservation_fulfillment ON public.reservation 
+IS 'Actualiza automáticamente el estado de la reserva a FULFILLED cuando la fecha/hora del evento ha pasado.';
