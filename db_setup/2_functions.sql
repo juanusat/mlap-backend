@@ -872,12 +872,38 @@ $$;
 
 CREATE OR REPLACE FUNCTION public.update_reservation_paid_amount()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_all_requirements_completed BOOLEAN;
+    v_new_paid_amount DECIMAL(10,2);
+    v_current_price DECIMAL(10,2);
 BEGIN
+    -- Actualizar el monto pagado
     UPDATE public.reservation
     SET 
         paid_amount = paid_amount + NEW.amount,
         updated_at = CURRENT_TIMESTAMP
-    WHERE id = NEW.reservation_id;
+    WHERE id = NEW.reservation_id
+    RETURNING paid_amount INTO v_new_paid_amount;
+    
+    -- Obtener el precio del evento
+    SELECT ev.current_price INTO v_current_price
+    FROM public.reservation r
+    JOIN public.event_variant ev ON r.event_variant_id = ev.id
+    WHERE r.id = NEW.reservation_id;
+    
+    -- Verificar si todos los requisitos están completados
+    SELECT COALESCE(BOOL_AND(rr.completed), TRUE) 
+    INTO v_all_requirements_completed
+    FROM public.reservation_requirement rr
+    WHERE rr.reservation_id = NEW.reservation_id;
+    
+    -- Si el pago está completo Y todos los requisitos están completados, actualizar a COMPLETED
+    IF v_new_paid_amount >= v_current_price AND v_all_requirements_completed THEN
+        UPDATE public.reservation
+        SET status = 'COMPLETED', updated_at = CURRENT_TIMESTAMP
+        WHERE id = NEW.reservation_id 
+          AND status = 'IN_PROGRESS';
+    END IF;
     
     RETURN NEW;
 END;
@@ -887,6 +913,9 @@ CREATE TRIGGER trg_update_paid_amount_on_payment
 AFTER INSERT ON public.payment
 FOR EACH ROW
 EXECUTE FUNCTION public.update_reservation_paid_amount();
+
+COMMENT ON TRIGGER trg_update_paid_amount_on_payment ON public.payment 
+IS 'Actualiza el monto pagado de la reserva y verifica si debe cambiar a estado COMPLETED cuando se registra un pago.';
 
 
 -- ====================================================================
@@ -898,6 +927,7 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_reservation RECORD;
     v_all_requirements_completed BOOLEAN;
+    v_payment_completed BOOLEAN;
     v_event_datetime TIMESTAMP;
     v_current_datetime TIMESTAMP;
 BEGIN
@@ -907,10 +937,11 @@ BEGIN
     -- ========================================
     -- PASO 1: Actualizar IN_PROGRESS -> COMPLETED
     -- ========================================
-    -- Buscar reservas en estado IN_PROGRESS que tengan todos sus requisitos completados
+    -- Buscar reservas en estado IN_PROGRESS que tengan todos sus requisitos completados y pagos completos
     FOR v_reservation IN 
-        SELECT DISTINCT r.id
+        SELECT DISTINCT r.id, r.paid_amount, ev.current_price
         FROM public.reservation r
+        JOIN public.event_variant ev ON r.event_variant_id = ev.id
         WHERE r.status = 'IN_PROGRESS'
     LOOP
         -- Verificar si todos los requisitos de esta reserva están completados
@@ -921,8 +952,11 @@ BEGIN
         FROM public.reservation_requirement rr
         WHERE rr.reservation_id = v_reservation.id;
 
-        -- Si todos los requisitos están completados, cambiar estado a COMPLETED
-        IF v_all_requirements_completed THEN
+        -- Verificar si el pago está completo (monto pagado >= precio del evento)
+        v_payment_completed := (v_reservation.paid_amount >= v_reservation.current_price);
+
+        -- Si todos los requisitos están completados Y el pago está completo, cambiar estado a COMPLETED
+        IF v_all_requirements_completed AND v_payment_completed THEN
             UPDATE public.reservation
             SET 
                 status = 'COMPLETED',
@@ -974,16 +1008,18 @@ RETURNS void AS $$
 DECLARE
     v_reservation RECORD;
     v_all_requirements_completed BOOLEAN;
+    v_payment_completed BOOLEAN;
     v_event_datetime TIMESTAMP;
     v_current_datetime TIMESTAMP;
     v_updated_count INTEGER := 0;
 BEGIN
     v_current_datetime := CURRENT_TIMESTAMP;
 
-    -- PASO 1: IN_PROGRESS -> COMPLETED (requisitos completados)
+    -- PASO 1: IN_PROGRESS -> COMPLETED (requisitos completados Y pagos completos)
     FOR v_reservation IN 
-        SELECT DISTINCT r.id
+        SELECT DISTINCT r.id, r.paid_amount, ev.current_price
         FROM public.reservation r
+        JOIN public.event_variant ev ON r.event_variant_id = ev.id
         WHERE r.status = 'IN_PROGRESS'
     LOOP
         SELECT COALESCE(BOOL_AND(rr.completed), TRUE) 
@@ -991,7 +1027,10 @@ BEGIN
         FROM public.reservation_requirement rr
         WHERE rr.reservation_id = v_reservation.id;
 
-        IF v_all_requirements_completed THEN
+        -- Verificar si el pago está completo
+        v_payment_completed := (v_reservation.paid_amount >= v_reservation.current_price);
+
+        IF v_all_requirements_completed AND v_payment_completed THEN
             UPDATE public.reservation
             SET status = 'COMPLETED', updated_at = CURRENT_TIMESTAMP
             WHERE id = v_reservation.id;
@@ -1033,6 +1072,7 @@ CREATE OR REPLACE FUNCTION public.trigger_check_reservation_completion()
 RETURNS TRIGGER AS $$
 DECLARE
     v_all_requirements_completed BOOLEAN;
+    v_payment_completed BOOLEAN;
 BEGIN
     -- Solo proceder si el requisito fue marcado como completado
     IF NEW.completed = TRUE AND (OLD.completed = FALSE OR OLD.completed IS NULL) THEN
@@ -1042,8 +1082,15 @@ BEGIN
         FROM public.reservation_requirement rr
         WHERE rr.reservation_id = NEW.reservation_id;
 
-        -- Si todos están completados y la reserva está IN_PROGRESS, cambiar a COMPLETED
-        IF v_all_requirements_completed THEN
+        -- Verificar si el pago está completo
+        SELECT (r.paid_amount >= ev.current_price)
+        INTO v_payment_completed
+        FROM public.reservation r
+        JOIN public.event_variant ev ON r.event_variant_id = ev.id
+        WHERE r.id = NEW.reservation_id;
+
+        -- Si todos están completados Y el pago está completo, cambiar a COMPLETED
+        IF v_all_requirements_completed AND v_payment_completed THEN
             UPDATE public.reservation
             SET status = 'COMPLETED', updated_at = CURRENT_TIMESTAMP
             WHERE id = NEW.reservation_id 
@@ -1061,7 +1108,7 @@ FOR EACH ROW
 EXECUTE FUNCTION public.trigger_check_reservation_completion();
 
 COMMENT ON TRIGGER trg_check_reservation_completion ON public.reservation_requirement 
-IS 'Actualiza automáticamente el estado de la reserva a COMPLETED cuando todos los requisitos están completados.';
+IS 'Actualiza automáticamente el estado de la reserva a COMPLETED cuando todos los requisitos están completados Y el pago está completo.';
 
 
 -- ====================================================================
